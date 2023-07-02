@@ -1,3 +1,4 @@
+const express = require("express");
 const elmExpress = require("elm-express");
 
 const { Elm } = require("./build/backend");
@@ -26,6 +27,8 @@ const server = elmExpress({
   sessionConfig,
   requestCallback
 });
+
+server.use(express.static("public"));
 
 server.start(() => {
   console.log(`Example app listening on port ${port}`);
