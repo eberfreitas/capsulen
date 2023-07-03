@@ -1,27 +1,40 @@
 module Frontend exposing (main)
 
 import Browser
+import Frontend.Page.Login
 import Html
 
 
 type Model
-    = Homepage
+    = Login Frontend.Page.Login.Model
 
 
-view : Model -> Html.Html msg
-view _ =
-    Html.div [] [ Html.h1 [] [ Html.text "Capsulen" ] ]
+type Msg
+    = LoginMsg Frontend.Page.Login.Msg
 
 
-update : msg -> Model -> ( Model, Cmd msg )
-update _ model =
-    ( model, Cmd.none )
+view : Model -> Html.Html Msg
+view model =
+    case model of
+        Login subModel ->
+            subModel |> Frontend.Page.Login.view |> Html.map LoginMsg
 
 
-main : Program () Model msg
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case ( msg, model ) of
+        ( LoginMsg subMsg, Login subModel ) ->
+            let
+                ( nextSubModel, nextCmd ) =
+                    Frontend.Page.Login.update subMsg subModel
+            in
+            ( Login nextSubModel, nextCmd |> Cmd.map LoginMsg )
+
+
+main : Program () Model Msg
 main =
     Browser.element
-        { init = \() -> ( Homepage, Cmd.none )
+        { init = \() -> ( Login Frontend.Page.Login.init, Cmd.none )
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
