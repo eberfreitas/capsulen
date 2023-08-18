@@ -1,21 +1,23 @@
-const express = require("express");
-const elmExpress = require("elm-express");
+import express, { Request } from "express";
+import { elmExpress } from "elm-express";
 
+// This just avoids a bunch of problems with module loading and TS
 const { Elm } = require("./build/backend");
 
 require("dotenv").config();
 
-const port = process.env.BACKEND_PORT || 3000;
+const port = process.env.BACKEND_PORT ? parseInt(process.env.BACKEND_PORT, 10) : 3000;
 const app = Elm.Backend.init();
-const secret = process.env.BACKEND_SECRET;
+const secret = process.env.BACKEND_SECRET || "f4k3s3cr3t";
 const mountingRoute = "/api/";
+const timeout = 5000;
 
 const sessionConfig = {
   resave: false,
   saveUninitialized: true,
 };
 
-const requestCallback = (req) => {
+const requestCallback = (req: Request): void => {
   console.log(`[${req.method}] ${new Date().toString()} - ${req.originalUrl}`);
 }
 
@@ -25,7 +27,8 @@ const server = elmExpress({
   port,
   mountingRoute,
   sessionConfig,
-  requestCallback
+  requestCallback,
+  timeout,
 });
 
 server.use(express.static("public"));
