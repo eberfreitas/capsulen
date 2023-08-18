@@ -1,11 +1,12 @@
 module Frontend.Page.Register exposing (Model, Msg, init, update, view)
 
+import Form
 import Frontend.View
 import Html
 
 
 type Msg
-    = Msg
+    = FormMsg Form.Msg
 
 
 type alias Model =
