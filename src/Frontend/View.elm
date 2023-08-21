@@ -1,4 +1,4 @@
-module Frontend.View exposing (..)
+module Frontend.View exposing (template)
 
 import Html
 

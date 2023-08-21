@@ -1,4 +1,4 @@
-module Frontend.Page.Login exposing (Model, Msg, init, update, view)
+module Frontend.Page.Login exposing (Model, Msg, update, view)
 
 import Frontend.Port
 import Frontend.View
@@ -17,11 +17,6 @@ type Msg
     = FillUsername String
     | FillPrivateKey String
     | Submit
-
-
-init : Model
-init =
-    { username = "", privateKey = "" }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

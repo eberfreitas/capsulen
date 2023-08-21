@@ -43,7 +43,7 @@ update msg model =
             in
             ( Register nextSubModel, nextCmd |> Cmd.map RegisterMsg )
 
-        ( _, _ ) ->
+        _ ->
             ( model, Cmd.none )
 
 

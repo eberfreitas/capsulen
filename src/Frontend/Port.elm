@@ -1,4 +1,4 @@
-port module Frontend.Port exposing (..)
+port module Frontend.Port exposing (login)
 
 import Json.Encode
 

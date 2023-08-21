@@ -19,8 +19,14 @@ init =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update _ model =
-    ( model, Cmd.none )
+update msg model =
+    case msg of
+        FormMsg formMsg ->
+            let
+                _ =
+                    Debug.log "Form msg" formMsg
+            in
+            ( model, Cmd.none )
 
 
 view : Model -> Html.Html Msg
