@@ -6,7 +6,9 @@ import "dotenv/config";
 // eslint-disable-next-line
 const { Elm } = require("./build/backend");
 
-const port = process.env.BACKEND_PORT ? parseInt(process.env.BACKEND_PORT, 10) : 3000;
+const port = process.env.BACKEND_PORT
+  ? parseInt(process.env.BACKEND_PORT, 10)
+  : 3000;
 const app = Elm.Backend.init();
 const secret = process.env.BACKEND_SECRET || "f4k3s3cr3t";
 const mountingRoute = "/api/";
@@ -19,7 +21,7 @@ const sessionConfig = {
 
 const requestCallback = (req: Request): void => {
   console.log(`[${req.method}] ${new Date().toString()} - ${req.originalUrl}`);
-}
+};
 
 const server = elmExpress({
   app,
