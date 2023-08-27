@@ -1,12 +1,11 @@
 module Frontend.Page.Register exposing (Model, Msg, init, update, view)
 
-import Form
 import Frontend.View
 import Html
 
 
 type Msg
-    = FormMsg Form.Msg
+    = FormMsg
 
 
 type alias Model =
@@ -21,11 +20,7 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        FormMsg formMsg ->
-            let
-                _ =
-                    Debug.log "Form msg" formMsg
-            in
+        FormMsg ->
             ( model, Cmd.none )
 
 

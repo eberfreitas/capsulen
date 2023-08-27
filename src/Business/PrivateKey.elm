@@ -1,4 +1,4 @@
-module Business.PrivateKey exposing (fromString, toString)
+module Business.PrivateKey exposing (PrivateKey, fromString, toString)
 
 
 type PrivateKey
@@ -13,6 +13,7 @@ minLength =
 fromString : String -> Result String PrivateKey
 fromString raw =
     let
+        privateKey : String
         privateKey =
             String.trim raw
     in

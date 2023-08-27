@@ -10,6 +10,7 @@ type Username
 fromString : String -> Result String Username
 fromString raw =
     let
+        username : String
         username =
             "[^A-Za-z0-9_]*"
                 |> Regex.fromString

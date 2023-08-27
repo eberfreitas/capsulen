@@ -23,6 +23,7 @@ port errorPort : String -> Cmd.Cmd msg
 incoming : () -> Express.Request.Request -> Express.Response.Response -> ( Express.Conn.Conn (), Cmd msg )
 incoming _ request response =
     let
+        conn : Express.Conn.Conn ()
         conn =
             { request = request, response = response |> Express.Response.text "Capsulen", model = () }
     in
