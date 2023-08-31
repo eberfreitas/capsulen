@@ -16,9 +16,10 @@ fromString raw =
                 |> Regex.fromString
                 |> Maybe.map (\regex -> Regex.replace regex (\_ -> "") raw)
                 |> Maybe.withDefault ""
+                |> String.trim
     in
-    if username == "" then
-        Err "Username can't be empty or contain non-alphanumeric characters"
+    if username /= raw then
+        Err "Username must contain only letters, numbers and underscores (_)."
 
     else
         Ok (Username username)
