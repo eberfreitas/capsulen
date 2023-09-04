@@ -55,6 +55,7 @@ run effect context =
 
         RemoveAlert index ->
             let
+                alerts : List Frontend.Alert.Message
                 alerts =
                     context.alerts |> List.Extra.indexedFilter (\idx _ -> idx /= index)
             in

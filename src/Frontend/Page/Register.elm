@@ -78,8 +78,15 @@ update msg model =
 
         Submit ->
             let
+                newModel : Model
+                newModel =
+                    { model
+                        | usernameInput = parseInput Business.Username.fromString model.usernameInput
+                        , privateKeyInput = parseInput Business.PrivateKey.fromString model.privateKeyInput
+                    }
+
                 ( effects, cmds ) =
-                    case buildUserData model of
+                    case buildUserData newModel of
                         Ok _ ->
                             ( Frontend.Effect.none, Cmd.none )
 
@@ -88,12 +95,13 @@ update msg model =
                             , Cmd.none
                             )
             in
-            ( model, effects, cmds )
+            ( newModel, effects, cmds )
 
 
 buildUserData : Model -> Result String UserData
 buildUserData { usernameInput, privateKeyInput } =
     let
+        errorMsg : String
         errorMsg =
             "One or more inputs are invalid. Check the messages in the form to fix and try again."
     in
@@ -109,6 +117,11 @@ buildUserData { usernameInput, privateKeyInput } =
             Err errorMsg
 
 
+parseInput : (String -> Result String a) -> FormInput a -> FormInput a
+parseInput parser input =
+    { input | valid = Just <| parser input.raw }
+
+
 updateUsername :
     InputEvent
     -> FormInput Business.Username.Username
@@ -118,11 +131,11 @@ updateUsername event input =
         Input raw ->
             { input | raw = String.trim raw }
 
-        Blur ->
-            { input | valid = Just (Business.Username.fromString input.raw) }
-
         Focus ->
             { input | valid = Nothing }
+
+        Blur ->
+            parseInput Business.Username.fromString input
 
 
 updatePrivateKey :
@@ -134,11 +147,11 @@ updatePrivateKey event input =
         Input raw ->
             { input | raw = String.trim raw }
 
-        Blur ->
-            { input | valid = Just (Business.PrivateKey.fromString input.raw) }
-
         Focus ->
             { input | valid = Nothing }
+
+        Blur ->
+            parseInput Business.PrivateKey.fromString input
 
 
 view : Model -> Html.Html Msg
@@ -182,6 +195,7 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                             [ Html.Events.onClick ToggleShowPrivateKey ]
                             [ togglePrivateKeyIcon ]
                         , viewInputError privateKeyInput
+                        , Html.div [] [ Html.text "Your private key will *never* be sent over the network." ]
                         ]
                     ]
                 , Html.button [] [ Html.text "Submit" ]

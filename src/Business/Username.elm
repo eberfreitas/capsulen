@@ -18,7 +18,10 @@ fromString raw =
                 |> Maybe.withDefault ""
                 |> String.trim
     in
-    if username /= raw then
+    if username == "" then
+        Err "Username can't be empty."
+
+    else if username /= raw then
         Err "Username must contain only letters, numbers and underscores (_)."
 
     else

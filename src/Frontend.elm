@@ -26,6 +26,7 @@ type Msg
 view : Model -> Html.Html Msg
 view model =
     let
+        pageHtml : Html.Html Msg
         pageHtml =
             case model.page of
                 Register subModel ->

@@ -18,7 +18,7 @@ fromString raw =
             String.trim raw
     in
     if String.length privateKey < minLength then
-        Err ("Private key must have more than " ++ String.fromInt minLength ++ " characters")
+        Err ("Private key must have more than " ++ String.fromInt minLength ++ " characters.")
 
     else if raw /= String.trim raw then
         Err "Avoid spaces at the beginning and end of the private key."
