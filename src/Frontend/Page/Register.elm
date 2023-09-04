@@ -2,7 +2,8 @@ module Frontend.Page.Register exposing (FormInput, Model, Msg, UserData, init, u
 
 import Business.PrivateKey
 import Business.Username
-import Frontend.View
+import Frontend.Alert
+import Frontend.Effect
 import Html
 import Html.Attributes
 import Html.Events
@@ -54,20 +55,58 @@ init =
     ( baseModel, Cmd.none )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Frontend.Effect.Effect, Cmd Msg )
 update msg model =
     case msg of
         WithUsername event ->
-            ( { model | usernameInput = updateUsername event model.usernameInput }, Cmd.none )
+            ( { model | usernameInput = updateUsername event model.usernameInput }
+            , Frontend.Effect.none
+            , Cmd.none
+            )
 
         WithPrivateKey event ->
-            ( { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }, Cmd.none )
+            ( { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }
+            , Frontend.Effect.none
+            , Cmd.none
+            )
 
         ToggleShowPrivateKey ->
-            ( { model | showPrivateKey = not model.showPrivateKey }, Cmd.none )
+            ( { model | showPrivateKey = not model.showPrivateKey }
+            , Frontend.Effect.none
+            , Cmd.none
+            )
 
         Submit ->
-            ( model, Cmd.none )
+            let
+                ( effects, cmds ) =
+                    case buildUserData model of
+                        Ok _ ->
+                            ( Frontend.Effect.none, Cmd.none )
+
+                        Err submissionError ->
+                            ( Frontend.Effect.addAlert (Frontend.Alert.new Frontend.Alert.Error submissionError)
+                            , Cmd.none
+                            )
+            in
+            ( model, effects, cmds )
+
+
+buildUserData : Model -> Result String UserData
+buildUserData { usernameInput, privateKeyInput } =
+    let
+        errorMsg =
+            "One or more inputs are invalid. Check the messages in the form to fix and try again."
+    in
+    case ( usernameInput.valid, privateKeyInput.valid ) of
+        ( Just username, Just privateKey ) ->
+            Result.map2
+                (\username_ privateKey_ -> { username = username_, privateKey = privateKey_ })
+                username
+                privateKey
+                |> Result.mapError (always errorMsg)
+
+        _ ->
+            Err errorMsg
 
 
 updateUsername :
@@ -112,7 +151,7 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
             else
                 ( "password", Phosphor.eye Phosphor.Regular |> Phosphor.toHtml [] )
     in
-    Frontend.View.template
+    Html.div []
         [ Html.form [ Html.Events.onSubmit Submit ]
             [ Html.fieldset []
                 [ Html.legend [] [ Html.text "Register" ]
