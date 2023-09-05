@@ -101,6 +101,7 @@ update msg model =
                     case buildUserData newModel of
                         Ok userData ->
                             let
+                                cmd : Cmd Msg
                                 cmd =
                                     Http.post
                                         { url = "/api/users/request_access"

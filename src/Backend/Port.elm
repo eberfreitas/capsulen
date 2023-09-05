@@ -1,4 +1,4 @@
-port module Backend.Port exposing (..)
+port module Backend.Port exposing (userRequestAccess)
 
 import Json.Decode
 

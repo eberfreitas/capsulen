@@ -27,6 +27,7 @@ requestAccess request response =
     case username of
         Ok username_ ->
             let
+                data : Json.Encode.Value
                 data =
                     Json.Encode.object
                         [ ( "requestId", Json.Encode.string <| Express.Request.id request )

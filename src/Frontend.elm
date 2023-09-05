@@ -45,6 +45,7 @@ update msg model =
     case ( msg, model.page ) of
         ( AlertsMsg subMsg, _ ) ->
             let
+                effect : Frontend.Effect.Effect
                 effect =
                     Frontend.View.Alerts.update subMsg
 

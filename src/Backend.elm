@@ -32,16 +32,13 @@ notFound =
 incoming : () -> Express.Request.Request -> Express.Response.Response -> ( Express.Conn.Conn (), Cmd msg )
 incoming _ request response =
     let
+        url : AppUrl.AppUrl
         url =
             AppUrl.fromUrl <| Express.Request.url request
     in
     case ( Express.Request.method request, url.path ) of
         ( Express.Request.Post, [ "api", "users", "request_access" ] ) ->
-            let
-                ( conn, cmds ) =
-                    Backend.Endpoint.User.requestAccess request response
-            in
-            ( conn, cmds )
+            Backend.Endpoint.User.requestAccess request response
 
         _ ->
             let
