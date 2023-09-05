@@ -1,5 +1,7 @@
 port module Backend exposing (main)
 
+import AppUrl
+import Backend.Endpoint.User
 import Express
 import Express.Conn
 import Express.Request
@@ -20,14 +22,34 @@ port responsePort : Json.Encode.Value -> Cmd.Cmd msg
 port errorPort : String -> Cmd.Cmd msg
 
 
+notFound : Express.Response.Response
+notFound =
+    Express.Response.new
+        |> Express.Response.status Express.Response.NotFound
+        |> Express.Response.text "Not found"
+
+
 incoming : () -> Express.Request.Request -> Express.Response.Response -> ( Express.Conn.Conn (), Cmd msg )
 incoming _ request response =
     let
-        conn : Express.Conn.Conn ()
-        conn =
-            { request = request, response = response |> Express.Response.text "Capsulen", model = () }
+        url =
+            AppUrl.fromUrl <| Express.Request.url request
     in
-    ( conn, conn |> Express.Conn.send |> responsePort )
+    case ( Express.Request.method request, url.path ) of
+        ( Express.Request.Post, [ "api", "users", "request_access" ] ) ->
+            let
+                ( conn, cmds ) =
+                    Backend.Endpoint.User.requestAccess request response
+            in
+            ( conn, cmds )
+
+        _ ->
+            let
+                conn : Express.Conn.Conn ()
+                conn =
+                    { request = request, response = notFound, model = () }
+            in
+            ( conn, conn |> Express.Conn.send |> responsePort )
 
 
 update : () -> msg -> Express.Conn.Conn () -> ( Express.Conn.Conn (), Cmd msg )

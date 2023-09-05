@@ -7,6 +7,10 @@ import Frontend.Effect
 import Html
 import Html.Attributes
 import Html.Events
+import Http
+import Json.Decode
+import Json.Decode.Extra
+import Json.Encode
 import Phosphor
 
 
@@ -21,6 +25,14 @@ type Msg
     | WithPrivateKey InputEvent
     | ToggleShowPrivateKey
     | Submit
+    | GotAccessRequest (Result Http.Error (Result String AccessRequest))
+
+
+type alias AccessRequest =
+    { username : Business.Username.Username
+    , nonce : String
+    , challenge : String
+    }
 
 
 type alias Model =
@@ -87,8 +99,17 @@ update msg model =
 
                 ( effects, cmds ) =
                     case buildUserData newModel of
-                        Ok _ ->
-                            ( Frontend.Effect.none, Cmd.none )
+                        Ok userData ->
+                            let
+                                cmd =
+                                    Http.post
+                                        { url = "/api/users/request_access"
+                                        , body = Http.jsonBody <| encodeUserData userData
+                                        , expect = Http.expectJson GotAccessRequest decodeAccessRequestResult
+                                        }
+                            in
+                            -- TODO: Use loader effect here, to show fake progress bar
+                            ( Frontend.Effect.none, cmd )
 
                         Err submissionError ->
                             ( Frontend.Effect.addAlert (Frontend.Alert.new Frontend.Alert.Error submissionError)
@@ -96,6 +117,9 @@ update msg model =
                             )
             in
             ( newModel, effects, cmds )
+
+        GotAccessRequest _ ->
+            ( model, Frontend.Effect.none, Cmd.none )
 
 
 buildUserData : Model -> Result String UserData
@@ -220,3 +244,24 @@ viewInputError input =
 
         _ ->
             Html.text ""
+
+
+encodeUserData : UserData -> Json.Encode.Value
+encodeUserData { username } =
+    Json.Encode.object
+        [ ( "username", Business.Username.encode username ) ]
+
+
+decodeAccessRequest : Json.Decode.Decoder AccessRequest
+decodeAccessRequest =
+    Json.Decode.map3 AccessRequest
+        Business.Username.decode
+        Json.Decode.string
+        Json.Decode.string
+
+
+decodeAccessRequestResult : Json.Decode.Decoder (Result String AccessRequest)
+decodeAccessRequestResult =
+    Json.Decode.Extra.result
+        Json.Decode.string
+        decodeAccessRequest

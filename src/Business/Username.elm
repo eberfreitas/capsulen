@@ -1,5 +1,7 @@
-module Business.Username exposing (Username, fromString, toString)
+module Business.Username exposing (Username, decode, encode, fromString, toString)
 
+import Json.Decode
+import Json.Encode
 import Regex
 
 
@@ -31,3 +33,22 @@ fromString raw =
 toString : Username -> String
 toString (Username username) =
     username
+
+
+decode : Json.Decode.Decoder Username
+decode =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\username ->
+                case fromString username of
+                    Ok username_ ->
+                        Json.Decode.succeed username_
+
+                    Err _ ->
+                        Json.Decode.fail <| "Could not decode username: " ++ username
+            )
+
+
+encode : Username -> Json.Encode.Value
+encode (Username username) =
+    Json.Encode.string username
