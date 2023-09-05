@@ -1,25 +1,17 @@
-port module Backend exposing (main)
+module Backend exposing (main)
 
 import AppUrl
 import Backend.Endpoint.User
+import Backend.Port
 import Express
 import Express.Conn
 import Express.Request
 import Express.Response
 import Json.Decode
-import Json.Encode
 
 
-port requestPort : (Json.Decode.Value -> msg) -> Sub.Sub msg
-
-
-port poolPort : (String -> msg) -> Sub.Sub msg
-
-
-port responsePort : Json.Encode.Value -> Cmd.Cmd msg
-
-
-port errorPort : String -> Cmd.Cmd msg
+type Msg
+    = UserMsg Backend.Endpoint.User.Msg
 
 
 notFound : Express.Response.Response
@@ -46,29 +38,44 @@ incoming _ request response =
                 conn =
                     { request = request, response = notFound, model = () }
             in
-            ( conn, conn |> Express.Conn.send |> responsePort )
+            ( conn, conn |> Express.Conn.send |> Backend.Port.responsePort )
 
 
-update : () -> msg -> Express.Conn.Conn () -> ( Express.Conn.Conn (), Cmd msg )
-update _ _ conn =
-    ( conn, Cmd.none )
+update : () -> Msg -> Express.Conn.Conn () -> ( Express.Conn.Conn (), Cmd Msg )
+update _ msg conn =
+    case msg of
+        UserMsg subMsg ->
+            let
+                ( nextConn, cmds ) =
+                    Backend.Endpoint.User.update subMsg conn
+            in
+            ( nextConn, cmds |> Cmd.map UserMsg )
 
 
-decodeRequestId : msg -> Result Json.Decode.Error String
-decodeRequestId _ =
-    Err <| Json.Decode.Failure "Decoder not implemented" Json.Encode.null
+decodeRequestId : Msg -> Result Json.Decode.Error String
+decodeRequestId msg =
+    case msg of
+        UserMsg subMsg ->
+            Backend.Endpoint.User.decodeRequestId subMsg
 
 
-main : Program () (Express.Model () ()) (Express.Msg msg)
+subscriptions : Sub Msg
+subscriptions =
+    Sub.batch
+        [ Backend.Endpoint.User.subscriptions |> Sub.map UserMsg
+        ]
+
+
+main : Program () (Express.Model () ()) (Express.Msg Msg)
 main =
     Express.application
         { init = \_ -> ()
-        , requestPort = requestPort
-        , responsePort = responsePort
-        , errorPort = errorPort
-        , poolPort = poolPort
+        , requestPort = Backend.Port.requestPort
+        , responsePort = Backend.Port.responsePort
+        , errorPort = Backend.Port.errorPort
+        , poolPort = Backend.Port.poolPort
         , incoming = incoming
-        , subscriptions = Sub.none
+        , subscriptions = subscriptions
         , update = update
         , middlewares = []
         , decodeRequestId = decodeRequestId

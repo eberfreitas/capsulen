@@ -1,4 +1,4 @@
-module Frontend.Effect exposing (Effect, addAlert, batch, none, run, removeAlert)
+module Frontend.Effect exposing (Effect, addAlert, batch, none, removeAlert, run)
 
 import Frontend.Alert
 import Frontend.Context

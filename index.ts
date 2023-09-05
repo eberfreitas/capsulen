@@ -1,6 +1,12 @@
 import express, { Request } from "express";
 import { elmExpress } from "elm-express";
+import { Client } from "pg";
 import "dotenv/config";
+
+import {
+  RequestAccessData,
+  handleUserAccessRequest,
+} from "./src/Backend/ts/users";
 
 // This just avoids a bunch of problems with module loading and TS
 // eslint-disable-next-line
@@ -24,6 +30,13 @@ const requestCallback = (req: Request): void => {
   console.log(`[${req.method}] ${new Date().toString()} - ${req.originalUrl}`);
 };
 
+const db = new Client({
+  host: "localhost",
+  user: "postgres",
+  password: "postgres",
+  database: "capsulen",
+});
+
 const server = elmExpress({
   app,
   secret,
@@ -36,8 +49,11 @@ const server = elmExpress({
 
 server.use(express.static("public"));
 
-server.start(() => {
+server.start(async () => {
+  await db.connect();
   console.log(`Example app listening on port ${port}`);
 });
 
-app.ports.userRequestAccess.subscribe(console.log);
+app.ports.userRequestAccess.subscribe((data: RequestAccessData) =>
+  handleUserAccessRequest(app, db, data),
+);
