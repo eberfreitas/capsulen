@@ -131,6 +131,7 @@ update msg model =
                     )
 
                 Err _ ->
+                    -- TODO: Notify alerting system here...
                     ( model
                     , Frontend.Effect.addAlert
                         (Frontend.Alert.new
