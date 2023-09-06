@@ -119,8 +119,26 @@ update msg model =
             in
             ( newModel, effects, cmds )
 
-        GotAccessRequest _ ->
-            ( model, Frontend.Effect.none, Cmd.none )
+        GotAccessRequest result ->
+            case result of
+                Ok (Ok _) ->
+                    ( model, Frontend.Effect.none, Cmd.none )
+
+                Ok (Err errorMsg) ->
+                    ( model
+                    , Frontend.Effect.addAlert (Frontend.Alert.new Frontend.Alert.Error errorMsg)
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( model
+                    , Frontend.Effect.addAlert
+                        (Frontend.Alert.new
+                            Frontend.Alert.Error
+                            "There was an internal error processing your request. Please, try again."
+                        )
+                    , Cmd.none
+                    )
 
 
 buildUserData : Model -> Result String UserData
@@ -256,9 +274,9 @@ encodeUserData { username } =
 decodeAccessRequest : Json.Decode.Decoder AccessRequest
 decodeAccessRequest =
     Json.Decode.map3 AccessRequest
-        Business.Username.decode
-        Json.Decode.string
-        Json.Decode.string
+        (Json.Decode.field "username" Business.Username.decode)
+        (Json.Decode.field "nonce" Json.Decode.string)
+        (Json.Decode.field "challenge" Json.Decode.string)
 
 
 decodeAccessRequestResult : Json.Decode.Decoder (Result String AccessRequest)
