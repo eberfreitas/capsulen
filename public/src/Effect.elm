@@ -1,14 +1,14 @@
-module Frontend.Effect exposing (Effect, addAlert, batch, none, removeAlert, run)
+module Effect exposing (Effect, addAlert, batch, none, removeAlert, run)
 
-import Frontend.Alert
-import Frontend.Context
+import Alert
+import Context
 import List.Extra
 
 
 type Effect
     = None
     | Batch (List Effect)
-    | AddAlert Frontend.Alert.Message
+    | AddAlert Alert.Message
     | RemoveAlert Int
 
 
@@ -22,7 +22,7 @@ batch =
     Batch
 
 
-addAlert : Frontend.Alert.Message -> Effect
+addAlert : Alert.Message -> Effect
 addAlert =
     AddAlert
 
@@ -32,7 +32,7 @@ removeAlert =
     RemoveAlert
 
 
-run : Effect -> Frontend.Context.Context -> ( Frontend.Context.Context, Cmd msg )
+run : Effect -> Context.Context -> ( Context.Context, Cmd msg )
 run effect context =
     case effect of
         None ->
@@ -55,7 +55,7 @@ run effect context =
 
         RemoveAlert index ->
             let
-                alerts : List Frontend.Alert.Message
+                alerts : List Alert.Message
                 alerts =
                     context.alerts |> List.Extra.indexedFilter (\idx _ -> idx /= index)
             in

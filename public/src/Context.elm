@@ -1,10 +1,10 @@
-module Frontend.Context exposing (Context, new)
+module Context exposing (Context, new)
 
-import Frontend.Alert
+import Alert
 
 
 type alias Context =
-    { alerts : List Frontend.Alert.Message }
+    { alerts : List Alert.Message }
 
 
 new : Context

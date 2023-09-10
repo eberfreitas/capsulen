@@ -1,4 +1,4 @@
-module Frontend.Alert exposing (Message, Severity(..), new, toHtml)
+module Alert exposing (Message, Severity(..), new, toHtml)
 
 import Html
 import Html.Attributes

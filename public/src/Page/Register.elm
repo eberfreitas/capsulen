@@ -1,9 +1,9 @@
-module Frontend.Page.Register exposing (FormInput, Model, Msg, UserData, init, update, view)
+module Page.Register exposing (FormInput, Model, Msg, UserData, init, update, view)
 
+import Alert
 import Business.PrivateKey
 import Business.Username
-import Frontend.Alert
-import Frontend.Effect
+import Effect
 import Html
 import Html.Attributes
 import Html.Events
@@ -67,24 +67,24 @@ init =
     ( baseModel, Cmd.none )
 
 
-update : Msg -> Model -> ( Model, Frontend.Effect.Effect, Cmd Msg )
+update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update msg model =
     case msg of
         WithUsername event ->
             ( { model | usernameInput = updateUsername event model.usernameInput }
-            , Frontend.Effect.none
+            , Effect.none
             , Cmd.none
             )
 
         WithPrivateKey event ->
             ( { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }
-            , Frontend.Effect.none
+            , Effect.none
             , Cmd.none
             )
 
         ToggleShowPrivateKey ->
             ( { model | showPrivateKey = not model.showPrivateKey }
-            , Frontend.Effect.none
+            , Effect.none
             , Cmd.none
             )
 
@@ -110,10 +110,10 @@ update msg model =
                                         }
                             in
                             -- TODO: Use loader effect here, to show fake progress bar
-                            ( Frontend.Effect.none, cmd )
+                            ( Effect.none, cmd )
 
                         Err submissionError ->
-                            ( Frontend.Effect.addAlert (Frontend.Alert.new Frontend.Alert.Error submissionError)
+                            ( Effect.addAlert (Alert.new Alert.Error submissionError)
                             , Cmd.none
                             )
             in
@@ -122,20 +122,20 @@ update msg model =
         GotAccessRequest result ->
             case result of
                 Ok (Ok _) ->
-                    ( model, Frontend.Effect.none, Cmd.none )
+                    ( model, Effect.none, Cmd.none )
 
                 Ok (Err errorMsg) ->
                     ( model
-                    , Frontend.Effect.addAlert (Frontend.Alert.new Frontend.Alert.Error errorMsg)
+                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
                     , Cmd.none
                     )
 
                 Err _ ->
                     -- TODO: Notify alerting system here...
                     ( model
-                    , Frontend.Effect.addAlert
-                        (Frontend.Alert.new
-                            Frontend.Alert.Error
+                    , Effect.addAlert
+                        (Alert.new
+                            Alert.Error
                             "There was an internal error processing your request. Please, try again."
                         )
                     , Cmd.none

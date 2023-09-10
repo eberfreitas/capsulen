@@ -1,26 +1,26 @@
-module Frontend exposing (main)
+module App exposing (main)
 
 import Browser
-import Frontend.Context
-import Frontend.Effect
-import Frontend.Page.Register
-import Frontend.View.Alerts
+import Context
+import Effect
+import Page.Register
+import View.Alerts
 import Html
 
 
 type alias Model =
-    { context : Frontend.Context.Context
+    { context : Context.Context
     , page : Page
     }
 
 
 type Page
-    = Register Frontend.Page.Register.Model
+    = Register Page.Register.Model
 
 
 type Msg
-    = RegisterMsg Frontend.Page.Register.Msg
-    | AlertsMsg Frontend.View.Alerts.Msg
+    = RegisterMsg Page.Register.Msg
+    | AlertsMsg View.Alerts.Msg
 
 
 view : Model -> Html.Html Msg
@@ -30,12 +30,12 @@ view model =
         pageHtml =
             case model.page of
                 Register subModel ->
-                    subModel |> Frontend.Page.Register.view |> Html.map RegisterMsg
+                    subModel |> Page.Register.view |> Html.map RegisterMsg
     in
     Html.div
         []
         [ Html.h1 [] [ Html.text "Capsulen" ]
-        , Frontend.View.Alerts.view model.context.alerts |> Html.map AlertsMsg
+        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
         , Html.div [] [ pageHtml ]
         ]
 
@@ -45,22 +45,22 @@ update msg model =
     case ( msg, model.page ) of
         ( AlertsMsg subMsg, _ ) ->
             let
-                effect : Frontend.Effect.Effect
+                effect : Effect.Effect
                 effect =
-                    Frontend.View.Alerts.update subMsg
+                    View.Alerts.update subMsg
 
                 ( nextContext, cmds ) =
-                    Frontend.Effect.run effect model.context
+                    Effect.run effect model.context
             in
             ( { model | context = nextContext }, cmds )
 
         ( RegisterMsg subMsg, Register subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Frontend.Page.Register.update subMsg subModel
+                    Page.Register.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
-                    Frontend.Effect.run effects model.context
+                    Effect.run effects model.context
             in
             ( { model | page = Register nextSubModel, context = nextContext }
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map RegisterMsg ]
@@ -71,9 +71,9 @@ init : () -> ( Model, Cmd Msg )
 init () =
     let
         ( pageModel, pageCmd ) =
-            Frontend.Page.Register.init
+            Page.Register.init
     in
-    ( { context = Frontend.Context.new, page = Register pageModel }, Cmd.map RegisterMsg pageCmd )
+    ( { context = Context.new, page = Register pageModel }, Cmd.map RegisterMsg pageCmd )
 
 
 main : Program () Model Msg
