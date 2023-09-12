@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "elm-review": "^2.10.2"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
