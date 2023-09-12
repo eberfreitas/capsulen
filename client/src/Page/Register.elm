@@ -12,6 +12,7 @@ import Json.Decode
 import Json.Decode.Extra
 import Json.Encode
 import Phosphor
+import Port
 
 
 type InputEvent
@@ -39,6 +40,7 @@ type alias Model =
     { usernameInput : FormInput Business.Username.Username
     , privateKeyInput : FormInput Business.PrivateKey.PrivateKey
     , showPrivateKey : Bool
+    , userData : Maybe UserData
     }
 
 
@@ -59,6 +61,7 @@ baseModel =
     { usernameInput = { raw = "", valid = Nothing }
     , privateKeyInput = { raw = "", valid = Nothing }
     , showPrivateKey = False
+    , userData = Nothing
     }
 
 
@@ -97,7 +100,7 @@ update msg model =
                         , privateKeyInput = parseInput Business.PrivateKey.fromString model.privateKeyInput
                     }
 
-                ( effects, cmds ) =
+                ( modelUserData, effects, cmds ) =
                     case buildUserData newModel of
                         Ok userData ->
                             let
@@ -110,27 +113,31 @@ update msg model =
                                         }
                             in
                             -- TODO: Use loader effect here, to show fake progress bar
-                            ( Effect.none, cmd )
+                            ( Just userData, Effect.none, cmd )
 
                         Err submissionError ->
-                            ( Effect.addAlert (Alert.new Alert.Error submissionError)
+                            ( Nothing
+                            , Effect.addAlert (Alert.new Alert.Error submissionError)
                             , Cmd.none
                             )
             in
-            ( newModel, effects, cmds )
+            ( { newModel | userData = modelUserData }, effects, cmds )
 
         GotAccessRequest result ->
-            case result of
-                Ok (Ok _) ->
-                    ( model, Effect.none, Cmd.none )
+            case ( result, model.userData ) of
+                ( Ok (Ok accessRequest), Just userData ) ->
+                    ( model
+                    , Effect.none
+                    , Port.gotAccessRequest <| encodeAccessRequestWithPrivateKey accessRequest userData.privateKey
+                    )
 
-                Ok (Err errorMsg) ->
+                ( Ok (Err errorMsg), _ ) ->
                     ( model
                     , Effect.addAlert (Alert.new Alert.Error errorMsg)
                     , Cmd.none
                     )
 
-                Err _ ->
+                _ ->
                     -- TODO: Notify alerting system here...
                     ( model
                     , Effect.addAlert
@@ -270,6 +277,16 @@ encodeUserData : UserData -> Json.Encode.Value
 encodeUserData { username } =
     Json.Encode.object
         [ ( "username", Business.Username.encode username ) ]
+
+
+encodeAccessRequestWithPrivateKey : AccessRequest -> Business.PrivateKey.PrivateKey -> Json.Encode.Value
+encodeAccessRequestWithPrivateKey accessRequest privateKey =
+    Json.Encode.object
+        [ ( "username", Business.Username.encode accessRequest.username )
+        , ( "privateKey", Business.PrivateKey.encode privateKey )
+        , ( "nonce", Json.Encode.string accessRequest.nonce )
+        , ( "challenge", Json.Encode.string accessRequest.challenge )
+        ]
 
 
 decodeAccessRequest : Json.Decode.Decoder AccessRequest

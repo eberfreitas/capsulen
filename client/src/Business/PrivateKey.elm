@@ -1,4 +1,6 @@
-module Business.PrivateKey exposing (PrivateKey, fromString, toString)
+module Business.PrivateKey exposing (PrivateKey, encode, fromString, toString)
+
+import Json.Encode
 
 
 type PrivateKey
@@ -30,3 +32,8 @@ fromString raw =
 toString : PrivateKey -> String
 toString (PrivateKey privateKey) =
     privateKey
+
+
+encode : PrivateKey -> Json.Encode.Value
+encode (PrivateKey privateKey) =
+    Json.Encode.string privateKey
