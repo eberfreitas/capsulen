@@ -1,11 +1,11 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
-import "dotenv/config";
 import randomstring from "randomstring";
+import "dotenv/config";
 
-import { Err, Ok, Result } from "./src/result";
-import { createUserRequest, existingUser } from "./src/queries/user.queries";
+import { Err, Ok, Result } from "./result";
+import { createUserRequest, existingUser } from "./db/queries/users.queries";
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
