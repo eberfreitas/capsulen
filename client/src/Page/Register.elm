@@ -1,4 +1,4 @@
-module Page.Register exposing (FormInput, Model, Msg, UserData, init, update, view)
+module Page.Register exposing (FormInput, Model, Msg, UserData, init, subscriptions, update, view)
 
 import Alert
 import Business.PrivateKey
@@ -27,12 +27,22 @@ type Msg
     | ToggleShowPrivateKey
     | Submit
     | GotAccessRequest (Result Http.Error (Result String AccessRequest))
+    | GotChallengeEncrypted Json.Decode.Value
+    | GotUserCreated (Result Http.Error (Result String User))
 
 
 type alias AccessRequest =
     { username : Business.Username.Username
     , nonce : String
     , challenge : String
+    }
+
+
+type alias User =
+    { username : Business.Username.Username
+    , nonce : String
+    , challenge : String
+    , challengeEncrypted : String
     }
 
 
@@ -128,7 +138,7 @@ update msg model =
                 ( Ok (Ok accessRequest), Just userData ) ->
                     ( model
                     , Effect.none
-                    , Port.gotAccessRequest <| encodeAccessRequestWithPrivateKey accessRequest userData.privateKey
+                    , Port.sendAccessRequest <| encodeAccessRequestWithPrivateKey accessRequest userData.privateKey
                     )
 
                 ( Ok (Err errorMsg), _ ) ->
@@ -147,6 +157,24 @@ update msg model =
                         )
                     , Cmd.none
                     )
+
+        GotChallengeEncrypted raw ->
+            ( model
+            , Effect.none
+            , Http.post
+                { url = "/api/users/create_user"
+                , body = Http.jsonBody raw
+                , expect = Http.expectJson GotUserCreated decodeUser
+                }
+            )
+
+        GotUserCreated _ ->
+            ( model, Effect.none, Cmd.none )
+
+
+subscriptions : Sub Msg
+subscriptions =
+    Port.getChallengeEncrypted GotChallengeEncrypted
 
 
 buildUserData : Model -> Result String UserData
@@ -302,3 +330,15 @@ decodeAccessRequestResult =
     Json.Decode.Extra.result
         Json.Decode.string
         decodeAccessRequest
+
+
+decodeUser : Json.Decode.Decoder (Result String User)
+decodeUser =
+    Json.Decode.Extra.result
+        Json.Decode.string
+        (Json.Decode.map4 User
+            (Json.Decode.field "username" Business.Username.decode)
+            (Json.Decode.field "nonce" Json.Decode.string)
+            (Json.Decode.field "challenge" Json.Decode.string)
+            (Json.Decode.field "challengeEncrypted" Json.Decode.string)
+        )

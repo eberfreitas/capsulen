@@ -7,7 +7,9 @@
     "elm-review": "^2.10.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:dev:elm": "elm make src/App.elm --output ../server/public/js/app.js --debug",
+    "build:dev:ts": "esbuild index.ts --bundle --outfile=../server/public/js/index.js",
+    "build:dev": "npm run build:dev:elm && npm run build:dev:ts"
   },
   "keywords": [],
   "author": "",

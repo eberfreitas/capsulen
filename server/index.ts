@@ -2,10 +2,15 @@ import express from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
 import randomstring from "randomstring";
+import { Err, Ok, Result } from "shared/result";
 import "dotenv/config";
 
-import { Err, Ok, Result } from "./result";
-import { createUserRequest, existingUser } from "./db/queries/users.queries";
+import {
+  createUserRequest,
+  existingUser,
+  getPendingUser,
+  persistChallenge,
+} from "./db/queries/users.queries";
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -53,11 +58,46 @@ server.post("/api/users/request_access", async (req, res) => {
     data = Ok(user);
 
     return res.send(data);
-  } catch (e) {
+  } catch (_) {
     data = Err(
-      "There was an error creating your user request. Plase, try again.",
+      "There was an error creating your user request. Please, try again.",
     );
 
     return res.send(data);
   }
+});
+
+server.post("/api/users/create_user", async (req, res) => {
+  const user = await getPendingUser.run(
+    {
+      username: req.body?.data?.username,
+      nonce: req.body?.data?.nonce,
+    },
+    db,
+  );
+
+  const defaultError = Err(
+    "There was an error registering your account. Please, try again.",
+  );
+
+  if (user.length < 1 || !user[0]?.id) {
+    return res.send(defaultError);
+  }
+
+  try {
+    persistChallenge.run(
+      {
+        id: user[0].id,
+        challengeEncrypted: req.body?.data?.challengeEncrypted,
+      },
+      db,
+    );
+  } catch (_) {
+    return res.send(defaultError);
+  }
+
+  // Creates a session with the user data
+  // Return data to frontend
+  console.log(req.body);
+  res.send({});
 });

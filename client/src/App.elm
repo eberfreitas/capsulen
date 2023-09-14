@@ -76,11 +76,16 @@ init () =
     ( { context = Context.new, page = Register pageModel }, Cmd.map RegisterMsg pageCmd )
 
 
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Page.Register.subscriptions |> Sub.map RegisterMsg
+
+
 main : Program () Model Msg
 main =
     Browser.element
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
