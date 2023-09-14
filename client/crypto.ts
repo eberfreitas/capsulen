@@ -1,4 +1,5 @@
 // Based on https://github.com/bradyjoslin/webcrypto-example
+import { Result, Ok, Err } from "shared/result";
 
 const enc = new TextEncoder();
 
@@ -49,7 +50,7 @@ export async function getPasswordKey(password: string): Promise<CryptoKey> {
 export async function encryptData(
   secretData: string,
   passwordKey: CryptoKey,
-): Promise<string> {
+): Promise<Result<string, string>> {
   try {
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -75,17 +76,16 @@ export async function encryptData(
 
     const base64Buff = buffToBase64(buff);
 
-    return base64Buff;
+    return Ok(base64Buff);
   } catch (e) {
-    console.log(`Error - ${e}`);
-    return "";
+    return Err(e instanceof Error ? e.message : "Unknown encrypting error.");
   }
 }
 
 export async function decryptData(
   encryptedData: string,
   passwordKey: CryptoKey,
-): Promise<string> {
+): Promise<Result<string, string>> {
   try {
     const encryptedDataBuff = base64ToBuf(encryptedData);
     const salt = encryptedDataBuff.slice(0, 16);
@@ -102,9 +102,8 @@ export async function decryptData(
       data,
     );
 
-    return dec.decode(decryptedContent);
+    return Ok(dec.decode(decryptedContent));
   } catch (e) {
-    console.log(`Error - ${e}`);
-    return "";
+    return Err(e instanceof Error ? e.message : "Unknown decrypting error.");
   }
 }

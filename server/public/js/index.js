@@ -1,4 +1,24 @@
 (() => {
+  // ../shared/result.ts
+  function Ok(data) {
+    return { _kind: "ok", data };
+  }
+  function Err(error) {
+    return { _kind: "err", error };
+  }
+  function withOk(result, callback) {
+    if (result._kind === "ok") {
+      return callback(result.data);
+    }
+    return null;
+  }
+  function withErr(result, callback) {
+    if (result._kind === "err") {
+      return callback(result.error);
+    }
+    return null;
+  }
+
   // crypto.ts
   var enc = new TextEncoder();
   var dec = new TextDecoder();
@@ -54,28 +74,21 @@
       buff.set(iv, salt.byteLength);
       buff.set(encryptedContentArr, salt.byteLength + iv.byteLength);
       const base64Buff = buffToBase64(buff);
-      return base64Buff;
+      return Ok(base64Buff);
     } catch (e) {
-      console.log(`Error - ${e}`);
-      return "";
+      return Err(e instanceof Error ? e.message : "Unknown encrypting error.");
     }
   }
 
-  // ../shared/result.ts
-  function Ok(data) {
-    return { _kind: "ok", data };
-  }
-  function Err(error) {
-    return { _kind: "err", error };
-  }
-
   // handlers/access_request.ts
-  function handleAccessRequest(app, setPrivateKey) {
+  function handleAccessRequest(app) {
     app.ports.sendAccessRequest.subscribe(async (data) => {
-      try {
-        const privateKey = await getPasswordKey(data.privateKey);
-        const challengeEncrypted = await encryptData(data.challenge, privateKey);
-        setPrivateKey(privateKey);
+      const privateKey = await getPasswordKey(data.privateKey);
+      const challengeEncryptedResult = await encryptData(
+        data.challenge,
+        privateKey
+      );
+      withOk(challengeEncryptedResult, (challengeEncrypted) => {
         const result = Ok({
           username: data.username,
           nonce: data.nonce,
@@ -83,24 +96,18 @@
           challengeEncrypted
         });
         app.ports.getChallengeEncrypted.send(result);
-      } catch (e) {
-        const result = Err(
-          e instanceof Error ? e.message : "Unknown error when generating encrypted challenge"
-        );
-        app.ports.getChallengeEncrypted.send(result);
-      }
+      });
+      withErr(challengeEncryptedResult, (e) => {
+        app.ports.getChallengeEncrypted.send(Err(e));
+      });
     });
   }
 
   // index.ts
   (function() {
-    let privateKey = null;
     const app = window.Elm.App.init({
       node: document.getElementById("app")
     });
-    function setPrivateKey(key) {
-      privateKey = key;
-    }
-    handleAccessRequest(app, setPrivateKey);
+    handleAccessRequest(app);
   })();
 })();

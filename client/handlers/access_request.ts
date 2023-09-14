@@ -1,18 +1,16 @@
 import { App } from "../@types/global";
 import { encryptData, getPasswordKey } from "../crypto";
-import { Ok, Err } from "shared/result";
+import { Ok, Err, withOk, withErr } from "shared/result";
 
-export function handleAccessRequest(
-  app: App,
-  setPrivateKey: (key: CryptoKey) => void,
-): void {
+export function handleAccessRequest(app: App): void {
   app.ports.sendAccessRequest.subscribe(async (data) => {
-    try {
-      const privateKey = await getPasswordKey(data.privateKey);
-      const challengeEncrypted = await encryptData(data.challenge, privateKey);
+    const privateKey = await getPasswordKey(data.privateKey);
+    const challengeEncryptedResult = await encryptData(
+      data.challenge,
+      privateKey,
+    );
 
-      setPrivateKey(privateKey);
-
+    withOk(challengeEncryptedResult, (challengeEncrypted) => {
       const result = Ok({
         username: data.username,
         nonce: data.nonce,
@@ -21,15 +19,11 @@ export function handleAccessRequest(
       });
 
       app.ports.getChallengeEncrypted.send(result);
-    } catch (e: unknown) {
-      // TODO: notify some error handling service here
-      const result = Err(
-        e instanceof Error
-          ? e.message
-          : "Unknown error when generating encrypted challenge",
-      );
+    });
 
-      app.ports.getChallengeEncrypted.send(result);
-    }
+    withErr(challengeEncryptedResult, (e) => {
+      // TODO: notify some error handling service here
+      app.ports.getChallengeEncrypted.send(Err(e));
+    });
   });
 }

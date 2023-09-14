@@ -96,8 +96,5 @@ server.post("/api/users/create_user", async (req, res) => {
     return res.send(defaultError);
   }
 
-  // Creates a session with the user data
-  // Return data to frontend
-  console.log(req.body);
-  res.send({});
+  res.send(Ok(true));
 });

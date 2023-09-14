@@ -28,21 +28,13 @@ type Msg
     | Submit
     | GotAccessRequest (Result Http.Error (Result String AccessRequest))
     | GotChallengeEncrypted Json.Decode.Value
-    | GotUserCreated (Result Http.Error (Result String User))
+    | GotUserCreated (Result Http.Error (Result String Bool))
 
 
 type alias AccessRequest =
     { username : Business.Username.Username
     , nonce : String
     , challenge : String
-    }
-
-
-type alias User =
-    { username : Business.Username.Username
-    , nonce : String
-    , challenge : String
-    , challengeEncrypted : String
     }
 
 
@@ -164,12 +156,29 @@ update msg model =
             , Http.post
                 { url = "/api/users/create_user"
                 , body = Http.jsonBody raw
-                , expect = Http.expectJson GotUserCreated decodeUser
+                , expect = Http.expectJson GotUserCreated decodeUserCreation
                 }
             )
 
-        GotUserCreated _ ->
-            ( model, Effect.none, Cmd.none )
+        GotUserCreated result ->
+            case result of
+                Ok (Ok _) ->
+                    -- TODO: alert user were created and redirect to login
+                    ( model, Effect.none, Cmd.none )
+
+                Ok (Err errMsg) ->
+                    ( model, Effect.addAlert (Alert.new Alert.Error errMsg), Cmd.none )
+
+                _ ->
+                    -- TODO: Notify alerting system here...
+                    ( model
+                    , Effect.addAlert
+                        (Alert.new
+                            Alert.Error
+                            "There was an internal error processing your request. Please, try again."
+                        )
+                    , Cmd.none
+                    )
 
 
 subscriptions : Sub Msg
@@ -332,13 +341,8 @@ decodeAccessRequestResult =
         decodeAccessRequest
 
 
-decodeUser : Json.Decode.Decoder (Result String User)
-decodeUser =
+decodeUserCreation : Json.Decode.Decoder (Result String Bool)
+decodeUserCreation =
     Json.Decode.Extra.result
         Json.Decode.string
-        (Json.Decode.map4 User
-            (Json.Decode.field "username" Business.Username.decode)
-            (Json.Decode.field "nonce" Json.Decode.string)
-            (Json.Decode.field "challenge" Json.Decode.string)
-            (Json.Decode.field "challengeEncrypted" Json.Decode.string)
-        )
+        Json.Decode.bool
