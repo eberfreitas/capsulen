@@ -4,11 +4,14 @@ import { Client } from "pg";
 import randomstring from "randomstring";
 import { Err, Ok, Result } from "shared/result";
 import "dotenv/config";
+import { V4 as paseto } from "paseto";
+import { KeyObject } from "crypto";
 
 import {
   createUserRequest,
   existingUser,
   getPendingUser,
+  getUser,
   persistChallenge,
 } from "./db/queries/users.queries";
 
@@ -23,10 +26,21 @@ const db = new Client({
   database: "capsulen",
 });
 
+let pasetoKey: KeyObject;
+
+async function getPasetoKey(): Promise<KeyObject> {
+  if (pasetoKey) return pasetoKey;
+
+  pasetoKey = await paseto.generateKey("public");
+
+  return pasetoKey;
+}
+
 const server = express();
 
 server.use(express.static("public"));
 server.use(bodyParser.json());
+server.use(bodyParser.text());
 
 server.listen(port, async () => {
   await db.connect();
@@ -60,7 +74,7 @@ server.post("/api/users/request_access", async (req, res) => {
     return res.send(data);
   } catch (_) {
     data = Err(
-      "There was an error creating your user request. Please, try again.",
+    "There was an error registering your account. Please, try again.",
     );
 
     return res.send(data);
@@ -97,4 +111,46 @@ server.post("/api/users/create_user", async (req, res) => {
   }
 
   res.send(Ok(true));
+});
+
+server.post("/api/users/login_request", async (req, res) => {
+  const user = await getUser.run({ username: req.body }, db);
+
+  if (user.length < 1 || !user[0]?.username) {
+    return res.send(
+      Err("Username or private key incorrect. Please, try again."),
+    );
+  }
+
+  const data = user[0];
+
+  res.send(
+    Ok({
+      username: data.username,
+      challenge_encrypted: data.challenge_encrypted,
+    }),
+  );
+});
+
+server.post("/api/users/login", async (req, res) => {
+  const user = await getUser.run({ username: req.body?.data?.username }, db);
+
+  if (user.length < 1 || !user[0]) {
+    return res.send(
+      Err("Username or private key incorrect. Please, try again."),
+    );
+  }
+
+  const data = user[0];
+
+  if (data.challenge !== req.body?.data?.challenge) {
+    return res.send(
+      Err("Username or private key incorrect. Please, try again."),
+    );
+  }
+
+  const key = await getPasetoKey();
+  const token = await paseto.sign({ sub: data.username }, key);
+
+  res.send(Ok(token));
 });

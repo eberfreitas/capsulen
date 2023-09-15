@@ -30,6 +30,9 @@
       )
     );
   }
+  function base64ToBuf(b64) {
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  }
   async function deriveKey(passwordKey, salt, keyUsage) {
     return window.crypto.subtle.deriveKey(
       {
@@ -79,6 +82,26 @@
       return Err(e instanceof Error ? e.message : "Unknown encrypting error.");
     }
   }
+  async function decryptData(encryptedData, passwordKey) {
+    try {
+      const encryptedDataBuff = base64ToBuf(encryptedData);
+      const salt = encryptedDataBuff.slice(0, 16);
+      const iv = encryptedDataBuff.slice(16, 16 + 12);
+      const data = encryptedDataBuff.slice(16 + 12);
+      const aesKey = await deriveKey(passwordKey, salt, ["decrypt"]);
+      const decryptedContent = await window.crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv
+        },
+        aesKey,
+        data
+      );
+      return Ok(dec.decode(decryptedContent));
+    } catch (e) {
+      return Err(e instanceof Error ? e.message : "Unknown decrypting error.");
+    }
+  }
 
   // handlers/access_request.ts
   function handleAccessRequest(app) {
@@ -103,11 +126,29 @@
     });
   }
 
+  // handlers/login_request.ts
+  function handleLoginRequest(app) {
+    app.ports.sendLoginRequest.subscribe(async (data) => {
+      const privateKey = await getPasswordKey(data.privateKey);
+      const challengeResult = await decryptData(
+        data.challengeEncrypted,
+        privateKey
+      );
+      withOk(challengeResult, (challenge) => {
+        app.ports.getLoginChallenge.send(Ok({ username: data.username, challenge }));
+      });
+      withErr(challengeResult, (e) => {
+        app.ports.getLoginChallenge.send(Err(e));
+      });
+    });
+  }
+
   // index.ts
   (function() {
     const app = window.Elm.App.init({
       node: document.getElementById("app")
     });
     handleAccessRequest(app);
+    handleLoginRequest(app);
   })();
 })();

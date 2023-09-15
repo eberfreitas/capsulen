@@ -38,7 +38,6 @@ WHERE
 
 /* @name getUser */
 SELECT
-    id,
     username,
     challenge,
     challenge_encrypted

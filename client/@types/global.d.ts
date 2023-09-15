@@ -10,7 +10,22 @@ export interface App {
         }) => void,
       ) => void;
     };
+
+    sendLoginRequest: {
+      subscribe: (
+        callback: (data: {
+          username: string;
+          privateKey: string;
+          challengeEncrypted: string;
+        }) => void,
+      ) => void;
+    };
+
     getChallengeEncrypted: {
+      send: (data: unknown) => void;
+    };
+
+    getLoginChallenge: {
       send: (data: unknown) => void;
     };
   };

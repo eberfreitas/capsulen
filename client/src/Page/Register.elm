@@ -1,9 +1,10 @@
-module Page.Register exposing (FormInput, Model, Msg, UserData, init, subscriptions, update, view)
+module Page.Register exposing (Model, Msg, UserData, init, subscriptions, update, view)
 
 import Alert
 import Business.PrivateKey
 import Business.Username
 import Effect
+import Form
 import Html
 import Html.Attributes
 import Html.Events
@@ -15,15 +16,9 @@ import Phosphor
 import Port
 
 
-type InputEvent
-    = Focus
-    | Blur
-    | Input String
-
-
 type Msg
-    = WithUsername InputEvent
-    | WithPrivateKey InputEvent
+    = WithUsername Form.InputEvent
+    | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
     | GotAccessRequest (Result Http.Error (Result String AccessRequest))
@@ -39,16 +34,10 @@ type alias AccessRequest =
 
 
 type alias Model =
-    { usernameInput : FormInput Business.Username.Username
-    , privateKeyInput : FormInput Business.PrivateKey.PrivateKey
+    { usernameInput : Form.Input Business.Username.Username
+    , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
     , showPrivateKey : Bool
     , userData : Maybe UserData
-    }
-
-
-type alias FormInput a =
-    { raw : String
-    , valid : Maybe (Result String a)
     }
 
 
@@ -60,8 +49,8 @@ type alias UserData =
 
 baseModel : Model
 baseModel =
-    { usernameInput = { raw = "", valid = Nothing }
-    , privateKeyInput = { raw = "", valid = Nothing }
+    { usernameInput = Form.newInput
+    , privateKeyInput = Form.newInput
     , showPrivateKey = False
     , userData = Nothing
     }
@@ -98,8 +87,8 @@ update msg model =
                 newModel : Model
                 newModel =
                     { model
-                        | usernameInput = parseInput Business.Username.fromString model.usernameInput
-                        , privateKeyInput = parseInput Business.PrivateKey.fromString model.privateKeyInput
+                        | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
+                        , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
                     }
 
                 ( modelUserData, effects, cmds ) =
@@ -205,41 +194,36 @@ buildUserData { usernameInput, privateKeyInput } =
             Err errorMsg
 
 
-parseInput : (String -> Result String a) -> FormInput a -> FormInput a
-parseInput parser input =
-    { input | valid = Just <| parser input.raw }
-
-
 updateUsername :
-    InputEvent
-    -> FormInput Business.Username.Username
-    -> FormInput Business.Username.Username
+    Form.InputEvent
+    -> Form.Input Business.Username.Username
+    -> Form.Input Business.Username.Username
 updateUsername event input =
     case event of
-        Input raw ->
+        Form.OnInput raw ->
             { input | raw = String.trim raw }
 
-        Focus ->
+        Form.OnFocus ->
             { input | valid = Nothing }
 
-        Blur ->
-            parseInput Business.Username.fromString input
+        Form.OnBlur ->
+            Form.parseInput Business.Username.fromString input
 
 
 updatePrivateKey :
-    InputEvent
-    -> FormInput Business.PrivateKey.PrivateKey
-    -> FormInput Business.PrivateKey.PrivateKey
+    Form.InputEvent
+    -> Form.Input Business.PrivateKey.PrivateKey
+    -> Form.Input Business.PrivateKey.PrivateKey
 updatePrivateKey event input =
     case event of
-        Input raw ->
+        Form.OnInput raw ->
             { input | raw = String.trim raw }
 
-        Focus ->
+        Form.OnFocus ->
             { input | valid = Nothing }
 
-        Blur ->
-            parseInput Business.PrivateKey.fromString input
+        Form.OnBlur ->
+            Form.parseInput Business.PrivateKey.fromString input
 
 
 view : Model -> Html.Html Msg
@@ -263,10 +247,10 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                             ([ Html.Attributes.type_ "text"
                              , Html.Attributes.value usernameInput.raw
                              ]
-                                ++ inputEvents WithUsername
+                                ++ Form.inputEvents WithUsername
                             )
                             []
-                        , viewInputError usernameInput
+                        , Form.viewInputError usernameInput
                         ]
                     ]
                 , Html.label []
@@ -276,38 +260,20 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                             ([ Html.Attributes.type_ privateKeyInputType
                              , Html.Attributes.value privateKeyInput.raw
                              ]
-                                ++ inputEvents WithPrivateKey
+                                ++ Form.inputEvents WithPrivateKey
                             )
                             []
                         , Html.a
                             [ Html.Events.onClick ToggleShowPrivateKey ]
                             [ togglePrivateKeyIcon ]
-                        , viewInputError privateKeyInput
+                        , Form.viewInputError privateKeyInput
                         , Html.div [] [ Html.text "Your private key will *never* be sent over the network." ]
                         ]
                     ]
-                , Html.button [] [ Html.text "Submit" ]
+                , Html.button [] [ Html.text "Register" ]
                 ]
             ]
         ]
-
-
-inputEvents : (InputEvent -> msg) -> List (Html.Attribute msg)
-inputEvents msg =
-    [ Html.Events.onInput (Input >> msg)
-    , Html.Events.onBlur (msg Blur)
-    , Html.Events.onFocus (msg Focus)
-    ]
-
-
-viewInputError : FormInput a -> Html.Html msg
-viewInputError input =
-    case input.valid of
-        Just (Err msg) ->
-            Html.div [] [ Html.text msg ]
-
-        _ ->
-            Html.text ""
 
 
 encodeUserData : UserData -> Json.Encode.Value

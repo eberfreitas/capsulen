@@ -3,9 +3,10 @@ module App exposing (main)
 import Browser
 import Context
 import Effect
+import Html
+import Page.Login
 import Page.Register
 import View.Alerts
-import Html
 
 
 type alias Model =
@@ -16,10 +17,12 @@ type alias Model =
 
 type Page
     = Register Page.Register.Model
+    | Login Page.Login.Model
 
 
 type Msg
     = RegisterMsg Page.Register.Msg
+    | LoginMsg Page.Login.Msg
     | AlertsMsg View.Alerts.Msg
 
 
@@ -31,6 +34,9 @@ view model =
             case model.page of
                 Register subModel ->
                     subModel |> Page.Register.view |> Html.map RegisterMsg
+
+                Login subModel ->
+                    subModel |> Page.Login.view |> Html.map LoginMsg
     in
     Html.div
         []
@@ -66,19 +72,37 @@ update msg model =
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map RegisterMsg ]
             )
 
+        ( LoginMsg subMsg, Login subModel ) ->
+            let
+                ( nextSubModel, effects, nextCmd ) =
+                    Page.Login.update subMsg subModel
+
+                ( nextContext, effectsCmds ) =
+                    Effect.run effects model.context
+            in
+            ( { model | page = Login nextSubModel, context = nextContext }
+            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map LoginMsg ]
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
 
 init : () -> ( Model, Cmd Msg )
 init () =
     let
         ( pageModel, pageCmd ) =
-            Page.Register.init
+            Page.Login.init
     in
-    ( { context = Context.new, page = Register pageModel }, Cmd.map RegisterMsg pageCmd )
+    ( { context = Context.new, page = Login pageModel }, Cmd.map LoginMsg pageCmd )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Page.Register.subscriptions |> Sub.map RegisterMsg
+    Sub.batch
+        [ Page.Register.subscriptions |> Sub.map RegisterMsg
+        , Page.Login.subscriptions |> Sub.map LoginMsg
+        ]
 
 
 main : Program () Model Msg

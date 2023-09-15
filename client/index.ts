@@ -1,4 +1,5 @@
 import { handleAccessRequest } from "./handlers/access_request";
+import { handleLoginRequest } from "./handlers/login_request";
 
 (function () {
 
@@ -15,4 +16,5 @@ import { handleAccessRequest } from "./handlers/access_request";
   // }
 
   handleAccessRequest(app);
+  handleLoginRequest(app);
 })();
