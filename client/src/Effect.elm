@@ -1,6 +1,7 @@
-module Effect exposing (Effect, addAlert, batch, none, removeAlert, run)
+module Effect exposing (Effect, addAlert, batch, none, redirect, removeAlert, run)
 
 import Alert
+import Browser.Navigation
 import Context
 import List.Extra
 
@@ -10,6 +11,7 @@ type Effect
     | Batch (List Effect)
     | AddAlert Alert.Message
     | RemoveAlert Int
+    | Redirect String
 
 
 none : Effect
@@ -30,6 +32,11 @@ addAlert =
 removeAlert : Int -> Effect
 removeAlert =
     RemoveAlert
+
+
+redirect : String -> Effect
+redirect =
+    Redirect
 
 
 run : Effect -> Context.Context -> ( Context.Context, Cmd msg )
@@ -60,3 +67,6 @@ run effect context =
                     context.alerts |> List.Extra.indexedFilter (\idx _ -> idx /= index)
             in
             ( { context | alerts = alerts }, Cmd.none )
+
+        Redirect path ->
+            ( context, Browser.Navigation.pushUrl context.key path )

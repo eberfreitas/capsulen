@@ -1,14 +1,11 @@
-module Context exposing (Context, new)
+module Context exposing (Context)
 
 import Alert
+import Browser.Navigation
 
 
 type alias Context =
-    { alerts : List Alert.Message
+    { key : Browser.Navigation.Key
+    , alerts : List Alert.Message
     , user : Maybe String
     }
-
-
-new : Context
-new =
-    { alerts = [], user = Nothing }

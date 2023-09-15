@@ -1,16 +1,20 @@
 module App exposing (main)
 
+import AppUrl
 import Browser
+import Browser.Navigation
 import Context
 import Effect
 import Html
 import Page.Login
 import Page.Register
+import Url
 import View.Alerts
 
 
 type alias Model =
-    { context : Context.Context
+    { url : Url.Url
+    , context : Context.Context
     , page : Page
     }
 
@@ -18,15 +22,18 @@ type alias Model =
 type Page
     = Register Page.Register.Model
     | Login Page.Login.Model
+    | NotFound
 
 
 type Msg
-    = RegisterMsg Page.Register.Msg
+    = UrlChange Url.Url
+    | UrlRequest Browser.UrlRequest
+    | RegisterMsg Page.Register.Msg
     | LoginMsg Page.Login.Msg
     | AlertsMsg View.Alerts.Msg
 
 
-view : Model -> Html.Html Msg
+view : Model -> Browser.Document Msg
 view model =
     let
         pageHtml : Html.Html Msg
@@ -37,18 +44,41 @@ view model =
 
                 Login subModel ->
                     subModel |> Page.Login.view |> Html.map LoginMsg
+
+                NotFound ->
+                    -- TODO: create a proper error page
+                    Html.text "404 Not found"
     in
-    Html.div
-        []
-        [ Html.h1 [] [ Html.text "Capsulen" ]
-        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
-        , Html.div [] [ pageHtml ]
+    { title = "Capsulen"
+    , body =
+        [ Html.div
+            []
+            [ Html.h1 [] [ Html.text "Capsulen" ]
+            , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
+            , Html.div [] [ pageHtml ]
+            ]
         ]
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model.page ) of
+        ( UrlRequest request, _ ) ->
+            case request of
+                Browser.Internal url ->
+                    ( model, Browser.Navigation.pushUrl model.context.key (Url.toString url) )
+
+                Browser.External url ->
+                    ( model, Browser.Navigation.load url )
+
+        ( UrlChange url, _ ) ->
+            let
+                ( page, cmd ) =
+                    router <| AppUrl.fromUrl url
+            in
+            ( { model | page = page, url = url }, cmd )
+
         ( AlertsMsg subMsg, _ ) ->
             let
                 effect : Effect.Effect
@@ -88,13 +118,32 @@ update msg model =
             ( model, Cmd.none )
 
 
-init : () -> ( Model, Cmd Msg )
-init () =
+init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init () url key =
     let
-        ( pageModel, pageCmd ) =
-            Page.Login.init
+        ( page, cmd ) =
+            router <| AppUrl.fromUrl url
+
+        context =
+            { key = key
+            , alerts = []
+            , user = Nothing
+            }
     in
-    ( { context = Context.new, page = Login pageModel }, Cmd.map LoginMsg pageCmd )
+    ( { url = url, context = context, page = page }, cmd )
+
+
+router : AppUrl.AppUrl -> ( Page, Cmd Msg )
+router url =
+    case url.path of
+        [] ->
+            Tuple.mapBoth Login (Cmd.map LoginMsg) Page.Login.init
+
+        [ "register" ] ->
+            Tuple.mapBoth Register (Cmd.map RegisterMsg) Page.Register.init
+
+        _ ->
+            ( NotFound, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -107,8 +156,10 @@ subscriptions _ =
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
+        , onUrlChange = UrlChange
+        , onUrlRequest = UrlRequest
         , view = view
         , update = update
         , subscriptions = subscriptions

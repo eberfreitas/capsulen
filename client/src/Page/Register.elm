@@ -152,8 +152,13 @@ update msg model =
         GotUserCreated result ->
             case result of
                 Ok (Ok _) ->
-                    -- TODO: alert user were created and redirect to login
-                    ( model, Effect.none, Cmd.none )
+                    ( model
+                    , Effect.batch
+                        [ Effect.addAlert (Alert.new Alert.Success "Registration successful! Please log in now.")
+                        , Effect.redirect "/"
+                        ]
+                    , Cmd.none
+                    )
 
                 Ok (Err errMsg) ->
                     ( model, Effect.addAlert (Alert.new Alert.Error errMsg), Cmd.none )
@@ -263,8 +268,8 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                                 ++ Form.inputEvents WithPrivateKey
                             )
                             []
-                        , Html.a
-                            [ Html.Events.onClick ToggleShowPrivateKey ]
+                        , Html.button
+                            [ Html.Attributes.type_ "button", Html.Events.onClick ToggleShowPrivateKey ]
                             [ togglePrivateKeyIcon ]
                         , Form.viewInputError privateKeyInput
                         , Html.div [] [ Html.text "Your private key will *never* be sent over the network." ]
@@ -273,6 +278,7 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                 , Html.button [] [ Html.text "Register" ]
                 ]
             ]
+        , Html.a [ Html.Attributes.href "/" ] [ Html.text "Login" ]
         ]
 
 

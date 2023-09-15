@@ -4,9 +4,7 @@ import { handleToken } from "./handlers/token";
 
 (function () {
 
-  const app = window.Elm.App.init({
-    node: document.getElementById("app"),
-  });
+  const app = window.Elm.App.init();
 
   let privateStuff: { token: string; privateKey: CryptoKey } | null = null;
 

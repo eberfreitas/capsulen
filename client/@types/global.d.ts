@@ -39,7 +39,7 @@ export interface App {
 
 interface Elm {
   App: {
-    init: (params: { node: HTMLElement | null }) => App;
+    init: () => App;
   };
 }
 

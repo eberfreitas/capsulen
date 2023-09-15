@@ -44,7 +44,7 @@ toHtml closeFn index (Message message) =
         [ Html.Attributes.class <| messageClass message.severity ]
         [ Html.div [] [ Html.text message.body ]
         , Html.div []
-            [ Html.a [ Html.Events.onClick <| closeFn index ]
+            [ Html.button [ Html.Events.onClick <| closeFn index ]
                 [ Phosphor.xCircle Phosphor.Regular |> Phosphor.toHtml [] ]
             ]
         ]

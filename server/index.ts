@@ -6,6 +6,7 @@ import { Err, Ok, Result } from "shared/result";
 import "dotenv/config";
 import { V4 as paseto } from "paseto";
 import { KeyObject } from "crypto";
+import path from "path";
 
 import {
   createUserRequest,
@@ -38,7 +39,7 @@ async function getPasetoKey(): Promise<KeyObject> {
 
 const server = express();
 
-server.use(express.static("public"));
+server.use(express.static(path.join(__dirname, "public")));
 server.use(bodyParser.json());
 server.use(bodyParser.text());
 
@@ -74,7 +75,7 @@ server.post("/api/users/request_access", async (req, res) => {
     return res.send(data);
   } catch (_) {
     data = Err(
-    "There was an error registering your account. Please, try again.",
+      "There was an error registering your account. Please, try again.",
     );
 
     return res.send(data);
@@ -154,3 +155,7 @@ server.post("/api/users/login", async (req, res) => {
 
   res.send(Ok(token));
 });
+
+server.get("*", (_req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html")),
+);

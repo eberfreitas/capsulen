@@ -87,8 +87,8 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                                 ++ Form.inputEvents WithPrivateKey
                             )
                             []
-                        , Html.a
-                            [ Html.Events.onClick ToggleShowPrivateKey ]
+                        , Html.button
+                            [ Html.Attributes.type_ "button", Html.Events.onClick ToggleShowPrivateKey ]
                             [ togglePrivateKeyIcon ]
                         , Form.viewInputError privateKeyInput
                         , Html.div [] [ Html.text "Your private key will *never* be sent over the network." ]
@@ -97,6 +97,7 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                 , Html.button [] [ Html.text "Login" ]
                 ]
             ]
+        , Html.a [ Html.Attributes.href "/register" ] [ Html.text "Register new account" ]
         ]
 
 

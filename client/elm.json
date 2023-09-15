@@ -12,6 +12,8 @@
             "elm/http": "2.0.0",
             "elm/json": "1.1.3",
             "elm/regex": "1.0.0",
+            "elm/url": "1.0.0",
+            "lydell/elm-app-url": "1.0.4",
             "phosphor-icons/phosphor-elm": "2.0.0"
         },
         "indirect": {
@@ -19,7 +21,6 @@
             "elm/file": "1.0.5",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
-            "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.3"
         }
     },
