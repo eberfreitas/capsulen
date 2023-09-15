@@ -1,5 +1,6 @@
 import { handleAccessRequest } from "./handlers/access_request";
 import { handleLoginRequest } from "./handlers/login_request";
+import { handleToken } from "./handlers/token";
 
 (function () {
 
@@ -7,14 +8,15 @@ import { handleLoginRequest } from "./handlers/login_request";
     node: document.getElementById("app"),
   });
 
-  // let privateKey: CryptoKey | null = null;
-  // function setPrivateKey(key: CryptoKey): void {
-  //   privateKey = key;
-  // }
-  // function getPrivateKey(): CryptoKey | null {
-  //   return privateKey;
-  // }
+  let privateStuff: { token: string; privateKey: CryptoKey } | null = null;
+
+  function setPrivateStuff(data: { token: string; privateKey: CryptoKey }): void {
+    privateStuff = data;
+
+    console.log(privateStuff);
+  }
 
   handleAccessRequest(app);
   handleLoginRequest(app);
+  handleToken(app, setPrivateStuff);
 })();

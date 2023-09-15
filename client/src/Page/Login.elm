@@ -173,8 +173,11 @@ update msg model =
 
         GotLogin result ->
             case result of
-                Ok (Ok _) ->
-                    ( model, Effect.none, Cmd.none )
+                Ok (Ok token) ->
+                    ( model
+                    , Effect.none
+                    , Port.sendToken <| encodeTokenAndPrivateKey model.privateKeyInput.raw token
+                    )
 
                 Ok (Err errorMsg) ->
                     ( model
@@ -190,6 +193,14 @@ update msg model =
                         )
                     , Cmd.none
                     )
+
+
+encodeTokenAndPrivateKey : String -> String -> Json.Encode.Value
+encodeTokenAndPrivateKey privateKey token =
+    Json.Encode.object
+        [ ( "privateKey", Json.Encode.string privateKey )
+        , ( "token", Json.Encode.string token )
+        ]
 
 
 decodeLoginRequest : Json.Decode.Decoder (Result String LoginRequest)

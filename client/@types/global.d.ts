@@ -21,6 +21,12 @@ export interface App {
       ) => void;
     };
 
+    sendToken: {
+      subscribe: (
+        callback: (data: { privateKey: string; token: string }) => void,
+      ) => void;
+    };
+
     getChallengeEncrypted: {
       send: (data: unknown) => void;
     };

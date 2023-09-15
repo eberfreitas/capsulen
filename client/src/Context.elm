@@ -4,9 +4,11 @@ import Alert
 
 
 type alias Context =
-    { alerts : List Alert.Message }
+    { alerts : List Alert.Message
+    , user : Maybe String
+    }
 
 
 new : Context
 new =
-    { alerts = [] }
+    { alerts = [], user = Nothing }
