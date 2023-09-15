@@ -1,7 +1,6 @@
 module Form exposing
     ( Input
     , InputEvent(..)
-    , inputError
     , inputEvents
     , newInput
     , parseInput
@@ -50,8 +49,3 @@ viewInputError input =
 
         _ ->
             Html.text ""
-
-
-inputError : String -> Input a -> Input a
-inputError error input =
-    { input | valid = Just <| Err error }

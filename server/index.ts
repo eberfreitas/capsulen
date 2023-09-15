@@ -26,7 +26,7 @@ const db = new Client({
   database: "capsulen",
 });
 
-let pasetoKey: KeyObject;
+let pasetoKey: KeyObject | undefined;
 
 async function getPasetoKey(): Promise<KeyObject> {
   if (pasetoKey) return pasetoKey;
