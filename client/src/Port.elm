@@ -13,6 +13,9 @@ port sendLoginRequest : Json.Encode.Value -> Cmd msg
 port sendToken : Json.Encode.Value -> Cmd msg
 
 
+port sendPost : Json.Encode.Value -> Cmd msg
+
+
 port getChallengeEncrypted : (Json.Decode.Value -> msg) -> Sub msg
 
 

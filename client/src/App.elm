@@ -7,6 +7,7 @@ import Context
 import Effect
 import Html
 import Page.Login
+import Page.Posts
 import Page.Register
 import Url
 import View.Alerts
@@ -22,6 +23,7 @@ type alias Model =
 type Page
     = Register Page.Register.Model
     | Login Page.Login.Model
+    | Posts Page.Posts.Model
     | NotFound
 
 
@@ -30,6 +32,7 @@ type Msg
     | UrlRequest Browser.UrlRequest
     | RegisterMsg Page.Register.Msg
     | LoginMsg Page.Login.Msg
+    | PostsMsg Page.Posts.Msg
     | AlertsMsg View.Alerts.Msg
 
 
@@ -44,6 +47,9 @@ view model =
 
                 Login subModel ->
                     subModel |> Page.Login.view |> Html.map LoginMsg
+
+                Posts subModel ->
+                    subModel |> Page.Posts.view model.context |> Html.map PostsMsg
 
                 NotFound ->
                     -- TODO: create a proper error page
@@ -114,6 +120,18 @@ update msg model =
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map LoginMsg ]
             )
 
+        ( PostsMsg subMsg, Posts subModel ) ->
+            let
+                ( nextSubModel, effects, nextCmd ) =
+                    Page.Posts.update subMsg subModel
+
+                ( nextContext, effectsCmds ) =
+                    Effect.run effects model.context
+            in
+            ( { model | page = Posts nextSubModel, context = nextContext }
+            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map PostsMsg ]
+            )
+
         _ ->
             ( model, Cmd.none )
 
@@ -141,6 +159,9 @@ router url =
 
         [ "register" ] ->
             Tuple.mapBoth Register (Cmd.map RegisterMsg) Page.Register.init
+
+        [ "posts" ] ->
+            Tuple.mapBoth Posts (Cmd.map PostsMsg) Page.Posts.init
 
         _ ->
             ( NotFound, Cmd.none )

@@ -1,4 +1,13 @@
-module Effect exposing (Effect, addAlert, batch, none, redirect, removeAlert, run)
+module Effect exposing
+    ( Effect
+    , addAlert
+    , batch
+    , login
+    , none
+    , redirect
+    , removeAlert
+    , run
+    )
 
 import Alert
 import Browser.Navigation
@@ -12,6 +21,7 @@ type Effect
     | AddAlert Alert.Message
     | RemoveAlert Int
     | Redirect String
+    | Login String
 
 
 none : Effect
@@ -37,6 +47,11 @@ removeAlert =
 redirect : String -> Effect
 redirect =
     Redirect
+
+
+login : String -> Effect
+login =
+    Login
 
 
 run : Effect -> Context.Context -> ( Context.Context, Cmd msg )
@@ -70,3 +85,6 @@ run effect context =
 
         Redirect path ->
             ( context, Browser.Navigation.pushUrl context.key path )
+
+        Login username ->
+            ( { context | user = Just username }, Cmd.none )

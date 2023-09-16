@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
 import randomstring from "randomstring";
@@ -9,6 +9,7 @@ import { KeyObject } from "crypto";
 import path from "path";
 
 import {
+  IGetUserResult,
   createUserRequest,
   existingUser,
   getPendingUser,
@@ -35,6 +36,33 @@ async function getPasetoKey(): Promise<KeyObject> {
   pasetoKey = await paseto.generateKey("public");
 
   return pasetoKey;
+}
+
+async function getAuthUser(
+  req: Request,
+): Promise<Result<IGetUserResult, string>> {
+  const defaultError: Result<IGetUserResult, string> = Err(
+    "You are not authorized to perform this action.",
+  );
+
+  try {
+    const token = (req.headers?.["authorization"] ?? "").replace("Bearer ", "");
+    const key = await getPasetoKey();
+    const tokenData = await paseto.verify(token, key);
+    const user: IGetUserResult[] = await getUser.run(
+      { username: tokenData.sub as string },
+      db,
+    );
+
+    if (user.length < 1 || !user[0]) {
+      return defaultError;
+    }
+
+    return Ok(user[0]);
+  } catch (_) {
+    // TODO: log error and send a better error to the application
+    return defaultError;
+  }
 }
 
 const server = express();
@@ -154,6 +182,12 @@ server.post("/api/users/login", async (req, res) => {
   const token = await paseto.sign({ sub: data.username }, key);
 
   res.send(Ok(token));
+});
+
+server.post("/api/posts", async (req, res) => {
+  const user = await getAuthUser(req);
+  console.log(user);
+  res.send({});
 });
 
 server.get("*", (_req, res) =>

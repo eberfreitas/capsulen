@@ -143,6 +143,7 @@ export interface IGetUserParams {
 export interface IGetUserResult {
   challenge: string;
   challenge_encrypted: string | null;
+  id: number;
   username: string;
 }
 
@@ -152,12 +153,13 @@ export interface IGetUserQuery {
   result: IGetUserResult;
 }
 
-const getUserIR: any = {"usedParamSet":{"username":true},"params":[{"name":"username","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":107}]}],"statement":"SELECT\n    username,\n    challenge,\n    challenge_encrypted\nFROM\n    users\nWHERE\n    username LIKE :username\n    AND status = 'active'\nLIMIT 1"};
+const getUserIR: any = {"usedParamSet":{"username":true},"params":[{"name":"username","required":false,"transform":{"type":"scalar"},"locs":[{"a":107,"b":115}]}],"statement":"SELECT\n    id,\n    username,\n    challenge,\n    challenge_encrypted\nFROM\n    users\nWHERE\n    username LIKE :username\n    AND status = 'active'\nLIMIT 1"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
+ *     id,
  *     username,
  *     challenge,
  *     challenge_encrypted

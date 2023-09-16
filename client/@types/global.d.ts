@@ -27,6 +27,12 @@ export interface App {
       ) => void;
     };
 
+    sendPost: {
+      subscribe: (
+        callback: (data: { body: string }) => void,
+      ) => void;
+    };
+
     getChallengeEncrypted: {
       send: (data: unknown) => void;
     };

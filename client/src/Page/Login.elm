@@ -176,7 +176,10 @@ update msg model =
             case result of
                 Ok (Ok token) ->
                     ( model
-                    , Effect.none
+                    , Effect.batch
+                        [ Effect.login model.usernameInput.raw
+                        , Effect.redirect "/posts"
+                        ]
                     , Port.sendToken <| encodeTokenAndPrivateKey model.privateKeyInput.raw token
                     )
 
