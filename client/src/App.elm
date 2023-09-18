@@ -172,6 +172,7 @@ subscriptions _ =
     Sub.batch
         [ Page.Register.subscriptions |> Sub.map RegisterMsg
         , Page.Login.subscriptions |> Sub.map LoginMsg
+        , Page.Posts.subscriptions |> Sub.map PostsMsg
         ]
 
 

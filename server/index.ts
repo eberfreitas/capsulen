@@ -2,11 +2,12 @@ import express, { Request } from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
 import randomstring from "randomstring";
-import { Err, Ok, Result } from "shared/result";
+import { Err, Ok, Result, withErr, withOk } from "shared/result";
 import "dotenv/config";
 import { V4 as paseto } from "paseto";
 import { KeyObject } from "crypto";
 import path from "path";
+import Hashids from "hashids";
 
 import {
   IGetUserResult,
@@ -16,6 +17,7 @@ import {
   getUser,
   persistChallenge,
 } from "./db/queries/users.queries";
+import { createPost } from "./db/queries/posts.queries";
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -27,6 +29,8 @@ const db = new Client({
   password: "postgres",
   database: "capsulen",
 });
+
+const hashids = new Hashids(process.env.PRIVATE_KEY || "", 16);
 
 let pasetoKey: KeyObject | undefined;
 
@@ -185,9 +189,34 @@ server.post("/api/users/login", async (req, res) => {
 });
 
 server.post("/api/posts", async (req, res) => {
-  const user = await getAuthUser(req);
-  console.log(user);
-  res.send({});
+  const userResult = await getAuthUser(req);
+
+  withOk(userResult, async (user) => {
+    const postData = {
+      user_id: user.id,
+      content: req.body,
+    };
+
+    const possiblePost = await createPost.run({ post: postData }, db);
+
+    if (possiblePost.length < 1) {
+      return res.send(
+        Err("There was an error saving your post. Please, try again."),
+      );
+    }
+
+    const post = possiblePost[0];
+
+    res.send(
+      Ok({
+        id: hashids.encode(post.id),
+        content: post.content,
+        created_at: post.created_at,
+      }),
+    );
+  });
+
+  withErr(userResult, (e) => res.send(Err(e)));
 });
 
 server.get("*", (_req, res) =>

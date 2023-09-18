@@ -1,4 +1,4 @@
-module Page.Posts exposing (Model, Msg, init, update, view)
+module Page.Posts exposing (Model, Msg, init, update, view, subscriptions)
 
 import Business.Username
 import Context
@@ -7,6 +7,7 @@ import Form
 import Html
 import Html.Attributes
 import Html.Events
+import Json.Decode
 import Json.Encode
 import Port
 
@@ -19,6 +20,7 @@ type alias Model =
 type Msg
     = WithPostInput Form.InputEvent
     | Submit
+    | GotPost Json.Decode.Value
 
 
 type alias Post =
@@ -89,3 +91,11 @@ update msg model =
                     { body = model.postInput.raw }
             in
             ( model, Effect.none, Port.sendPost <| encodePost post )
+
+        GotPost _ ->
+            ( model, Effect.none, Cmd.none )
+
+
+subscriptions : Sub Msg
+subscriptions =
+    Port.getPost GotPost

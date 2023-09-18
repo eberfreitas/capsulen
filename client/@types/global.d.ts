@@ -28,9 +28,7 @@ export interface App {
     };
 
     sendPost: {
-      subscribe: (
-        callback: (data: { body: string }) => void,
-      ) => void;
+      subscribe: (callback: (data: { body: string }) => void) => void;
     };
 
     getChallengeEncrypted: {
@@ -38,6 +36,10 @@ export interface App {
     };
 
     getLoginChallenge: {
+      send: (data: unknown) => void;
+    };
+
+    getPost: {
       send: (data: unknown) => void;
     };
   };
