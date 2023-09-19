@@ -31,3 +31,22 @@ export function withErr<T, E, R = null>(
 
   return null;
 }
+
+export function mapOk<T, E, R>(
+  result: Result<T, E>,
+  mapFn: (data: T) => R,
+): Result<R, E> {
+  if (result._kind === "ok") {
+    return Ok(mapFn(result.data));
+  }
+
+  return result;
+}
+
+export function withDefault<T, E>(result: Result<T, E>, defaultValue: T): T {
+  if (result._kind === "ok") {
+    return result.data;
+  }
+
+  return defaultValue;
+}

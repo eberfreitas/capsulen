@@ -17,7 +17,9 @@ import {
   getUser,
   persistChallenge,
 } from "./db/queries/users.queries";
-import { createPost } from "./db/queries/posts.queries";
+import { IGetInitialPostsResult, createPost, getInitialPosts } from "./db/queries/posts.queries";
+
+const POSTS_LIMIT = 5;
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -214,6 +216,29 @@ server.post("/api/posts", async (req, res) => {
         created_at: post.created_at,
       }),
     );
+  });
+
+  withErr(userResult, (e) => res.send(Err(e)));
+});
+
+server.get("/api/posts", async (req, res) => {
+  const userResult = await getAuthUser(req);
+
+  withOk(userResult, async (user) => {
+    const posts = await getInitialPosts.run({
+      user_id: user.id,
+      limit: POSTS_LIMIT,
+    }, db);
+
+    const finalPosts = posts.map((post) => {
+      return {
+        id: hashids.encode(post.id),
+        content: post.content,
+        created_at: post.created_at,
+      };
+    });
+
+    res.send(Ok(finalPosts));
   });
 
   withErr(userResult, (e) => res.send(Err(e)));

@@ -2,7 +2,7 @@ import { Err, Ok, Result } from "shared/result";
 import { App } from "../@types/global";
 import { decryptData, encryptData } from "../crypto";
 
-type Post = {
+export type Post = {
   id: string;
   content: string;
   created_at: string;

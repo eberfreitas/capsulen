@@ -1,6 +1,7 @@
 import { handleAccessRequest } from "./handlers/access_request";
 import { handleLoginRequest } from "./handlers/login_request";
 import { handlePost } from "./handlers/post";
+import { handlePosts } from "./handlers/posts";
 import { handleToken } from "./handlers/token";
 
 (function() {
@@ -25,4 +26,5 @@ import { handleToken } from "./handlers/token";
   handleLoginRequest(app);
   handleToken(app, setPrivateStuff);
   handlePost(app, getPrivateStuff);
+  handlePosts(app, getPrivateStuff);
 })();

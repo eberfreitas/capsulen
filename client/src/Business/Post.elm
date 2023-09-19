@@ -18,7 +18,7 @@ type alias Post =
 decodeContent : Json.Decode.Decoder Content
 decodeContent =
     Json.Decode.map Content
-        (Json.Decode.field "data" Json.Decode.string)
+        (Json.Decode.field "body" Json.Decode.string)
 
 
 decode : Json.Decode.Decoder Post

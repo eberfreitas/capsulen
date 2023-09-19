@@ -25,6 +25,7 @@ type Msg
     = WithPostInput Form.InputEvent
     | Submit
     | GotPost Json.Decode.Value
+    | GotPosts Json.Decode.Value
 
 
 type alias Post =
@@ -73,7 +74,7 @@ init =
     ( { postInput = Form.newInput
       , posts = []
       }
-    , Cmd.none
+    , Port.sendPostsRequest Json.Encode.null
     )
 
 
@@ -86,7 +87,7 @@ update msg model =
                     model.postInput
 
                 newPostInput =
-                    { postInput | raw = String.trim raw }
+                    { postInput | raw = raw }
             in
             ( { model | postInput = newPostInput }, Effect.none, Cmd.none )
 
@@ -94,9 +95,10 @@ update msg model =
             ( model, Effect.none, Cmd.none )
 
         Submit ->
+            -- TODO: prevent empty submissions
             let
                 post =
-                    { body = model.postInput.raw }
+                    { body = String.trim model.postInput.raw }
             in
             ( model, Effect.none, Port.sendPost <| encodePost post )
 
@@ -120,6 +122,30 @@ update msg model =
                     , Cmd.none
                     )
 
+        GotPosts raw ->
+            case Json.Decode.decodeValue decodePostsResult raw of
+                Ok (Ok posts) ->
+                    ( { model | posts = posts ++ model.posts }, Effect.none, Cmd.none )
+
+                Ok (Err errorMsg) ->
+                    ( model
+                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( model
+                    , Effect.addAlert (Alert.new Alert.Error "There was an error fetching your posts. Please, try again.")
+                    , Cmd.none
+                    )
+
+
+decodePostsResult : Json.Decode.Decoder (Result String (List Business.Post.Post))
+decodePostsResult =
+    Json.Decode.Extra.result
+        Json.Decode.string
+        (Json.Decode.list Business.Post.decode)
+
 
 decodePostResult : Json.Decode.Decoder (Result String Business.Post.Post)
 decodePostResult =
@@ -130,4 +156,7 @@ decodePostResult =
 
 subscriptions : Sub Msg
 subscriptions =
-    Port.getPost GotPost
+    Sub.batch
+        [ Port.getPost GotPost
+        , Port.getPosts GotPosts
+        ]
