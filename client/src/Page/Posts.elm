@@ -1,5 +1,7 @@
-module Page.Posts exposing (Model, Msg, init, update, view, subscriptions)
+module Page.Posts exposing (Model, Msg, init, subscriptions, update, view)
 
+import Alert
+import Business.Post
 import Business.Username
 import Context
 import Effect
@@ -8,12 +10,14 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode
+import Json.Decode.Extra
 import Json.Encode
 import Port
 
 
 type alias Model =
     { postInput : Form.Input String
+    , posts : List Business.Post.Post
     }
 
 
@@ -66,7 +70,11 @@ viewWithoutUser =
 
 init : ( Model, Cmd msg )
 init =
-    ( { postInput = Form.newInput }, Cmd.none )
+    ( { postInput = Form.newInput
+      , posts = []
+      }
+    , Cmd.none
+    )
 
 
 update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
@@ -92,8 +100,32 @@ update msg model =
             in
             ( model, Effect.none, Port.sendPost <| encodePost post )
 
-        GotPost _ ->
-            ( model, Effect.none, Cmd.none )
+        GotPost raw ->
+            case Json.Decode.decodeValue decodePostResult raw of
+                Ok (Ok post) ->
+                    ( { model | posts = post :: model.posts }
+                    , Effect.addAlert (Alert.new Alert.Success "New post created.")
+                    , Cmd.none
+                    )
+
+                Ok (Err errorMsg) ->
+                    ( model
+                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( model
+                    , Effect.addAlert (Alert.new Alert.Error "There was an error while saving your post. Please, try again.")
+                    , Cmd.none
+                    )
+
+
+decodePostResult : Json.Decode.Decoder (Result String Business.Post.Post)
+decodePostResult =
+    Json.Decode.Extra.result
+        Json.Decode.string
+        Business.Post.decode
 
 
 subscriptions : Sub Msg
