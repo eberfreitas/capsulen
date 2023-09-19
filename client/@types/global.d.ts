@@ -52,6 +52,10 @@ export interface App {
     getPosts: {
       send: (data: unknown) => void;
     };
+
+    getError: {
+      send: (data: unknown) => void;
+    };
   };
 }
 

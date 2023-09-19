@@ -1,5 +1,6 @@
 port module Port exposing
     ( getChallengeEncrypted
+    , getError
     , getLoginChallenge
     , getPost
     , getPosts
@@ -39,3 +40,6 @@ port getPost : (Json.Decode.Value -> msg) -> Sub msg
 
 
 port getPosts : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port getError : (String -> msg) -> Sub msg

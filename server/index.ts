@@ -2,7 +2,6 @@ import express, { Request } from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
 import randomstring from "randomstring";
-import { Err, Ok, Result, withErr, withOk } from "shared/result";
 import "dotenv/config";
 import { V4 as paseto } from "paseto";
 import { KeyObject } from "crypto";
@@ -17,7 +16,8 @@ import {
   getUser,
   persistChallenge,
 } from "./db/queries/users.queries";
-import { IGetInitialPostsResult, createPost, getInitialPosts } from "./db/queries/posts.queries";
+
+import { createPost, getInitialPosts } from "./db/queries/posts.queries";
 
 const POSTS_LIMIT = 5;
 
@@ -44,31 +44,24 @@ async function getPasetoKey(): Promise<KeyObject> {
   return pasetoKey;
 }
 
-async function getAuthUser(
-  req: Request,
-): Promise<Result<IGetUserResult, string>> {
-  const defaultError: Result<IGetUserResult, string> = Err(
-    "You are not authorized to perform this action.",
+async function getAuthUser(req: Request): Promise<IGetUserResult> {
+  const token = (req.headers?.["authorization"] ?? "")
+    .replace("Bearer ", "")
+    .trim();
+
+  const key = await getPasetoKey();
+  const tokenData = await paseto.verify(token, key);
+
+  const user: IGetUserResult[] = await getUser.run(
+    { username: tokenData.sub as string },
+    db,
   );
 
-  try {
-    const token = (req.headers?.["authorization"] ?? "").replace("Bearer ", "");
-    const key = await getPasetoKey();
-    const tokenData = await paseto.verify(token, key);
-    const user: IGetUserResult[] = await getUser.run(
-      { username: tokenData.sub as string },
-      db,
-    );
-
-    if (user.length < 1 || !user[0]) {
-      return defaultError;
-    }
-
-    return Ok(user[0]);
-  } catch (_) {
-    // TODO: log error and send a better error to the application
-    return defaultError;
+  if (user.length < 1 || !user[0]) {
+    throw new Error("User not found.");
   }
+
+  return user[0];
 }
 
 const server = express();
@@ -89,51 +82,43 @@ server.post("/api/users/request_access", async (req, res) => {
     challenge: randomstring.generate(),
   };
 
-  const exists = await existingUser.run({ username: user.username }, db);
-
-  let data: Result<typeof user, string> = Err("Unexpected error");
-
-  if (exists.length > 0) {
-    data = Err(
-      "Username is already in use. Please, pick a different username.",
-    );
-
-    return res.send(data);
-  }
-
   try {
+    const exists = await existingUser.run({ username: user.username }, db);
+
+    if (exists.length > 0) {
+      return res
+        .status(400)
+        .send("Username is already in use. Please, pick a different username.");
+    }
+
     await createUserRequest.run({ user }, db);
 
-    data = Ok(user);
-
-    return res.send(data);
+    return res.send(user);
   } catch (_) {
-    data = Err(
-      "There was an error registering your account. Please, try again.",
-    );
-
-    return res.send(data);
+    // TODO: monitor error here...
+    return res
+      .status(500)
+      .send("There was an error registering your account. Please, try again.");
   }
 });
 
 server.post("/api/users/create_user", async (req, res) => {
-  const user = await getPendingUser.run(
-    {
-      username: req.body?.data?.username,
-      nonce: req.body?.data?.nonce,
-    },
-    db,
-  );
-
-  const defaultError = Err(
-    "There was an error registering your account. Please, try again.",
-  );
-
-  if (user.length < 1 || !user[0]?.id) {
-    return res.send(defaultError);
-  }
+  const defaultError =
+    "There was an error registering your account. Please, try again.";
 
   try {
+    const user = await getPendingUser.run(
+      {
+        username: req.body?.data?.username,
+        nonce: req.body?.data?.nonce,
+      },
+      db,
+    );
+
+    if (user.length < 1 || !user[0]?.id) {
+      return res.status(500).send(defaultError);
+    }
+
     persistChallenge.run(
       {
         id: user[0].id,
@@ -141,59 +126,72 @@ server.post("/api/users/create_user", async (req, res) => {
       },
       db,
     );
+
+    return res.send(true);
   } catch (_) {
+    // TODO: monitor error here
     return res.send(defaultError);
   }
-
-  res.send(Ok(true));
 });
 
 server.post("/api/users/login_request", async (req, res) => {
-  const user = await getUser.run({ username: req.body }, db);
+  try {
+    const user = await getUser.run({ username: req.body }, db);
 
-  if (user.length < 1 || !user[0]?.username) {
-    return res.send(
-      Err("Username or private key incorrect. Please, try again."),
-    );
-  }
+    if (user.length < 1 || !user[0]) {
+      return res
+        .status(400)
+        .send("Username or private key incorrect. Please, try again.");
+    }
 
-  const data = user[0];
+    const data = user[0];
 
-  res.send(
-    Ok({
+    res.send({
       username: data.username,
       challenge_encrypted: data.challenge_encrypted,
-    }),
-  );
+    });
+  } catch (_) {
+    //TODO: monitor error here
+    return res
+      .status(500)
+      .send("There was an error trying to log you in. Please, try again.");
+  }
 });
 
 server.post("/api/users/login", async (req, res) => {
-  const user = await getUser.run({ username: req.body?.data?.username }, db);
+  try {
+    const user = await getUser.run({ username: req.body?.username }, db);
 
-  if (user.length < 1 || !user[0]) {
-    return res.send(
-      Err("Username or private key incorrect. Please, try again."),
-    );
+    if (user.length < 1 || !user[0]) {
+      return res
+        .status(400)
+        .send("Username or private key incorrect. Please, try again.");
+    }
+
+    const data = user[0];
+
+    if (data.challenge !== req.body?.challenge) {
+      return res
+        .status(400)
+        .send("Username or private key incorrect. Please, try again.");
+    }
+
+    const key = await getPasetoKey();
+    const token = await paseto.sign({ sub: data.username }, key);
+
+    res.send(token);
+  } catch (_) {
+    //TODO: monitor error here
+    return res
+      .status(500)
+      .send("There was an error trying to log you in. Please, try again.");
   }
-
-  const data = user[0];
-
-  if (data.challenge !== req.body?.data?.challenge) {
-    return res.send(
-      Err("Username or private key incorrect. Please, try again."),
-    );
-  }
-
-  const key = await getPasetoKey();
-  const token = await paseto.sign({ sub: data.username }, key);
-
-  res.send(Ok(token));
 });
 
 server.post("/api/posts", async (req, res) => {
-  const userResult = await getAuthUser(req);
+  try {
+    const user = await getAuthUser(req);
 
-  withOk(userResult, async (user) => {
     const postData = {
       user_id: user.id,
       content: req.body,
@@ -202,35 +200,39 @@ server.post("/api/posts", async (req, res) => {
     const possiblePost = await createPost.run({ post: postData }, db);
 
     if (possiblePost.length < 1) {
-      return res.send(
-        Err("There was an error saving your post. Please, try again."),
-      );
+      return res
+        .status(500)
+        .send("There was an error saving your post. Please, try again.");
     }
 
     const post = possiblePost[0];
 
-    res.send(
-      Ok({
-        id: hashids.encode(post.id),
-        content: post.content,
-        created_at: post.created_at,
-      }),
-    );
-  });
-
-  withErr(userResult, (e) => res.send(Err(e)));
+    res.send({
+      id: hashids.encode(post.id),
+      content: post.content,
+      created_at: post.created_at,
+    });
+  } catch (_) {
+    //TODO: monitor error here
+    return res
+      .status(500)
+      .send("There was an error saving your post. Please, try again.");
+  }
 });
 
 server.get("/api/posts", async (req, res) => {
-  const userResult = await getAuthUser(req);
+  try {
+    const user = await getAuthUser(req);
 
-  withOk(userResult, async (user) => {
-    const posts = await getInitialPosts.run({
-      user_id: user.id,
-      limit: POSTS_LIMIT,
-    }, db);
+    const rawPosts = await getInitialPosts.run(
+      {
+        user_id: user.id,
+        limit: POSTS_LIMIT,
+      },
+      db,
+    );
 
-    const finalPosts = posts.map((post) => {
+    const posts = rawPosts.map((post) => {
       return {
         id: hashids.encode(post.id),
         content: post.content,
@@ -238,10 +240,13 @@ server.get("/api/posts", async (req, res) => {
       };
     });
 
-    res.send(Ok(finalPosts));
-  });
-
-  withErr(userResult, (e) => res.send(Err(e)));
+    res.send(posts);
+  } catch (_) {
+    //TODO: monitor error here
+    return res
+      .status(500)
+      .send("There was an error fetching your posts. Please, try again.");
+  }
 });
 
 server.get("*", (_req, res) =>

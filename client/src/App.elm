@@ -1,5 +1,6 @@
 module App exposing (main)
 
+import Alert
 import AppUrl
 import Browser
 import Browser.Navigation
@@ -9,6 +10,7 @@ import Html
 import Page.Login
 import Page.Posts
 import Page.Register
+import Port
 import Url
 import View.Alerts
 
@@ -30,6 +32,7 @@ type Page
 type Msg
     = UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
+    | GotError String
     | RegisterMsg Page.Register.Msg
     | LoginMsg Page.Login.Msg
     | PostsMsg Page.Posts.Msg
@@ -84,6 +87,16 @@ update msg model =
                     router <| AppUrl.fromUrl url
             in
             ( { model | page = page, url = url }, cmd )
+
+        ( GotError errorMsg, _ ) ->
+            let
+                effect =
+                    Effect.addAlert (Alert.new Alert.Error errorMsg)
+
+                ( nextContext, cmd ) =
+                    Effect.run effect model.context
+            in
+            ( { model | context = nextContext }, cmd )
 
         ( AlertsMsg subMsg, _ ) ->
             let
@@ -170,7 +183,8 @@ router url =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ Page.Register.subscriptions |> Sub.map RegisterMsg
+        [ Port.getError GotError
+        , Page.Register.subscriptions |> Sub.map RegisterMsg
         , Page.Login.subscriptions |> Sub.map LoginMsg
         , Page.Posts.subscriptions |> Sub.map PostsMsg
         ]

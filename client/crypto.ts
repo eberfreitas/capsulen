@@ -1,5 +1,4 @@
 // Based on https://github.com/bradyjoslin/webcrypto-example
-import { Result, Ok, Err } from "shared/result";
 
 const enc = new TextEncoder();
 
@@ -50,60 +49,52 @@ export async function getPasswordKey(password: string): Promise<CryptoKey> {
 export async function encryptData(
   secretData: string,
   passwordKey: CryptoKey,
-): Promise<Result<string, string>> {
-  try {
-    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const aesKey = await deriveKey(passwordKey, salt, ["encrypt"]);
+): Promise<string> {
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const aesKey = await deriveKey(passwordKey, salt, ["encrypt"]);
 
-    const encryptedContent = await window.crypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv: iv,
-      },
-      aesKey,
-      enc.encode(secretData),
-    );
+  const encryptedContent = await window.crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    aesKey,
+    enc.encode(secretData),
+  );
 
-    const encryptedContentArr = new Uint8Array(encryptedContent);
-    const buff = new Uint8Array(
-      salt.byteLength + iv.byteLength + encryptedContentArr.byteLength,
-    );
+  const encryptedContentArr = new Uint8Array(encryptedContent);
+  const buff = new Uint8Array(
+    salt.byteLength + iv.byteLength + encryptedContentArr.byteLength,
+  );
 
-    buff.set(salt, 0);
-    buff.set(iv, salt.byteLength);
-    buff.set(encryptedContentArr, salt.byteLength + iv.byteLength);
+  buff.set(salt, 0);
+  buff.set(iv, salt.byteLength);
+  buff.set(encryptedContentArr, salt.byteLength + iv.byteLength);
 
-    const base64Buff = buffToBase64(buff);
+  const base64Buff = buffToBase64(buff);
 
-    return Ok(base64Buff);
-  } catch (e) {
-    return Err(e instanceof Error ? e.message : "Unknown encrypting error.");
-  }
+  return base64Buff;
 }
 
 export async function decryptData(
   encryptedData: string,
   passwordKey: CryptoKey,
-): Promise<Result<string, string>> {
-  try {
-    const encryptedDataBuff = base64ToBuf(encryptedData);
-    const salt = encryptedDataBuff.slice(0, 16);
-    const iv = encryptedDataBuff.slice(16, 16 + 12);
-    const data = encryptedDataBuff.slice(16 + 12);
-    const aesKey = await deriveKey(passwordKey, salt, ["decrypt"]);
+): Promise<string> {
+  const encryptedDataBuff = base64ToBuf(encryptedData);
+  const salt = encryptedDataBuff.slice(0, 16);
+  const iv = encryptedDataBuff.slice(16, 16 + 12);
+  const data = encryptedDataBuff.slice(16 + 12);
+  const aesKey = await deriveKey(passwordKey, salt, ["decrypt"]);
 
-    const decryptedContent = await window.crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: iv,
-      },
-      aesKey,
-      data,
-    );
+  const decryptedContent = await window.crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    aesKey,
+    data,
+  );
 
-    return Ok(dec.decode(decryptedContent));
-  } catch (e) {
-    return Err(e instanceof Error ? e.message : "Unknown decrypting error.");
-  }
+  return dec.decode(decryptedContent);
 }

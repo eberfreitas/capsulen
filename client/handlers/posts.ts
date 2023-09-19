@@ -1,4 +1,3 @@
-import { Err, Ok, Result, withDefault } from "shared/result";
 import { App } from "../@types/global";
 import { Post } from "./post";
 import { decryptData } from "../crypto";
@@ -16,7 +15,7 @@ export function handlePosts(
       authorization: `Bearer ${privateStuff.token}`,
     });
 
-    const defaultError = Err("There was an error fetching your posts. Please, try again.");
+    const defaultError = "There was an error fetching your posts. Please, try again.";
 
     try {
       const response = await fetch("/api/posts", { headers });

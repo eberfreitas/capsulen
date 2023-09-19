@@ -18,7 +18,11 @@ import { handleToken } from "./handlers/token";
     privateStuff = data;
   }
 
-  function getPrivateStuff(): PrivateStuff | null {
+  function getPrivateStuff(): PrivateStuff {
+    if (!privateStuff) {
+      throw new Error("Private key and token not defined.");
+    }
+
     return privateStuff;
   }
 

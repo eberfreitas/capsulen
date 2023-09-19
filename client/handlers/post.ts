@@ -1,4 +1,3 @@
-import { Err, Ok, Result } from "shared/result";
 import { App } from "../@types/global";
 import { decryptData, encryptData } from "../crypto";
 
@@ -10,25 +9,17 @@ export type Post = {
 
 export function handlePost(
   app: App,
-  getPrivateStuff: () => { token: string; privateKey: CryptoKey } | null,
+  getPrivateStuff: () => { token: string; privateKey: CryptoKey },
 ): void {
   app.ports.sendPost.subscribe(async (data) => {
-    const privateStuff = getPrivateStuff();
-
-    if (!privateStuff) return;
-
-    const contentResult = await encryptData(
-      JSON.stringify(data),
-      privateStuff.privateKey,
-    );
-
-    if (contentResult._kind === "err") {
-      return app.ports.getPost.send(contentResult);
-    }
-
-    const content = contentResult.data;
-
     try {
+      const privateStuff = getPrivateStuff();
+
+      const content = await encryptData(
+        JSON.stringify(data),
+        privateStuff.privateKey,
+      );
+
       const response = await fetch("/api/posts", {
         method: "POST",
         body: content,
@@ -39,33 +30,21 @@ export function handlePost(
       });
 
       const raw = await response.text();
-      const postResult = JSON.parse(raw) as Result<Post, string>;
-
-      if (postResult._kind === "err") {
-        return app.ports.getPost.send(postResult);
-      }
-
-      const post = postResult.data;
+      const post = JSON.parse(raw);
       const decryptedContent = await decryptData(
         post.content,
         privateStuff.privateKey,
       );
 
-      if (decryptedContent._kind === "err") {
-        return app.ports.getPost.send(decryptedContent);
-      }
-
-      const postContent = decryptedContent.data;
-
       const finalPost = {
         ...post,
-        content: JSON.parse(postContent),
+        content: JSON.parse(decryptedContent),
       };
 
-      app.ports.getPost.send(Ok(finalPost));
+      app.ports.getPost.send(finalPost);
     } catch(e) {
       // TODO: log error to monitoring app
-      app.ports.getPost.send(Err("There was a problem dealing with your post. Please, try again."));
+      app.ports.getError.send("There was a problem dealing with your post. Please, try again.");
     }
   });
 }
