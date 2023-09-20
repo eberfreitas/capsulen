@@ -1,11 +1,10 @@
 module Api exposing (post)
 
 import Http
-import Json.Decode
 import Task
 
 
-post : { url : String, body : Http.Body, decoder : Json.Decode.Decoder a } -> Task.Task String a
+post : { url : String, body : Http.Body, decoder : (String -> Result err a) } -> Task.Task String a
 post params =
     Http.task
         { method = "POST"
@@ -17,11 +16,11 @@ post params =
         }
 
 
-resolver : Json.Decode.Decoder a -> Http.Resolver String a
+resolver : (String -> Result err a) -> Http.Resolver String a
 resolver decoder =
     let
         defaultErrorMsg =
-            "Unknown error."
+            "Unknown error"
     in
     Http.stringResolver <|
         \response ->
@@ -35,7 +34,7 @@ resolver decoder =
 
                 Http.GoodStatus_ _ body ->
                     body
-                        |> Json.Decode.decodeString decoder
+                        |> decoder
                         |> Result.toMaybe
                         |> Maybe.map Ok
                         |> Maybe.withDefault (Err defaultErrorMsg)

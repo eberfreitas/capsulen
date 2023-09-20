@@ -1,6 +1,7 @@
 module Page.Login exposing (Model, Msg, init, subscriptions, update, view)
 
 import Alert
+import Api
 import Effect
 import Form
 import Html
@@ -8,10 +9,10 @@ import Html.Attributes
 import Html.Events
 import Http
 import Json.Decode
-import Json.Decode.Extra
 import Json.Encode
 import Phosphor
 import Port
+import Task
 
 
 type alias Model =
@@ -32,9 +33,9 @@ type Msg
     | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
-    | GotLoginRequest (Result Http.Error (Result String LoginRequest))
+    | GotLoginRequest (Result String LoginRequest)
     | GotLoginChallenge Json.Decode.Value
-    | GotLogin (Result Http.Error (Result String String))
+    | GotLogin (Result String String)
 
 
 baseModel : Model
@@ -126,11 +127,12 @@ update msg model =
             if validInputs model then
                 ( model
                 , Effect.none
-                , Http.post
+                , Api.post
                     { url = "/api/users/login_request"
                     , body = Http.stringBody "text/plain" model.usernameInput.raw
-                    , expect = Http.expectJson GotLoginRequest decodeLoginRequest
+                    , decoder = Json.Decode.decodeString decodeLoginRequest
                     }
+                    |> Task.attempt GotLoginRequest
                 )
 
             else
@@ -141,40 +143,32 @@ update msg model =
 
         GotLoginRequest result ->
             case result of
-                Ok (Err errorMsg) ->
+                Err errorMsg ->
                     ( model
                     , Effect.addAlert (Alert.new Alert.Error errorMsg)
                     , Cmd.none
                     )
 
-                Ok (Ok loginRequest) ->
+                Ok loginRequest ->
                     ( model
                     , Effect.none
                     , Port.sendLoginRequest <| encodeLoginRequestWithPrivateKey loginRequest model.privateKeyInput.raw
                     )
 
-                _ ->
-                    ( model
-                    , Effect.addAlert
-                        (Alert.new Alert.Error
-                            "There was an internal error processing your request. Please, try again."
-                        )
-                    , Cmd.none
-                    )
-
         GotLoginChallenge raw ->
             ( model
             , Effect.none
-            , Http.post
+            , Api.post
                 { url = "/api/users/login"
                 , body = Http.jsonBody raw
-                , expect = Http.expectJson GotLogin (Json.Decode.Extra.result Json.Decode.string Json.Decode.string)
+                , decoder = (identity >> Ok)
                 }
+                |> Task.attempt GotLogin
             )
 
         GotLogin result ->
             case result of
-                Ok (Ok token) ->
+                Ok token ->
                     ( model
                     , Effect.batch
                         [ Effect.login model.usernameInput.raw
@@ -183,18 +177,9 @@ update msg model =
                     , Port.sendToken <| encodeTokenAndPrivateKey model.privateKeyInput.raw token
                     )
 
-                Ok (Err errorMsg) ->
+                Err errorMsg ->
                     ( model
                     , Effect.addAlert (Alert.new Alert.Error errorMsg)
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model
-                    , Effect.addAlert
-                        (Alert.new Alert.Error
-                            "There was an internal error processing your request. Please, try again."
-                        )
                     , Cmd.none
                     )
 
@@ -207,14 +192,11 @@ encodeTokenAndPrivateKey privateKey token =
         ]
 
 
-decodeLoginRequest : Json.Decode.Decoder (Result String LoginRequest)
+decodeLoginRequest : Json.Decode.Decoder LoginRequest
 decodeLoginRequest =
-    Json.Decode.Extra.result
-        Json.Decode.string
-        (Json.Decode.map2 LoginRequest
-            (Json.Decode.field "username" Json.Decode.string)
-            (Json.Decode.field "challenge_encrypted" Json.Decode.string)
-        )
+    Json.Decode.map2 LoginRequest
+        (Json.Decode.field "username" Json.Decode.string)
+        (Json.Decode.field "challenge_encrypted" Json.Decode.string)
 
 
 encodeLoginRequestWithPrivateKey : LoginRequest -> String -> Json.Encode.Value

@@ -44,6 +44,11 @@ async function getPasetoKey(): Promise<KeyObject> {
   return pasetoKey;
 }
 
+// Prints out the key used by paseto for token crypto
+// (async function () {
+//   console.log(paseto.keyObjectToBytes(await getPasetoKey()).toString("base64"));
+// })();
+
 async function getAuthUser(req: Request): Promise<IGetUserResult> {
   const token = (req.headers?.["authorization"] ?? "")
     .replace("Bearer ", "")
@@ -109,22 +114,24 @@ server.post("/api/users/create_user", async (req, res) => {
     "There was an error registering your account. Please, try again.";
 
   try {
-    const user = await getPendingUser.run(
+    const possibleUser = await getPendingUser.run(
       {
-        username: req.body?.data?.username,
-        nonce: req.body?.data?.nonce,
+        username: req.body?.username,
+        nonce: req.body?.nonce,
       },
       db,
     );
 
-    if (user.length < 1 || !user[0]?.id) {
+    if (possibleUser.length < 1 || !possibleUser[0]) {
       return res.status(500).send(defaultError);
     }
 
+    const user = possibleUser[0];
+
     persistChallenge.run(
       {
-        id: user[0].id,
-        challengeEncrypted: req.body?.data?.challengeEncrypted,
+        id: user.id,
+        challengeEncrypted: req.body?.challengeEncrypted,
       },
       db,
     );
@@ -138,19 +145,19 @@ server.post("/api/users/create_user", async (req, res) => {
 
 server.post("/api/users/login_request", async (req, res) => {
   try {
-    const user = await getUser.run({ username: req.body }, db);
+    const possibleUser = await getUser.run({ username: req.body }, db);
 
-    if (user.length < 1 || !user[0]) {
+    if (possibleUser.length < 1 || !possibleUser[0]) {
       return res
         .status(400)
         .send("Username or private key incorrect. Please, try again.");
     }
 
-    const data = user[0];
+    const user = possibleUser[0];
 
     res.send({
-      username: data.username,
-      challenge_encrypted: data.challenge_encrypted,
+      username: user.username,
+      challenge_encrypted: user.challenge_encrypted,
     });
   } catch (_) {
     //TODO: monitor error here
@@ -162,24 +169,24 @@ server.post("/api/users/login_request", async (req, res) => {
 
 server.post("/api/users/login", async (req, res) => {
   try {
-    const user = await getUser.run({ username: req.body?.username }, db);
+    const possibleUser = await getUser.run({ username: req.body?.username }, db);
 
-    if (user.length < 1 || !user[0]) {
+    if (possibleUser.length < 1 || !possibleUser[0]) {
       return res
         .status(400)
         .send("Username or private key incorrect. Please, try again.");
     }
 
-    const data = user[0];
+    const user = possibleUser[0];
 
-    if (data.challenge !== req.body?.challenge) {
+    if (user.challenge !== req.body?.challenge) {
       return res
         .status(400)
         .send("Username or private key incorrect. Please, try again.");
     }
 
     const key = await getPasetoKey();
-    const token = await paseto.sign({ sub: data.username }, key);
+    const token = await paseto.sign({ sub: user.username }, key);
 
     res.send(token);
   } catch (_) {

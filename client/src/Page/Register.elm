@@ -64,24 +64,20 @@ init =
 
 update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update msg model =
+    let
+        done : Model -> ( Model, Effect.Effect, Cmd Msg )
+        done model_ =
+            ( model_, Effect.none, Cmd.none )
+    in
     case msg of
         WithUsername event ->
-            ( { model | usernameInput = updateUsername event model.usernameInput }
-            , Effect.none
-            , Cmd.none
-            )
+            done { model | usernameInput = updateUsername event model.usernameInput }
 
         WithPrivateKey event ->
-            ( { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }
-            , Effect.none
-            , Cmd.none
-            )
+            done { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }
 
         ToggleShowPrivateKey ->
-            ( { model | showPrivateKey = not model.showPrivateKey }
-            , Effect.none
-            , Cmd.none
-            )
+            done { model | showPrivateKey = not model.showPrivateKey }
 
         Submit ->
             let
@@ -101,7 +97,7 @@ update msg model =
                             , Api.post
                                 { url = "/api/users/request_access"
                                 , body = Http.stringBody "text/plain" <| Business.Username.toString userData.username
-                                , decoder = decodeAccessRequest
+                                , decoder = Json.Decode.decodeString decodeAccessRequest
                                 }
                                 |> Task.attempt GotAccessRequest
                             )
@@ -145,7 +141,7 @@ update msg model =
             , Api.post
                 { url = "/api/users/create_user"
                 , body = Http.jsonBody raw
-                , decoder = decodeUserCreation
+                , decoder = Json.Decode.decodeString decodeUserCreation
                 }
                 |> Task.attempt GotUserCreated
             )
