@@ -77,7 +77,7 @@ server.listen(port, async () => {
 
 server.post("/api/users/request_access", async (req, res) => {
   const user = {
-    username: req.body?.username,
+    username: req.body,
     nonce: `${Math.floor(Math.random() * 999999999)}`,
     challenge: randomstring.generate(),
   };
@@ -94,8 +94,10 @@ server.post("/api/users/request_access", async (req, res) => {
     await createUserRequest.run({ user }, db);
 
     return res.send(user);
-  } catch (_) {
+  } catch (e) {
     // TODO: monitor error here...
+    console.log(e);
+
     return res
       .status(500)
       .send("There was an error registering your account. Please, try again.");

@@ -1,6 +1,7 @@
 module Page.Register exposing (Model, Msg, UserData, init, subscriptions, update, view)
 
 import Alert
+import Api
 import Business.PrivateKey
 import Business.Username
 import Effect
@@ -10,10 +11,10 @@ import Html.Attributes
 import Html.Events
 import Http
 import Json.Decode
-import Json.Decode.Extra
 import Json.Encode
 import Phosphor
 import Port
+import Task
 
 
 type Msg
@@ -21,9 +22,9 @@ type Msg
     | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
-    | GotAccessRequest (Result Http.Error (Result String AccessRequest))
+    | GotAccessRequest (Result String AccessRequest)
     | GotChallengeEncrypted Json.Decode.Value
-    | GotUserCreated (Result Http.Error (Result String Bool))
+    | GotUserCreated (Result String ())
 
 
 type alias AccessRequest =
@@ -94,17 +95,16 @@ update msg model =
                 ( modelUserData, effects, cmds ) =
                     case buildUserData newModel of
                         Ok userData ->
-                            let
-                                cmd : Cmd Msg
-                                cmd =
-                                    Http.post
-                                        { url = "/api/users/request_access"
-                                        , body = Http.jsonBody <| encodeUserData userData
-                                        , expect = Http.expectJson GotAccessRequest decodeAccessRequestResult
-                                        }
-                            in
                             -- TODO: Use loader effect here, to show fake progress bar
-                            ( Just userData, Effect.none, cmd )
+                            ( Just userData
+                            , Effect.none
+                            , Api.post
+                                { url = "/api/users/request_access"
+                                , body = Http.stringBody "text/plain" <| Business.Username.toString userData.username
+                                , decoder = decodeAccessRequest
+                                }
+                                |> Task.attempt GotAccessRequest
+                            )
 
                         Err submissionError ->
                             ( Nothing
@@ -116,13 +116,13 @@ update msg model =
 
         GotAccessRequest result ->
             case ( result, model.userData ) of
-                ( Ok (Ok accessRequest), Just userData ) ->
+                ( Ok accessRequest, Just userData ) ->
                     ( model
                     , Effect.none
                     , Port.sendAccessRequest <| encodeAccessRequestWithPrivateKey accessRequest userData.privateKey
                     )
 
-                ( Ok (Err errorMsg), _ ) ->
+                ( Err errorMsg, _ ) ->
                     ( model
                     , Effect.addAlert (Alert.new Alert.Error errorMsg)
                     , Cmd.none
@@ -142,16 +142,17 @@ update msg model =
         GotChallengeEncrypted raw ->
             ( model
             , Effect.none
-            , Http.post
+            , Api.post
                 { url = "/api/users/create_user"
                 , body = Http.jsonBody raw
-                , expect = Http.expectJson GotUserCreated decodeUserCreation
+                , decoder = decodeUserCreation
                 }
+                |> Task.attempt GotUserCreated
             )
 
         GotUserCreated result ->
             case result of
-                Ok (Ok _) ->
+                Ok _ ->
                     ( model
                     , Effect.batch
                         [ Effect.addAlert (Alert.new Alert.Success "Registration successful! Please log in now.")
@@ -160,19 +161,8 @@ update msg model =
                     , Cmd.none
                     )
 
-                Ok (Err errMsg) ->
+                Err errMsg ->
                     ( model, Effect.addAlert (Alert.new Alert.Error errMsg), Cmd.none )
-
-                _ ->
-                    -- TODO: Notify alerting system here...
-                    ( model
-                    , Effect.addAlert
-                        (Alert.new
-                            Alert.Error
-                            "There was an internal error processing your request. Please, try again."
-                        )
-                    , Cmd.none
-                    )
 
 
 subscriptions : Sub Msg
@@ -282,12 +272,6 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
         ]
 
 
-encodeUserData : UserData -> Json.Encode.Value
-encodeUserData { username } =
-    Json.Encode.object
-        [ ( "username", Business.Username.encode username ) ]
-
-
 encodeAccessRequestWithPrivateKey : AccessRequest -> Business.PrivateKey.PrivateKey -> Json.Encode.Value
 encodeAccessRequestWithPrivateKey accessRequest privateKey =
     Json.Encode.object
@@ -306,15 +290,6 @@ decodeAccessRequest =
         (Json.Decode.field "challenge" Json.Decode.string)
 
 
-decodeAccessRequestResult : Json.Decode.Decoder (Result String AccessRequest)
-decodeAccessRequestResult =
-    Json.Decode.Extra.result
-        Json.Decode.string
-        decodeAccessRequest
-
-
-decodeUserCreation : Json.Decode.Decoder (Result String Bool)
+decodeUserCreation : Json.Decode.Decoder ()
 decodeUserCreation =
-    Json.Decode.Extra.result
-        Json.Decode.string
-        Json.Decode.bool
+    Json.Decode.succeed ()
