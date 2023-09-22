@@ -54,7 +54,7 @@ login =
     Login
 
 
-run : Effect -> Context.Context -> ( Context.Context, Cmd msg )
+run : Effect -> Context.Context msg -> ( Context.Context msg, Cmd msg )
 run effect context =
     case effect of
         None ->

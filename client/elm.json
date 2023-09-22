@@ -6,6 +6,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "andrewMacmurray/elm-concurrent-task": "1.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -19,6 +20,7 @@
         "indirect": {
             "elm/bytes": "1.0.8",
             "elm/file": "1.0.5",
+            "elm/random": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.3"

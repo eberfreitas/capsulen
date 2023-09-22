@@ -17,7 +17,7 @@ import View.Alerts
 
 type alias Model =
     { url : Url.Url
-    , context : Context.Context
+    , context : Context.Context Msg
     , page : Page
     }
 
@@ -154,14 +154,8 @@ init () url key =
     let
         ( page, cmd ) =
             router <| AppUrl.fromUrl url
-
-        context =
-            { key = key
-            , alerts = []
-            , user = Nothing
-            }
     in
-    ( { url = url, context = context, page = page }, cmd )
+    ( { url = url, context = Context.new key, page = page }, cmd )
 
 
 router : AppUrl.AppUrl -> ( Page, Cmd Msg )

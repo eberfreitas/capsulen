@@ -15,6 +15,12 @@ import Json.Decode
 import Json.Encode
 
 
+port taskSend : Json.Decode.Value -> Cmd msg
+
+
+port taskReceive : (Json.Decode.Value -> msg) -> Sub msg
+
+
 port sendAccessRequest : Json.Encode.Value -> Cmd msg
 
 

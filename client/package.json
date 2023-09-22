@@ -13,5 +13,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@andrewmacmurray/elm-concurrent-task": "^1.0.0"
+  }
 }
