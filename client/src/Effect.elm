@@ -7,12 +7,16 @@ module Effect exposing
     , redirect
     , removeAlert
     , run
+    , task
     )
 
 import Alert
 import Browser.Navigation
+import ConcurrentTask
 import Context
 import List.Extra
+import Port
+import Tasks
 
 
 type Effect
@@ -22,6 +26,7 @@ type Effect
     | RemoveAlert Int
     | Redirect String
     | Login String
+    | Task (ConcurrentTask.ConcurrentTask Tasks.Error Tasks.Output)
 
 
 none : Effect
@@ -54,8 +59,17 @@ login =
     Login
 
 
-run : Effect -> Context.Context msg -> ( Context.Context msg, Cmd msg )
-run effect context =
+task : ConcurrentTask.ConcurrentTask Tasks.Error Tasks.Output -> Effect
+task =
+    Task
+
+
+run :
+    (ConcurrentTask.Response Tasks.Error Tasks.Output -> msg)
+    -> Context.Context msg
+    -> Effect
+    -> ( Context.Context msg, Cmd msg )
+run taskOnCompleteMsg context effect =
     case effect of
         None ->
             ( context, Cmd.none )
@@ -65,7 +79,7 @@ run effect context =
                 (\fx ( ctx, cmd ) ->
                     let
                         ( nextCtx, nextCmd ) =
-                            run fx ctx
+                            run taskOnCompleteMsg ctx fx
                     in
                     ( nextCtx, Cmd.batch [ cmd, nextCmd ] )
                 )
@@ -88,3 +102,15 @@ run effect context =
 
         Login username ->
             ( { context | user = Just username }, Cmd.none )
+
+        Task task_ ->
+            let
+                ( pool, cmds ) =
+                    ConcurrentTask.attempt
+                        { pool = context.tasks
+                        , send = Port.taskSend
+                        , onComplete = taskOnCompleteMsg
+                        }
+                        task_
+            in
+            ( { context | tasks = pool }, cmds )

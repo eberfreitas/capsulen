@@ -1,20 +1,19 @@
 module Page.Register exposing (Model, Msg, UserData, init, subscriptions, update, view)
 
 import Alert
-import Api
 import Business.PrivateKey
 import Business.Username
+import ConcurrentTask
+import ConcurrentTask.Http
 import Effect
 import Form
 import Html
 import Html.Attributes
 import Html.Events
-import Http
 import Json.Decode
 import Json.Encode
 import Phosphor
-import Port
-import Task
+import Tasks
 
 
 type Msg
@@ -22,23 +21,20 @@ type Msg
     | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
-    | GotAccessRequest (Result String AccessRequest)
-    | GotChallengeEncrypted Json.Decode.Value
-    | GotUserCreated (Result String ())
+    | TaskOnComplete (Result Tasks.Error Tasks.Output)
 
 
-type alias AccessRequest =
-    { username : Business.Username.Username
-    , nonce : String
+type alias Challenge =
+    { nonce : String
     , challenge : String
     }
 
 
 type alias Model =
-    { usernameInput : Form.Input Business.Username.Username
+    { taskOnCompleteMsg : Result Tasks.Error Tasks.Output -> Msg
+    , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
     , showPrivateKey : Bool
-    , userData : Maybe UserData
     }
 
 
@@ -50,10 +46,10 @@ type alias UserData =
 
 baseModel : Model
 baseModel =
-    { usernameInput = Form.newInput
+    { taskOnCompleteMsg = TaskOnComplete
+    , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
     , showPrivateKey = False
-    , userData = Nothing
     }
 
 
@@ -87,83 +83,86 @@ update msg model =
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
                     }
-
-                ( modelUserData, effects, cmds ) =
-                    case buildUserData newModel of
-                        Ok userData ->
-                            -- TODO: Use loader effect here, to show fake progress bar
-                            ( Just userData
-                            , Effect.none
-                            , Api.post
-                                { url = "/api/users/request_access"
-                                , body = Http.stringBody "text/plain" <| Business.Username.toString userData.username
-                                , decoder = Json.Decode.decodeString decodeAccessRequest
-                                }
-                                |> Task.attempt GotAccessRequest
-                            )
-
-                        Err submissionError ->
-                            ( Nothing
-                            , Effect.addAlert (Alert.new Alert.Error submissionError)
-                            , Cmd.none
-                            )
             in
-            ( { newModel | userData = modelUserData }, effects, cmds )
+            case buildUserData newModel of
+                Ok userData ->
+                    let
+                        requestAccess : ConcurrentTask.ConcurrentTask Tasks.Error Challenge
+                        requestAccess =
+                            ConcurrentTask.Http.post
+                                { url = "/api/users/request_access"
+                                , headers = []
+                                , body = ConcurrentTask.Http.stringBody "text/plain" <| Business.Username.toString userData.username
+                                , expect = ConcurrentTask.Http.expectJson decodeChallenge
+                                , timeout = Nothing
+                                }
+                                |> ConcurrentTask.mapError taskErrorMapper
 
-        GotAccessRequest result ->
-            case ( result, model.userData ) of
-                ( Ok accessRequest, Just userData ) ->
-                    ( model
-                    , Effect.none
-                    , Port.sendAccessRequest <| encodeAccessRequestWithPrivateKey accessRequest userData.privateKey
-                    )
+                        encryptChallenge : Challenge -> ConcurrentTask.ConcurrentTask Tasks.Error Json.Decode.Value
+                        encryptChallenge challenge =
+                            ConcurrentTask.define
+                                { function = "register:encryptChallenge"
+                                , expect = ConcurrentTask.expectJson Json.Decode.value
+                                , errors = ConcurrentTask.expectErrors Json.Decode.string
+                                , args = encodeChallengeWithUserData challenge userData
+                                }
+                                |> ConcurrentTask.mapError Tasks.RegisterError
 
-                ( Err errorMsg, _ ) ->
-                    ( model
-                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
+                        createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Tasks.Error ()
+                        createUser value =
+                            ConcurrentTask.Http.post
+                                { url = "/api/users/create_user"
+                                , headers = []
+                                , body = ConcurrentTask.Http.jsonBody value
+                                , expect = ConcurrentTask.Http.expectWhatever
+                                , timeout = Nothing
+                                }
+                                |> ConcurrentTask.mapError taskErrorMapper
+
+                        registrationTask : ConcurrentTask.ConcurrentTask Tasks.Error Tasks.Output
+                        registrationTask =
+                            requestAccess
+                                |> ConcurrentTask.andThen encryptChallenge
+                                |> ConcurrentTask.andThen createUser
+                                |> ConcurrentTask.map Tasks.Register
+                    in
+                    -- TODO: Use loader effect here, to show fake progress bar
+                    ( newModel
+                    , Effect.task registrationTask
                     , Cmd.none
                     )
 
-                _ ->
-                    -- TODO: Notify alerting system here...
-                    ( model
-                    , Effect.addAlert
-                        (Alert.new
-                            Alert.Error
-                            "There was an internal error processing your request. Please, try again."
-                        )
+                Err submissionError ->
+                    ( newModel
+                    , Effect.addAlert (Alert.new Alert.Error submissionError)
                     , Cmd.none
                     )
 
-        GotChallengeEncrypted raw ->
-            ( model
-            , Effect.none
-            , Api.post
-                { url = "/api/users/create_user"
-                , body = Http.jsonBody raw
-                , decoder = Json.Decode.decodeString decodeUserCreation
-                }
-                |> Task.attempt GotUserCreated
-            )
+        TaskOnComplete _ ->
+            Debug.todo ""
 
-        GotUserCreated result ->
-            case result of
-                Ok _ ->
-                    ( model
-                    , Effect.batch
-                        [ Effect.addAlert (Alert.new Alert.Success "Registration successful! Please log in now.")
-                        , Effect.redirect "/"
-                        ]
-                    , Cmd.none
-                    )
 
-                Err errMsg ->
-                    ( model, Effect.addAlert (Alert.new Alert.Error errMsg), Cmd.none )
+taskErrorMapper : ConcurrentTask.Http.Error -> Tasks.Error
+taskErrorMapper error =
+    case error of
+        ConcurrentTask.Http.BadStatus meta value ->
+            if List.member meta.statusCode [ 400, 500 ] then
+                value
+                    |> Json.Decode.decodeValue Json.Decode.string
+                    |> Result.toMaybe
+                    |> Maybe.withDefault "Unknown error"
+                    |> Tasks.RegisterError
+
+            else
+                Tasks.RegisterError "Unknown error"
+
+        _ ->
+            Tasks.RegisterError "Error while performing registration request. Please, try again."
 
 
 subscriptions : Sub Msg
 subscriptions =
-    Port.getChallengeEncrypted GotChallengeEncrypted
+    Sub.none
 
 
 buildUserData : Model -> Result String UserData
@@ -268,24 +267,18 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
         ]
 
 
-encodeAccessRequestWithPrivateKey : AccessRequest -> Business.PrivateKey.PrivateKey -> Json.Encode.Value
-encodeAccessRequestWithPrivateKey accessRequest privateKey =
+encodeChallengeWithUserData : Challenge -> UserData -> Json.Encode.Value
+encodeChallengeWithUserData challenge userData =
     Json.Encode.object
-        [ ( "username", Business.Username.encode accessRequest.username )
-        , ( "privateKey", Business.PrivateKey.encode privateKey )
-        , ( "nonce", Json.Encode.string accessRequest.nonce )
-        , ( "challenge", Json.Encode.string accessRequest.challenge )
+        [ ( "username", Business.Username.encode userData.username )
+        , ( "privateKey", Business.PrivateKey.encode userData.privateKey )
+        , ( "nonce", Json.Encode.string challenge.nonce )
+        , ( "challenge", Json.Encode.string challenge.challenge )
         ]
 
 
-decodeAccessRequest : Json.Decode.Decoder AccessRequest
-decodeAccessRequest =
-    Json.Decode.map3 AccessRequest
-        (Json.Decode.field "username" Business.Username.decode)
+decodeChallenge : Json.Decode.Decoder Challenge
+decodeChallenge =
+    Json.Decode.map2 Challenge
         (Json.Decode.field "nonce" Json.Decode.string)
         (Json.Decode.field "challenge" Json.Decode.string)
-
-
-decodeUserCreation : Json.Decode.Decoder ()
-decodeUserCreation =
-    Json.Decode.succeed ()

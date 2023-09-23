@@ -98,7 +98,10 @@ server.post("/api/users/request_access", async (req, res) => {
 
     await createUserRequest.run({ user }, db);
 
-    return res.send(user);
+    return res.send({
+      nonce: user.nonce,
+      challenge: user.challenge,
+    });
   } catch (e) {
     // TODO: monitor error here...
     console.log(e);
@@ -139,7 +142,7 @@ server.post("/api/users/create_user", async (req, res) => {
     return res.send(true);
   } catch (_) {
     // TODO: monitor error here
-    return res.send(defaultError);
+    return res.status(500).send(defaultError);
   }
 });
 
@@ -169,7 +172,10 @@ server.post("/api/users/login_request", async (req, res) => {
 
 server.post("/api/users/login", async (req, res) => {
   try {
-    const possibleUser = await getUser.run({ username: req.body?.username }, db);
+    const possibleUser = await getUser.run(
+      { username: req.body?.username },
+      db,
+    );
 
     if (possibleUser.length < 1 || !possibleUser[0]) {
       return res

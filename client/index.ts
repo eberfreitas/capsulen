@@ -1,11 +1,24 @@
+import * as ConcurrentTask from "@andrewmacmurray/elm-concurrent-task";
+
 import { handleAccessRequest } from "./handlers/access_request";
 import { handleLoginRequest } from "./handlers/login_request";
 import { handlePost } from "./handlers/post";
 import { handlePosts } from "./handlers/posts";
 import { handleToken } from "./handlers/token";
+import { encryptChallenge } from "./tasks/register";
 
 (function() {
   const app = window.Elm.App.init();
+
+  ConcurrentTask.register({
+    tasks: {
+      "register:encryptChallenge": encryptChallenge,
+    },
+    ports: {
+      send: app.ports.taskSend,
+      receive: app.ports.taskReceive,
+    },
+  });
 
   type PrivateStuff = { token: string; privateKey: CryptoKey };
 

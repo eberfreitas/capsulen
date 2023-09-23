@@ -9,6 +9,8 @@ port module Port exposing
     , sendPost
     , sendPostsRequest
     , sendToken
+    , taskReceive
+    , taskSend
     )
 
 import Json.Decode

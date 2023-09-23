@@ -4,6 +4,7 @@ import Alert
 import AppUrl
 import Browser
 import Browser.Navigation
+import ConcurrentTask
 import Context
 import Effect
 import Html
@@ -11,6 +12,7 @@ import Page.Login
 import Page.Posts
 import Page.Register
 import Port
+import Tasks
 import Url
 import View.Alerts
 
@@ -32,6 +34,8 @@ type Page
 type Msg
     = UrlChange Url.Url
     | UrlRequest Browser.UrlRequest
+    | TaskOnComplete (ConcurrentTask.Response Tasks.Error Tasks.Output)
+    | TaskOnProgress ( ConcurrentTask.Pool Msg Tasks.Error Tasks.Output, Cmd Msg )
     | GotError String
     | RegisterMsg Page.Register.Msg
     | LoginMsg Page.Login.Msg
@@ -72,6 +76,10 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        runEffect =
+            Effect.run TaskOnComplete
+    in
     case ( msg, model.page ) of
         ( UrlRequest request, _ ) ->
             case request of
@@ -88,13 +96,40 @@ update msg model =
             in
             ( { model | page = page, url = url }, cmd )
 
+        ( TaskOnProgress ( tasks, cmd ), _ ) ->
+            let
+                context =
+                    model.context
+
+                newContext =
+                    { context | tasks = tasks }
+            in
+            ( { model | context = newContext }, cmd )
+
+        ( TaskOnComplete response, Register subModel ) ->
+            let
+                subMsg =
+                    response
+                        |> Tasks.toResult
+                        |> subModel.taskOnCompleteMsg
+
+                ( nextSubModel, effects, nextCmd ) =
+                    Page.Register.update subMsg subModel
+
+                ( nextContext, effectsCmds ) =
+                    runEffect model.context effects
+            in
+            ( { model | page = Register nextSubModel, context = nextContext }
+            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map RegisterMsg ]
+            )
+
         ( GotError errorMsg, _ ) ->
             let
                 effect =
                     Effect.addAlert (Alert.new Alert.Error errorMsg)
 
                 ( nextContext, cmd ) =
-                    Effect.run effect model.context
+                    runEffect model.context effect
             in
             ( { model | context = nextContext }, cmd )
 
@@ -105,7 +140,7 @@ update msg model =
                     View.Alerts.update subMsg
 
                 ( nextContext, cmds ) =
-                    Effect.run effect model.context
+                    runEffect model.context effect
             in
             ( { model | context = nextContext }, cmds )
 
@@ -115,7 +150,7 @@ update msg model =
                     Page.Register.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
-                    Effect.run effects model.context
+                    runEffect model.context effects
             in
             ( { model | page = Register nextSubModel, context = nextContext }
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map RegisterMsg ]
@@ -127,7 +162,7 @@ update msg model =
                     Page.Login.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
-                    Effect.run effects model.context
+                    runEffect model.context effects
             in
             ( { model | page = Login nextSubModel, context = nextContext }
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map LoginMsg ]
@@ -139,7 +174,7 @@ update msg model =
                     Page.Posts.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
-                    Effect.run effects model.context
+                    runEffect model.context effects
             in
             ( { model | page = Posts nextSubModel, context = nextContext }
             , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map PostsMsg ]
@@ -175,12 +210,18 @@ router url =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Sub.batch
         [ Port.getError GotError
         , Page.Register.subscriptions |> Sub.map RegisterMsg
         , Page.Login.subscriptions |> Sub.map LoginMsg
         , Page.Posts.subscriptions |> Sub.map PostsMsg
+        , ConcurrentTask.onProgress
+            { send = Port.taskSend
+            , receive = Port.taskReceive
+            , onProgress = TaskOnProgress
+            }
+            model.context.tasks
         ]
 
 
