@@ -93,7 +93,7 @@ server.post("/api/users/request_access", async (req, res) => {
     if (exists.length > 0) {
       return res
         .status(400)
-        .send("Username is already in use. Please, pick a different username.");
+        .send("USERNAME_IN_USE");
     }
 
     await createUserRequest.run({ user }, db);
@@ -104,17 +104,15 @@ server.post("/api/users/request_access", async (req, res) => {
     });
   } catch (e) {
     // TODO: monitor error here...
-    console.log(e);
-
     return res
       .status(500)
-      .send("There was an error registering your account. Please, try again.");
+      .send("REGISTER_ERROR");
   }
 });
 
 server.post("/api/users/create_user", async (req, res) => {
   const defaultError =
-    "There was an error registering your account. Please, try again.";
+    "REGISTER_ERROR";
 
   try {
     const possibleUser = await getPendingUser.run(
@@ -131,7 +129,7 @@ server.post("/api/users/create_user", async (req, res) => {
 
     const user = possibleUser[0];
 
-    persistChallenge.run(
+    await persistChallenge.run(
       {
         id: user.id,
         challengeEncrypted: req.body?.challengeEncrypted,

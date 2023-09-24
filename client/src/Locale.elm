@@ -74,6 +74,11 @@ phrases =
         }
       )
     , ( "REGISTER", { pt = "Registrar conta", en = "Register" } )
+    , ( "REGISTER_ERROR"
+      , { pt = "Houve um error ao registrar sua conta. Por favor, tente novamente"
+        , en = "There was an error registering your account. Please, try again"
+        }
+      )
     , ( "REGISTER_NEW", { pt = "Registrar nova conta", en = "Register new account" } )
     , ( "REGISTER_SUCCESS"
       , { pt = "Registro realizado com sucesso! Você pode acessar sua conta agora"
@@ -100,6 +105,11 @@ phrases =
     , ( "USERNAME_INVALID"
       , { pt = "Nome de usuário pode conter apenas letras, números e underscoders (_)"
         , en = "Username must contain only letters, numbers and underscores (_)"
+        }
+      )
+    , ( "USERNAME_IN_USE"
+      , { pt = "Nome de usuário já cadastrado. Escolha um diferente e tente novamente"
+        , en = "Username is already in use. Please, pick a different username"
         }
       )
     ]

@@ -236,17 +236,12 @@ subscriptions pool =
 
 buildUserData : Model -> Result String UserData
 buildUserData { usernameInput, privateKeyInput } =
-    let
-        errorMsgKey : String
-        errorMsgKey =
-            "INVALID_INPUTS"
-    in
     case ( usernameInput.valid, privateKeyInput.valid ) of
         ( Form.Valid username, Form.Valid privateKey ) ->
             Ok { username = username, privateKey = privateKey }
 
         _ ->
-            Err errorMsgKey
+            Err "INVALID_INPUTS"
 
 
 view : (String -> String) -> Model -> Html.Html Msg
