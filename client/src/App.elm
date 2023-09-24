@@ -7,6 +7,7 @@ import Browser.Navigation
 import Context
 import Effect
 import Html
+import Locale
 import Page.Login
 import Page.Posts
 import Page.Register
@@ -42,14 +43,18 @@ type Msg
 view : Model -> Browser.Document Msg
 view model =
     let
+        localeHelper : String -> String
+        localeHelper =
+            Locale.getPhrase model.context.locale
+
         pageHtml : Html.Html Msg
         pageHtml =
             case model.page of
                 Register subModel ->
-                    subModel |> Page.Register.view |> Html.map RegisterMsg
+                    subModel |> Page.Register.view localeHelper |> Html.map RegisterMsg
 
                 Login subModel ->
-                    subModel |> Page.Login.view |> Html.map LoginMsg
+                    subModel |> Page.Login.view localeHelper |> Html.map LoginMsg
 
                 Posts subModel ->
                     subModel |> Page.Posts.view model.context |> Html.map PostsMsg
@@ -72,6 +77,11 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        localeHelper : String -> String
+        localeHelper =
+            Locale.getPhrase model.context.locale
+    in
     case ( msg, model.page ) of
         ( UrlRequest request, _ ) ->
             case request of
@@ -112,7 +122,7 @@ update msg model =
         ( RegisterMsg subMsg, Register subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Register.update subMsg subModel
+                    Page.Register.update localeHelper subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -155,7 +165,12 @@ init () url key =
         ( page, cmd ) =
             router <| AppUrl.fromUrl url
     in
-    ( { url = url, context = Context.new key, page = page }, cmd )
+    ( { url = url
+      , context = Context.new key (Locale.fromString "pt") -- TODO: get locale from browser as flag
+      , page = page
+      }
+    , cmd
+    )
 
 
 router : AppUrl.AppUrl -> ( Page, Cmd Msg )

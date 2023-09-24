@@ -16,21 +16,6 @@ import Phosphor
 import Port
 
 
-type Msg
-    = WithUsername Form.InputEvent
-    | WithPrivateKey Form.InputEvent
-    | ToggleShowPrivateKey
-    | Submit
-    | OnTaskProgress ( TaskPool, Cmd Msg )
-    | OnTaskComplete (ConcurrentTask.Response TaskError TaskOutput)
-
-
-type alias Challenge =
-    { nonce : String
-    , challenge : String
-    }
-
-
 type TaskError
     = RequestError ConcurrentTask.Http.Error
     | Generic String
@@ -44,11 +29,26 @@ type alias TaskPool =
     ConcurrentTask.Pool Msg TaskError TaskOutput
 
 
+type Msg
+    = WithUsername Form.InputEvent
+    | WithPrivateKey Form.InputEvent
+    | ToggleShowPrivateKey
+    | Submit
+    | OnTaskProgress ( TaskPool, Cmd Msg )
+    | OnTaskComplete (ConcurrentTask.Response TaskError TaskOutput)
+
+
 type alias Model =
     { tasks : TaskPool
     , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
     , showPrivateKey : Bool
+    }
+
+
+type alias Challenge =
+    { nonce : String
+    , challenge : String
     }
 
 
@@ -58,8 +58,8 @@ type alias UserData =
     }
 
 
-baseModel : Model
-baseModel =
+initModel : Model
+initModel =
     { tasks = ConcurrentTask.pool
     , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
@@ -69,11 +69,11 @@ baseModel =
 
 init : ( Model, Cmd Msg )
 init =
-    ( baseModel, Cmd.none )
+    ( initModel, Cmd.none )
 
 
-update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update msg model =
+update : (String -> String) -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i msg model =
     let
         done : Model -> ( Model, Effect.Effect, Cmd Msg )
         done model_ =
@@ -81,17 +81,30 @@ update msg model =
     in
     case msg of
         WithUsername event ->
-            done { model | usernameInput = updateUsername event model.usernameInput }
+            done
+                { model
+                    | usernameInput =
+                        Form.updateInput
+                            event
+                            Business.Username.fromString
+                            model.usernameInput
+                }
 
         WithPrivateKey event ->
-            done { model | privateKeyInput = updatePrivateKey event model.privateKeyInput }
+            done
+                { model
+                    | privateKeyInput =
+                        Form.updateInput
+                            event
+                            Business.PrivateKey.fromString
+                            model.privateKeyInput
+                }
 
         ToggleShowPrivateKey ->
             done { model | showPrivateKey = not model.showPrivateKey }
 
         Submit ->
             let
-                newModel : Model
                 newModel =
                     { model
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
@@ -106,8 +119,15 @@ update msg model =
                             ConcurrentTask.Http.post
                                 { url = "/api/users/request_access"
                                 , headers = []
-                                , body = ConcurrentTask.Http.stringBody "text/plain" <| Business.Username.toString userData.username
-                                , expect = ConcurrentTask.Http.expectJson decodeChallenge
+                                , body =
+                                    ConcurrentTask.Http.stringBody "text/plain" <|
+                                        Business.Username.toString userData.username
+                                , expect =
+                                    ConcurrentTask.Http.expectJson
+                                        (Json.Decode.map2 Challenge
+                                            (Json.Decode.field "nonce" Json.Decode.string)
+                                            (Json.Decode.field "challenge" Json.Decode.string)
+                                        )
                                 , timeout = Nothing
                                 }
                                 |> ConcurrentTask.mapError taskErrorMapper
@@ -118,7 +138,13 @@ update msg model =
                                 { function = "register:encryptChallenge"
                                 , expect = ConcurrentTask.expectJson Json.Decode.value
                                 , errors = ConcurrentTask.expectErrors Json.Decode.string
-                                , args = encodeChallengeWithUserData challenge userData
+                                , args =
+                                    Json.Encode.object
+                                        [ ( "username", Business.Username.encode userData.username )
+                                        , ( "privateKey", Business.PrivateKey.encode userData.privateKey )
+                                        , ( "nonce", Json.Encode.string challenge.nonce )
+                                        , ( "challenge", Json.Encode.string challenge.challenge )
+                                        ]
                                 }
                                 |> ConcurrentTask.mapError Generic
 
@@ -151,9 +177,9 @@ update msg model =
                     -- TODO: Use loader effect here, to show fake progress bar
                     ( { newModel | tasks = tasks }, Effect.none, cmd )
 
-                Err submissionError ->
+                Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error submissionError)
+                    , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                     , Cmd.none
                     )
 
@@ -163,21 +189,21 @@ update msg model =
         OnTaskComplete (ConcurrentTask.Success (Register ())) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Success "Registration successful! Please log in now.")
+                [ Effect.addAlert (Alert.new Alert.Success <| i "REGISTER_SUCCESS")
                 , Effect.redirect "/"
                 ]
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Generic errorMsg)) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error errorMsg), Cmd.none )
+        OnTaskComplete (ConcurrentTask.Error (Generic errorMsgKey)) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i errorMsgKey), Cmd.none )
 
         OnTaskComplete (ConcurrentTask.Error (RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model, Effect.addAlert (Alert.new Alert.Error "There was an error processing your request. Please, try again."), Cmd.none )
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error "There was an error processing your request. Please, try again."), Cmd.none )
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
 
 
 taskErrorMapper : ConcurrentTask.Http.Error -> TaskError
@@ -188,7 +214,7 @@ taskErrorMapper error =
                 value
                     |> Json.Decode.decodeValue Json.Decode.string
                     |> Result.toMaybe
-                    |> Maybe.withDefault "Unknown error"
+                    |> Maybe.withDefault "UNKNOWN_ERROR"
                     |> Generic
 
             else
@@ -211,59 +237,23 @@ subscriptions pool =
 buildUserData : Model -> Result String UserData
 buildUserData { usernameInput, privateKeyInput } =
     let
-        errorMsg : String
-        errorMsg =
-            "One or more inputs are invalid. Check the messages in the form to fix and try again."
+        errorMsgKey : String
+        errorMsgKey =
+            "INVALID_INPUTS"
     in
     case ( usernameInput.valid, privateKeyInput.valid ) of
-        ( Just username, Just privateKey ) ->
-            Result.map2
-                (\username_ privateKey_ -> { username = username_, privateKey = privateKey_ })
-                username
-                privateKey
-                |> Result.mapError (always errorMsg)
+        ( Form.Valid username, Form.Valid privateKey ) ->
+            Ok { username = username, privateKey = privateKey }
 
         _ ->
-            Err errorMsg
+            Err errorMsgKey
 
 
-updateUsername :
-    Form.InputEvent
-    -> Form.Input Business.Username.Username
-    -> Form.Input Business.Username.Username
-updateUsername event input =
-    case event of
-        Form.OnInput raw ->
-            { input | raw = String.trim raw }
-
-        Form.OnFocus ->
-            { input | valid = Nothing }
-
-        Form.OnBlur ->
-            Form.parseInput Business.Username.fromString input
-
-
-updatePrivateKey :
-    Form.InputEvent
-    -> Form.Input Business.PrivateKey.PrivateKey
-    -> Form.Input Business.PrivateKey.PrivateKey
-updatePrivateKey event input =
-    case event of
-        Form.OnInput raw ->
-            { input | raw = String.trim raw }
-
-        Form.OnFocus ->
-            { input | valid = Nothing }
-
-        Form.OnBlur ->
-            Form.parseInput Business.PrivateKey.fromString input
-
-
-view : Model -> Html.Html Msg
-view { usernameInput, privateKeyInput, showPrivateKey } =
+view : (String -> String) -> Model -> Html.Html Msg
+view i model =
     let
         ( privateKeyInputType, togglePrivateKeyIcon ) =
-            if showPrivateKey then
+            if model.showPrivateKey then
                 ( "text", Phosphor.eyeClosed Phosphor.Regular |> Phosphor.toHtml [] )
 
             else
@@ -272,26 +262,26 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
     Html.div []
         [ Html.form [ Html.Events.onSubmit Submit ]
             [ Html.fieldset []
-                [ Html.legend [] [ Html.text "Register" ]
+                [ Html.legend [] [ Html.text <| i "REGISTER" ]
                 , Html.label []
                     [ Html.div []
-                        [ Html.text "Username"
+                        [ Html.text <| i "USERNAME"
                         , Html.input
                             ([ Html.Attributes.type_ "text"
-                             , Html.Attributes.value usernameInput.raw
+                             , Html.Attributes.value model.usernameInput.raw
                              ]
                                 ++ Form.inputEvents WithUsername
                             )
                             []
-                        , Form.viewInputError usernameInput
+                        , Form.viewInputError i model.usernameInput
                         ]
                     ]
                 , Html.label []
                     [ Html.div []
-                        [ Html.text "Private key"
+                        [ Html.text <| i "PRIVATE_KEY"
                         , Html.input
                             ([ Html.Attributes.type_ privateKeyInputType
-                             , Html.Attributes.value privateKeyInput.raw
+                             , Html.Attributes.value model.privateKeyInput.raw
                              ]
                                 ++ Form.inputEvents WithPrivateKey
                             )
@@ -299,29 +289,12 @@ view { usernameInput, privateKeyInput, showPrivateKey } =
                         , Html.button
                             [ Html.Attributes.type_ "button", Html.Events.onClick ToggleShowPrivateKey ]
                             [ togglePrivateKeyIcon ]
-                        , Form.viewInputError privateKeyInput
-                        , Html.div [] [ Html.text "Your private key will *never* be sent over the network." ]
+                        , Form.viewInputError i model.privateKeyInput
+                        , Html.div [] [ Html.text <| i "PRIVATE_KEY_NOTICE" ]
                         ]
                     ]
-                , Html.button [] [ Html.text "Register" ]
+                , Html.button [] [ Html.text <| i "REGISTER" ]
                 ]
             ]
-        , Html.a [ Html.Attributes.href "/" ] [ Html.text "Login" ]
+        , Html.a [ Html.Attributes.href "/" ] [ Html.text <| i "LOGIN" ]
         ]
-
-
-encodeChallengeWithUserData : Challenge -> UserData -> Json.Encode.Value
-encodeChallengeWithUserData challenge userData =
-    Json.Encode.object
-        [ ( "username", Business.Username.encode userData.username )
-        , ( "privateKey", Business.PrivateKey.encode userData.privateKey )
-        , ( "nonce", Json.Encode.string challenge.nonce )
-        , ( "challenge", Json.Encode.string challenge.challenge )
-        ]
-
-
-decodeChallenge : Json.Decode.Decoder Challenge
-decodeChallenge =
-    Json.Decode.map2 Challenge
-        (Json.Decode.field "nonce" Json.Decode.string)
-        (Json.Decode.field "challenge" Json.Decode.string)

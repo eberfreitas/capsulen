@@ -1,6 +1,5 @@
-module Business.Username exposing (Username, decode, encode, fromString, toString)
+module Business.Username exposing (Username, encode, fromString, toString)
 
-import Json.Decode
 import Json.Encode
 import Regex
 
@@ -21,10 +20,10 @@ fromString raw =
                 |> String.trim
     in
     if username == "" then
-        Err "Username can't be empty."
+        Err "USERNAME_EMPTY"
 
     else if username /= raw then
-        Err "Username must contain only letters, numbers and underscores (_)."
+        Err "USERNAME_INVALID"
 
     else
         Ok (Username username)
@@ -33,20 +32,6 @@ fromString raw =
 toString : Username -> String
 toString (Username username) =
     username
-
-
-decode : Json.Decode.Decoder Username
-decode =
-    Json.Decode.string
-        |> Json.Decode.andThen
-            (\username ->
-                case fromString username of
-                    Ok username_ ->
-                        Json.Decode.succeed username_
-
-                    Err _ ->
-                        Json.Decode.fail <| "Could not decode username: " ++ username
-            )
 
 
 encode : Username -> Json.Encode.Value

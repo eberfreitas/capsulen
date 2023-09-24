@@ -146,7 +146,7 @@ server.post("/api/users/create_user", async (req, res) => {
   }
 });
 
-server.post("/api/users/login_request", async (req, res) => {
+server.post("/api/users/request_login", async (req, res) => {
   try {
     const possibleUser = await getUser.run({ username: req.body }, db);
 
@@ -158,10 +158,7 @@ server.post("/api/users/login_request", async (req, res) => {
 
     const user = possibleUser[0];
 
-    res.send({
-      username: user.username,
-      challenge_encrypted: user.challenge_encrypted,
-    });
+    res.send(user.challenge_encrypted);
   } catch (_) {
     //TODO: monitor error here
     return res

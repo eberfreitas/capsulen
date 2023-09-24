@@ -19,7 +19,7 @@ export async function encryptChallenge(args: {
     const error =
       e instanceof Error
         ? e.message
-        : "Unexpected error while handling your registration request.";
+        : "UNEXPECTED_REGISTER_ERROR";
 
     return { error };
   }

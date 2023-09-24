@@ -20,10 +20,10 @@ fromString raw =
             String.trim raw
     in
     if String.length privateKey < minLength then
-        Err ("Private key must have more than " ++ String.fromInt minLength ++ " characters.")
+        Err "PRIVATE_KEY_SHORT"
 
     else if raw /= String.trim raw then
-        Err "Avoid spaces at the beginning and end of the private key."
+        Err "PRIVATE_KEY_WS"
 
     else
         Ok (PrivateKey privateKey)
