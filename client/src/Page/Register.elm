@@ -13,7 +13,7 @@ import Html.Events
 import Json.Decode
 import Json.Encode
 import Phosphor
-import Tasks
+import Port
 
 
 type Msg
@@ -21,7 +21,8 @@ type Msg
     | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
-    | TaskOnComplete (Result Tasks.Error Tasks.Output)
+    | OnTaskProgress ( TaskPool, Cmd Msg )
+    | OnTaskComplete (ConcurrentTask.Response TaskError TaskOutput)
 
 
 type alias Challenge =
@@ -30,8 +31,21 @@ type alias Challenge =
     }
 
 
+type TaskError
+    = RequestError ConcurrentTask.Http.Error
+    | Generic String
+
+
+type TaskOutput
+    = Register ()
+
+
+type alias TaskPool =
+    ConcurrentTask.Pool Msg TaskError TaskOutput
+
+
 type alias Model =
-    { taskOnCompleteMsg : Result Tasks.Error Tasks.Output -> Msg
+    { tasks : TaskPool
     , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
     , showPrivateKey : Bool
@@ -46,7 +60,7 @@ type alias UserData =
 
 baseModel : Model
 baseModel =
-    { taskOnCompleteMsg = TaskOnComplete
+    { tasks = ConcurrentTask.pool
     , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
     , showPrivateKey = False
@@ -87,7 +101,7 @@ update msg model =
             case buildUserData newModel of
                 Ok userData ->
                     let
-                        requestAccess : ConcurrentTask.ConcurrentTask Tasks.Error Challenge
+                        requestAccess : ConcurrentTask.ConcurrentTask TaskError Challenge
                         requestAccess =
                             ConcurrentTask.Http.post
                                 { url = "/api/users/request_access"
@@ -98,7 +112,7 @@ update msg model =
                                 }
                                 |> ConcurrentTask.mapError taskErrorMapper
 
-                        encryptChallenge : Challenge -> ConcurrentTask.ConcurrentTask Tasks.Error Json.Decode.Value
+                        encryptChallenge : Challenge -> ConcurrentTask.ConcurrentTask TaskError Json.Decode.Value
                         encryptChallenge challenge =
                             ConcurrentTask.define
                                 { function = "register:encryptChallenge"
@@ -106,9 +120,9 @@ update msg model =
                                 , errors = ConcurrentTask.expectErrors Json.Decode.string
                                 , args = encodeChallengeWithUserData challenge userData
                                 }
-                                |> ConcurrentTask.mapError Tasks.RegisterError
+                                |> ConcurrentTask.mapError Generic
 
-                        createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Tasks.Error ()
+                        createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask TaskError ()
                         createUser value =
                             ConcurrentTask.Http.post
                                 { url = "/api/users/create_user"
@@ -119,18 +133,23 @@ update msg model =
                                 }
                                 |> ConcurrentTask.mapError taskErrorMapper
 
-                        registrationTask : ConcurrentTask.ConcurrentTask Tasks.Error Tasks.Output
+                        registrationTask : ConcurrentTask.ConcurrentTask TaskError TaskOutput
                         registrationTask =
                             requestAccess
                                 |> ConcurrentTask.andThen encryptChallenge
                                 |> ConcurrentTask.andThen createUser
-                                |> ConcurrentTask.map Tasks.Register
+                                |> ConcurrentTask.map Register
+
+                        ( tasks, cmd ) =
+                            ConcurrentTask.attempt
+                                { send = Port.taskSend
+                                , pool = model.tasks
+                                , onComplete = OnTaskComplete
+                                }
+                                registrationTask
                     in
                     -- TODO: Use loader effect here, to show fake progress bar
-                    ( newModel
-                    , Effect.task registrationTask
-                    , Cmd.none
-                    )
+                    ( { newModel | tasks = tasks }, Effect.none, cmd )
 
                 Err submissionError ->
                     ( newModel
@@ -138,11 +157,30 @@ update msg model =
                     , Cmd.none
                     )
 
-        TaskOnComplete _ ->
-            Debug.todo ""
+        OnTaskProgress ( tasks, cmd ) ->
+            ( { model | tasks = tasks }, Effect.none, cmd )
+
+        OnTaskComplete (ConcurrentTask.Success (Register ())) ->
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Success "Registration successful! Please log in now.")
+                , Effect.redirect "/"
+                ]
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Error (Generic errorMsg)) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error errorMsg), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.Error (RequestError _)) ->
+            -- TODO: send error to monitoring tool
+            ( model, Effect.addAlert (Alert.new Alert.Error "There was an error processing your request. Please, try again."), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error "There was an error processing your request. Please, try again."), Cmd.none )
 
 
-taskErrorMapper : ConcurrentTask.Http.Error -> Tasks.Error
+taskErrorMapper : ConcurrentTask.Http.Error -> TaskError
 taskErrorMapper error =
     case error of
         ConcurrentTask.Http.BadStatus meta value ->
@@ -151,18 +189,23 @@ taskErrorMapper error =
                     |> Json.Decode.decodeValue Json.Decode.string
                     |> Result.toMaybe
                     |> Maybe.withDefault "Unknown error"
-                    |> Tasks.RegisterError
+                    |> Generic
 
             else
-                Tasks.RegisterError "Unknown error"
+                RequestError error
 
         _ ->
-            Tasks.RegisterError "Error while performing registration request. Please, try again."
+            RequestError error
 
 
-subscriptions : Sub Msg
-subscriptions =
-    Sub.none
+subscriptions : TaskPool -> Sub Msg
+subscriptions pool =
+    ConcurrentTask.onProgress
+        { send = Port.taskSend
+        , receive = Port.taskReceive
+        , onProgress = OnTaskProgress
+        }
+        pool
 
 
 buildUserData : Model -> Result String UserData
