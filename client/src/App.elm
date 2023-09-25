@@ -132,7 +132,7 @@ update msg model =
         ( PostsMsg subMsg, Posts subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Posts.update subMsg subModel
+                    Page.Posts.update model.context subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -205,6 +205,9 @@ subscriptions model =
 
                 Login subModel ->
                     [ Page.Login.subscriptions subModel.tasks |> Sub.map LoginMsg ]
+
+                Posts subModel ->
+                    [ Page.Posts.subscriptions subModel.tasks |> Sub.map PostsMsg ]
 
                 _ ->
                     []

@@ -61,19 +61,36 @@ phrases =
         , en = "You need to be logged in to see this page. Please"
         }
       )
-    , ( "INPUT_EMPTY", { pt = "Este campo não pode ficar vazio", en = "This field can't be empty" } )
+    , ( "INPUT_EMPTY"
+      , { pt = "Este campo não pode ficar vazio"
+        , en = "This field can't be empty"
+        }
+      )
     , ( "INVALID_INPUTS"
       , { pt = "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"
         , en = "One or more inputs are invalid. Check the messages in the form to fix and try again"
         }
       )
-    , ( "LOGIN", { pt = "Login", en = "Login" } )
+    , ( "LOGIN"
+      , { pt = "Login"
+        , en = "Login"
+        }
+      )
     , ( "LOGIN_ERROR"
       , { pt = "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente"
         , en = "There was an error trying to log you in. Please, try again"
         }
       )
-    , ( "PRIVATE_KEY", { pt = "Chave privada", en = "Private key" } )
+    , ( "POST_ERROR"
+      , { pt = "Houve um error ao salvar sua postagem. Por favor, tente novamente"
+        , en = "There was an error saving your post. Please, try again"
+        }
+      )
+    , ( "PRIVATE_KEY"
+      , { pt = "Chave privada"
+        , en = "Private key"
+        }
+      )
     , ( "PRIVATE_KEY_NOTICE"
       , { pt = "Sua chave privada nunca será enviada pela rede"
         , en = "Your private key will never be sent over the network"
@@ -89,13 +106,21 @@ phrases =
         , en = "Avoid spaces at the beginning and end of the private key"
         }
       )
-    , ( "REGISTER", { pt = "Registrar conta", en = "Register" } )
+    , ( "REGISTER"
+      , { pt = "Registrar conta"
+        , en = "Register"
+        }
+      )
     , ( "REGISTER_ERROR"
       , { pt = "Houve um error ao registrar sua conta. Por favor, tente novamente"
         , en = "There was an error registering your account. Please, try again"
         }
       )
-    , ( "REGISTER_NEW", { pt = "Registrar nova conta", en = "Register new account" } )
+    , ( "REGISTER_NEW"
+      , { pt = "Registrar nova conta"
+        , en = "Register new account"
+        }
+      )
     , ( "REGISTER_SUCCESS"
       , { pt = "Registro realizado com sucesso! Você pode acessar sua conta agora"
         , en = "Registration successful! Please log in now"
@@ -106,13 +131,26 @@ phrases =
         , en = "There was an error processing your request. Please, try again"
         }
       )
-    , ( "UNKNOWN_ERROR", { pt = "Erro desconhecido", en = "Unknown error" } )
+    , ( "UNKNOWN_ERROR"
+      , { pt = "Erro desconhecido"
+        , en = "Unknown error"
+        }
+      )
     , ( "UNEXPECTED_REGISTER_ERROR"
       , { pt = "Erro inexperado ao lidar com seu pedido de registro"
         , en = "Unexpected error while handling your registration request"
         }
       )
-    , ( "USERNAME", { pt = "Nome de usuário", en = "Username" } )
+    , ( "USER_NOT_FOUND"
+      , { pt = "Usuário não encontrado"
+        , en = "User not found"
+        }
+      )
+    , ( "USERNAME"
+      , { pt = "Nome de usuário"
+        , en = "Username"
+        }
+      )
     , ( "USERNAME_EMPTY"
       , { pt = "Nome de usuário não pode ficar vazio"
         , en = "Username can't be empty"

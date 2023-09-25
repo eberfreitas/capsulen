@@ -1,4 +1,4 @@
-module Page exposing (TaskError(..), done, httpErrorMapper, plainParser)
+module Page exposing (TaskError(..), done, httpErrorMapper, nonEmptyInputParser)
 
 import ConcurrentTask.Http
 import Effect
@@ -8,11 +8,6 @@ import Json.Decode
 type TaskError
     = RequestError ConcurrentTask.Http.Error
     | Generic String
-
-
-done : model -> ( model, Effect.Effect, Cmd msg )
-done model =
-    ( model, Effect.none, Cmd.none )
 
 
 httpErrorMapper : ConcurrentTask.Http.Error -> TaskError
@@ -33,8 +28,13 @@ httpErrorMapper error =
             RequestError error
 
 
-plainParser : String -> Result String String
-plainParser value =
+done : model -> ( model, Effect.Effect, Cmd msg )
+done model =
+    ( model, Effect.none, Cmd.none )
+
+
+nonEmptyInputParser : String -> Result String String
+nonEmptyInputParser value =
     let
         parsedValue : String
         parsedValue =

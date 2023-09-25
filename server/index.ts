@@ -51,7 +51,7 @@ async function getPasetoKey(): Promise<KeyObject> {
 
 async function getAuthUser(req: Request): Promise<IGetUserResult> {
   const token = (req.headers?.["authorization"] ?? "")
-    .replace("Bearer ", "")
+    .replace("Bearer", "")
     .trim();
 
   const key = await getPasetoKey();
@@ -63,7 +63,7 @@ async function getAuthUser(req: Request): Promise<IGetUserResult> {
   );
 
   if (user.length < 1 || !user[0]) {
-    throw new Error("User not found.");
+    throw new Error("USER_NOT_FOUND");
   }
 
   return user[0];
@@ -212,7 +212,7 @@ server.post("/api/posts", async (req, res) => {
     if (possiblePost.length < 1) {
       return res
         .status(500)
-        .send("There was an error saving your post. Please, try again.");
+        .send("POST_ERROR");
     }
 
     const post = possiblePost[0];
@@ -226,7 +226,7 @@ server.post("/api/posts", async (req, res) => {
     //TODO: monitor error here
     return res
       .status(500)
-      .send("There was an error saving your post. Please, try again.");
+      .send("POST_ERROR");
   }
 });
 

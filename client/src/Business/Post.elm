@@ -1,11 +1,23 @@
-module Business.Post exposing (Content(..), Post, decode)
+module Business.Post exposing
+    ( Content(..)
+    , Post
+    , PostContent
+    , decode
+    , encodePostContent
+    )
 
 import Json.Decode
+import Json.Encode
+
+
+type alias PostContent =
+    { body : String
+    }
 
 
 type Content
     = Encrypted String
-    | Decrypted { data : String }
+    | Decrypted PostContent
 
 
 type alias Post =
@@ -15,10 +27,17 @@ type alias Post =
     }
 
 
+encodePostContent : PostContent -> Json.Encode.Value
+encodePostContent postContent =
+    Json.Encode.object
+        [ ( "body", Json.Encode.string postContent.body )
+        ]
+
+
 decodeDecryptedContent : Json.Decode.Decoder Content
 decodeDecryptedContent =
-    Json.Decode.map (\data -> Decrypted { data = data })
-        (Json.Decode.field "data" Json.Decode.string)
+    Json.Decode.map (PostContent >> Decrypted)
+        (Json.Decode.field "body" Json.Decode.string)
 
 
 decodeEncryptedContent : Json.Decode.Decoder Content

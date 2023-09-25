@@ -74,10 +74,10 @@ update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update msg model =
     case msg of
         WithUsername event ->
-            Page.done { model | usernameInput = Form.updateInput event Page.plainParser model.usernameInput }
+            Page.done { model | usernameInput = Form.updateInput event Page.nonEmptyInputParser model.usernameInput }
 
         WithPrivateKey event ->
-            Page.done { model | privateKeyInput = Form.updateInput event Page.plainParser model.privateKeyInput }
+            Page.done { model | privateKeyInput = Form.updateInput event Page.nonEmptyInputParser model.privateKeyInput }
 
         ToggleShowPrivateKey ->
             Page.done { model | showPrivateKey = not model.showPrivateKey }
@@ -87,8 +87,8 @@ update msg model =
                 newModel : Model
                 newModel =
                     { model
-                        | usernameInput = Form.parseInput Page.plainParser model.usernameInput
-                        , privateKeyInput = Form.parseInput Page.plainParser model.privateKeyInput
+                        | usernameInput = Form.parseInput Page.nonEmptyInputParser model.usernameInput
+                        , privateKeyInput = Form.parseInput Page.nonEmptyInputParser model.privateKeyInput
                     }
             in
             case buildUserData newModel of
