@@ -1,4 +1,4 @@
-module Page exposing (TaskError(..), done, httpErrorMapper)
+module Page exposing (TaskError(..), done, httpErrorMapper, plainParser)
 
 import ConcurrentTask.Http
 import Effect
@@ -31,3 +31,17 @@ httpErrorMapper error =
 
         _ ->
             RequestError error
+
+
+plainParser : String -> Result String String
+plainParser value =
+    let
+        parsedValue : String
+        parsedValue =
+            String.trim value
+    in
+    if parsedValue == "" then
+        Err "INPUT_EMPTY"
+
+    else
+        Ok parsedValue

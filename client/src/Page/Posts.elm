@@ -1,7 +1,5 @@
-module Page.Posts exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Posts exposing (Model, Msg, init, update, view)
 
-import Alert
-import Business.Post
 import Business.User
 import Context
 import Effect
@@ -9,35 +7,16 @@ import Form
 import Html
 import Html.Attributes
 import Html.Events
-import Json.Decode
-import Json.Decode.Extra
-import Json.Encode
-import Port
+import Page
 
 
 type alias Model =
-    { postInput : Form.Input String
-    , posts : List Business.Post.Post
-    }
+    { postInput : Form.Input String }
 
 
 type Msg
     = WithPostInput Form.InputEvent
     | Submit
-    | GotPost Json.Decode.Value
-    | GotPosts Json.Decode.Value
-
-
-type alias Post =
-    { body : String
-    }
-
-
-encodePost : Post -> Json.Encode.Value
-encodePost post =
-    Json.Encode.object
-        [ ( "body", Json.Encode.string post.body )
-        ]
 
 
 view : Context.Context -> Model -> Html.Html Msg
@@ -70,92 +49,19 @@ viewWithoutUser =
 
 init : ( Model, Cmd msg )
 init =
-    ( { postInput = Form.newInput
-      , posts = []
-      }
-    , Port.sendPostsRequest Json.Encode.null
+    ( { postInput = Form.newInput }
+    , Cmd.none
     )
 
 
 update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update msg model =
     case msg of
-        WithPostInput (Form.OnInput raw) ->
-            let
-                postInput =
-                    model.postInput
-
-                newPostInput =
-                    { postInput | raw = raw }
-            in
-            ( { model | postInput = newPostInput }, Effect.none, Cmd.none )
-
-        WithPostInput _ ->
-            ( model, Effect.none, Cmd.none )
+        WithPostInput event ->
+            ( { model | postInput = Form.updateInput event Page.plainParser model.postInput }
+            , Effect.none
+            , Cmd.none
+            )
 
         Submit ->
-            -- TODO: prevent empty submissions
-            let
-                post =
-                    { body = String.trim model.postInput.raw }
-            in
-            ( model, Effect.none, Port.sendPost <| encodePost post )
-
-        GotPost raw ->
-            case Json.Decode.decodeValue decodePostResult raw of
-                Ok (Ok post) ->
-                    ( { model | posts = post :: model.posts }
-                    , Effect.addAlert (Alert.new Alert.Success "New post created.")
-                    , Cmd.none
-                    )
-
-                Ok (Err errorMsg) ->
-                    ( model
-                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
-                    , Cmd.none
-                    )
-
-                Err _ ->
-                    ( model
-                    , Effect.addAlert (Alert.new Alert.Error "There was an error while saving your post. Please, try again.")
-                    , Cmd.none
-                    )
-
-        GotPosts raw ->
-            case Json.Decode.decodeValue decodePostsResult raw of
-                Ok (Ok posts) ->
-                    ( { model | posts = posts ++ model.posts }, Effect.none, Cmd.none )
-
-                Ok (Err errorMsg) ->
-                    ( model
-                    , Effect.addAlert (Alert.new Alert.Error errorMsg)
-                    , Cmd.none
-                    )
-
-                Err _ ->
-                    ( model
-                    , Effect.addAlert (Alert.new Alert.Error "There was an error fetching your posts. Please, try again.")
-                    , Cmd.none
-                    )
-
-
-decodePostsResult : Json.Decode.Decoder (Result String (List Business.Post.Post))
-decodePostsResult =
-    Json.Decode.Extra.result
-        Json.Decode.string
-        (Json.Decode.list Business.Post.decode)
-
-
-decodePostResult : Json.Decode.Decoder (Result String Business.Post.Post)
-decodePostResult =
-    Json.Decode.Extra.result
-        Json.Decode.string
-        Business.Post.decode
-
-
-subscriptions : Sub Msg
-subscriptions =
-    Sub.batch
-        [ Port.getPost GotPost
-        , Port.getPosts GotPosts
-        ]
+            Debug.todo "Submit post!"

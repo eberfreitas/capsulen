@@ -1,4 +1,4 @@
-module Business.PrivateKey exposing (PrivateKey, encode, fromString, toString)
+module Business.PrivateKey exposing (PrivateKey, encode, fromString)
 
 import Json.Encode
 
@@ -27,11 +27,6 @@ fromString raw =
 
     else
         Ok (PrivateKey privateKey)
-
-
-toString : PrivateKey -> String
-toString (PrivateKey privateKey) =
-    privateKey
 
 
 encode : PrivateKey -> Json.Encode.Value

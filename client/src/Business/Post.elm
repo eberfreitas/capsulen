@@ -1,4 +1,4 @@
-module Business.Post exposing (Post, decode)
+module Business.Post exposing (Content, Post, decode)
 
 import Json.Decode
 

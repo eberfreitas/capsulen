@@ -1,4 +1,14 @@
-module Page.Register exposing (Model, Msg, UserData, init, subscriptions, update, view)
+module Page.Register exposing
+    ( Model
+    , Msg
+    , TaskOutput
+    , TaskPool
+    , UserData
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Alert
 import Business.PrivateKey
@@ -96,6 +106,7 @@ update i msg model =
 
         Submit ->
             let
+                newModel : Model
                 newModel =
                     { model
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput

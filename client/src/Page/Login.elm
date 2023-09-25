@@ -1,4 +1,13 @@
-module Page.Login exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Login exposing
+    ( Model
+    , Msg
+    , TaskOutput
+    , TaskPool
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Alert
 import Business.User
@@ -65,20 +74,21 @@ update : (String -> String) -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update i msg model =
     case msg of
         WithUsername event ->
-            Page.done { model | usernameInput = Form.updateInput event plainParser model.usernameInput }
+            Page.done { model | usernameInput = Form.updateInput event Page.plainParser model.usernameInput }
 
         WithPrivateKey event ->
-            Page.done { model | privateKeyInput = Form.updateInput event plainParser model.privateKeyInput }
+            Page.done { model | privateKeyInput = Form.updateInput event Page.plainParser model.privateKeyInput }
 
         ToggleShowPrivateKey ->
             Page.done { model | showPrivateKey = not model.showPrivateKey }
 
         Submit ->
             let
+                newModel : Model
                 newModel =
                     { model
-                        | usernameInput = Form.parseInput plainParser model.usernameInput
-                        , privateKeyInput = Form.parseInput plainParser model.privateKeyInput
+                        | usernameInput = Form.parseInput Page.plainParser model.usernameInput
+                        , privateKeyInput = Form.parseInput Page.plainParser model.privateKeyInput
                     }
             in
             case buildUserData newModel of
@@ -191,19 +201,6 @@ buildUserData model =
 
         _ ->
             Err "INVALID_INPUTS"
-
-
-plainParser : String -> Result String String
-plainParser value =
-    let
-        parsedValue =
-            String.trim value
-    in
-    if parsedValue == "" then
-        Err "INPUT_EMPTY"
-
-    else
-        Ok parsedValue
 
 
 view : (String -> String) -> Model -> Html.Html Msg

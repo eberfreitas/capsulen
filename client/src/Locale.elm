@@ -34,6 +34,7 @@ type alias Phrases =
 getPhrase : Locale -> String -> String
 getPhrase locale phraseKey =
     let
+        mapFn : Phrase -> String
         mapFn =
             case locale of
                 PT ->
