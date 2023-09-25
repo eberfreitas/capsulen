@@ -1,7 +1,7 @@
 module Page.Posts exposing (Model, Msg, init, subscriptions, update, view)
 
 import Alert
-import Business.Post
+import Business.Post exposing (Content(..))
 import Business.User
 import ConcurrentTask
 import ConcurrentTask.Http
@@ -19,6 +19,7 @@ import Port
 
 type TaskOutput
     = Posted Business.Post.Post
+    | PostsLoaded (List Business.Post.Post)
 
 
 type alias TaskPool =
@@ -28,6 +29,7 @@ type alias TaskPool =
 type alias Model =
     { tasks : TaskPool
     , postInput : Form.Input String
+    , posts : List Business.Post.Post
     }
 
 
@@ -60,7 +62,7 @@ viewWithUser _ model =
         ]
 
 
-init : Context.Context -> ( Model, Effect.Effect, Cmd msg )
+init : Context.Context -> ( Model, Effect.Effect, Cmd Msg )
 init context =
     let
         effect : Effect.Effect
@@ -73,12 +75,51 @@ init context =
                         , Effect.redirect "/"
                         ]
                     )
+
+        tasks : TaskPool
+        tasks =
+            ConcurrentTask.pool
+
+        ( newTasks, cmd ) =
+            context.user
+                |> Maybe.map
+                    (\user ->
+                        ConcurrentTask.Http.get
+                            { url = "/api/posts"
+                            , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
+                            , expect = ConcurrentTask.Http.expectJson Json.Decode.value
+                            , timeout = Nothing
+                            }
+                            |> ConcurrentTask.mapError Page.httpErrorMapper
+                            |> ConcurrentTask.andThen
+                                (\value ->
+                                    ConcurrentTask.define
+                                        { function = "posts:decryptPosts"
+                                        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
+                                        , errors = ConcurrentTask.expectErrors Json.Decode.string
+                                        , args =
+                                            Json.Encode.object
+                                                [ ( "privateKey", user.privateKey )
+                                                , ( "posts", value )
+                                                ]
+                                        }
+                                        |> ConcurrentTask.mapError Page.Generic
+                                )
+                            |> ConcurrentTask.map PostsLoaded
+                            |> ConcurrentTask.attempt
+                                { pool = tasks
+                                , send = Port.taskSend
+                                , onComplete = OnTaskComplete
+                                }
+                    )
+                |> Maybe.withDefault ( tasks, Cmd.none )
     in
-    ( { tasks = ConcurrentTask.pool
+    ( { tasks = newTasks
       , postInput = Form.newInput
+      , posts = []
       }
     , effect
-    , Cmd.none
+    , cmd
     )
 
 
@@ -130,7 +171,7 @@ updateWithUser msg model user =
                                 , timeout = Nothing
                                 }
                                 |> ConcurrentTask.mapError Page.httpErrorMapper
-                                |> ConcurrentTask.map Posted
+                                |> ConcurrentTask.map (\post -> Posted { post | content = Business.Post.Decrypted postContent })
 
                         postTask =
                             encryptPost |> ConcurrentTask.andThen persistPost
@@ -154,12 +195,27 @@ updateWithUser msg model user =
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )
 
-        OnTaskComplete response ->
-            let
-                _ =
-                    Debug.log "res" response
-            in
-            Page.done model
+        OnTaskComplete (ConcurrentTask.Success (Posted post)) ->
+            ( { model | posts = post :: model.posts }
+            , Effect.addAlert (Alert.new Alert.Success "POST_NEW")
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Success (PostsLoaded posts)) ->
+            ( { model | posts = model.posts ++ posts }
+            , Effect.none
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error errorMsgKey), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
+            -- TODO: send error to monitoring tool
+            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
 
 
 buildPostContent : Model -> Result String Business.Post.PostContent

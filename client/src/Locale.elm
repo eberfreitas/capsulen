@@ -86,6 +86,11 @@ phrases =
         , en = "There was an error saving your post. Please, try again"
         }
       )
+    , ( "POST_NEW"
+      , { pt = "Novo post adicionado"
+        , en = "New post added"
+        }
+      )
     , ( "PRIVATE_KEY"
       , { pt = "Chave privada"
         , en = "Private key"
