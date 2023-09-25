@@ -29,10 +29,6 @@ export async function decryptPosts(args: {
       const post = args.posts[i];
       const content = await decryptData(post.content, args.privateKey);
 
-      console.log(post);
-      console.log(content);
-      console.log("---");
-
       posts.push({ id: post.id, created_at: post.created_at, content });
     }
 
