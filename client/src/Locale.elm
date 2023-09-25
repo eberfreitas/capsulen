@@ -56,6 +56,11 @@ phrases =
         , en = "Username or private key incorrect. Please, try again"
         }
       )
+    , ( "FORBIDDEN_AREA"
+      , { pt = "Você precisa ter feito login para acessar esta página"
+        , en = "You need to be logged in to see this page. Please"
+        }
+      )
     , ( "INPUT_EMPTY", { pt = "Este campo não pode ficar vazio", en = "This field can't be empty" } )
     , ( "INVALID_INPUTS"
       , { pt = "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"

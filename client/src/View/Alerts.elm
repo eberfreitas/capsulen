@@ -9,9 +9,9 @@ type Msg
     = CloseAlert Int
 
 
-view : List Alert.Message -> Html.Html Msg
-view alerts =
-    Html.div [] (alerts |> List.indexedMap (\index alert -> Alert.toHtml CloseAlert index alert))
+view : (String -> String) -> List Alert.Message -> Html.Html Msg
+view i alerts =
+    Html.div [] (alerts |> List.indexedMap (\index alert -> Alert.toHtml i CloseAlert index alert))
 
 
 update : Msg -> Effect.Effect

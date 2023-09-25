@@ -1,11 +1,11 @@
-module Business.Post exposing (Content, Post, decode)
+module Business.Post exposing (Content(..), Post, decode)
 
 import Json.Decode
 
 
-type alias Content =
-    { data : String
-    }
+type Content
+    = Encrypted String
+    | Decrypted { data : String }
 
 
 type alias Post =
@@ -15,10 +15,20 @@ type alias Post =
     }
 
 
+decodeDecryptedContent : Json.Decode.Decoder Content
+decodeDecryptedContent =
+    Json.Decode.map (\data -> Decrypted { data = data })
+        (Json.Decode.field "data" Json.Decode.string)
+
+
+decodeEncryptedContent : Json.Decode.Decoder Content
+decodeEncryptedContent =
+    Json.Decode.map Encrypted Json.Decode.string
+
+
 decodeContent : Json.Decode.Decoder Content
 decodeContent =
-    Json.Decode.map Content
-        (Json.Decode.field "body" Json.Decode.string)
+    Json.Decode.oneOf [ decodeDecryptedContent, decodeEncryptedContent ]
 
 
 decode : Json.Decode.Decoder Post

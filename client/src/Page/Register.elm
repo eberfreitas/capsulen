@@ -73,13 +73,13 @@ initModel =
     }
 
 
-init : ( Model, Cmd Msg )
+init : ( Model, Effect.Effect, Cmd Msg )
 init =
-    ( initModel, Cmd.none )
+    ( initModel, Effect.none, Cmd.none )
 
 
-update : (String -> String) -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update i msg model =
+update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update msg model =
     case msg of
         WithUsername event ->
             Page.done
@@ -181,7 +181,7 @@ update i msg model =
 
                 Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
+                    , Effect.addAlert (Alert.new Alert.Error errorKey)
                     , Cmd.none
                     )
 
@@ -191,21 +191,21 @@ update i msg model =
         OnTaskComplete (ConcurrentTask.Success (Register ())) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Success <| i "REGISTER_SUCCESS")
+                [ Effect.addAlert (Alert.new Alert.Success "REGISTER_SUCCESS")
                 , Effect.redirect "/"
                 ]
             , Cmd.none
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error <| i errorMsgKey), Cmd.none )
+            ( model, Effect.addAlert (Alert.new Alert.Error errorMsgKey), Cmd.none )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
+            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
+            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
 
 
 subscriptions : TaskPool -> Sub Msg

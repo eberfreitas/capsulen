@@ -10,6 +10,7 @@ import Locale
 import Page.Login
 import Page.Posts
 import Page.Register
+import Tuple.Extra
 import Url
 import View.Alerts
 
@@ -65,7 +66,7 @@ view model =
         [ Html.div
             []
             [ Html.h1 [] [ Html.text "Capsulen" ]
-            , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
+            , View.Alerts.view localeHelper model.context.alerts |> Html.map AlertsMsg
             , Html.div [] [ pageHtml ]
             ]
         ]
@@ -74,11 +75,6 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        localeHelper : String -> String
-        localeHelper =
-            Locale.getPhrase model.context.locale
-    in
     case ( msg, model.page ) of
         ( UrlRequest request, _ ) ->
             case request of
@@ -90,10 +86,13 @@ update msg model =
 
         ( UrlChange url, _ ) ->
             let
-                ( page, cmd ) =
-                    router <| AppUrl.fromUrl url
+                ( page, effect, pageCmd ) =
+                    router model.context <| AppUrl.fromUrl url
+
+                ( nextContext, effectCmd ) =
+                    Effect.run model.context effect
             in
-            ( { model | page = page, url = url }, cmd )
+            ( { model | page = page, url = url, context = nextContext }, Cmd.batch [ effectCmd, pageCmd ] )
 
         ( AlertsMsg subMsg, _ ) ->
             let
@@ -109,7 +108,7 @@ update msg model =
         ( RegisterMsg subMsg, Register subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Register.update localeHelper subMsg subModel
+                    Page.Register.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -121,7 +120,7 @@ update msg model =
         ( LoginMsg subMsg, Login subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Login.update localeHelper subMsg subModel
+                    Page.Login.update subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -149,31 +148,50 @@ update msg model =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init () url key =
     let
-        ( page, cmd ) =
-            router <| AppUrl.fromUrl url
+        -- TODO: get locale from browser as flag
+        initContext =
+            Context.new key (Locale.fromString "pt")
+
+        ( page, effect, pageCmd ) =
+            router initContext <| AppUrl.fromUrl url
+
+        ( nextContext, effectCmd ) =
+            Effect.run initContext effect
     in
     ( { url = url
-      , context = Context.new key (Locale.fromString "pt") -- TODO: get locale from browser as flag
+      , context = nextContext
       , page = page
       }
-    , cmd
+    , Cmd.batch [ effectCmd, pageCmd ]
     )
 
 
-router : AppUrl.AppUrl -> ( Page, Cmd Msg )
-router url =
+router : Context.Context -> AppUrl.AppUrl -> ( Page, Effect.Effect, Cmd Msg )
+router context url =
     case url.path of
         [] ->
-            Tuple.mapBoth Login (Cmd.map LoginMsg) Page.Login.init
+            Page.Login.init
+                |> Tuple.Extra.mapTrio
+                    Login
+                    identity
+                    (Cmd.map LoginMsg)
 
         [ "register" ] ->
-            Tuple.mapBoth Register (Cmd.map RegisterMsg) Page.Register.init
+            Page.Register.init
+                |> Tuple.Extra.mapTrio
+                    Register
+                    identity
+                    (Cmd.map RegisterMsg)
 
         [ "posts" ] ->
-            Tuple.mapBoth Posts (Cmd.map PostsMsg) Page.Posts.init
+            Page.Posts.init context
+                |> Tuple.Extra.mapTrio
+                    Posts
+                    identity
+                    (Cmd.map PostsMsg)
 
         _ ->
-            ( NotFound, Cmd.none )
+            ( NotFound, Effect.none, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

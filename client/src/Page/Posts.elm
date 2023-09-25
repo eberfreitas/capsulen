@@ -1,5 +1,6 @@
 module Page.Posts exposing (Model, Msg, init, update, view)
 
+import Alert
 import Business.User
 import Context
 import Effect
@@ -47,9 +48,23 @@ viewWithoutUser =
     Html.div [] [ Html.text "Can't see this..." ]
 
 
-init : ( Model, Cmd msg )
-init =
+init : Context.Context -> ( Model, Effect.Effect, Cmd msg )
+init context =
+    let
+        effect : Effect.Effect
+        effect =
+            case context.user of
+                Just _ ->
+                    Effect.none
+
+                Nothing ->
+                    Effect.batch
+                        [ Effect.addAlert (Alert.new Alert.Error "FORBIDDEN_AREA")
+                        , Effect.redirect "/"
+                        ]
+    in
     ( { postInput = Form.newInput }
+    , effect
     , Cmd.none
     )
 
