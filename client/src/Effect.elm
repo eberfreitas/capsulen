@@ -85,7 +85,7 @@ run context effect =
             ( { context | alerts = alerts }, Cmd.none )
 
         Redirect path ->
-            ( context, Browser.Navigation.pushUrl context.key path )
+            ( { context | alerts = [] }, Browser.Navigation.pushUrl context.key path )
 
         Login user ->
             ( { context | user = Just user }, Cmd.none )

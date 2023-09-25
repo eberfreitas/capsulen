@@ -27,7 +27,7 @@ export async function decryptPosts(args: {
 
     for (let i = 0; i < args.posts.length; i++) {
       const post = args.posts[i];
-      const content = await decryptData(post.content, args.privateKey);
+      const content = JSON.parse(await decryptData(post.content, args.privateKey));
 
       posts.push({ id: post.id, created_at: post.created_at, content });
     }

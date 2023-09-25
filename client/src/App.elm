@@ -55,7 +55,7 @@ view model =
                     subModel |> Page.Login.view localeHelper |> Html.map LoginMsg
 
                 Posts subModel ->
-                    subModel |> Page.Posts.view model.context |> Html.map PostsMsg
+                    subModel |> Page.Posts.view localeHelper model.context |> Html.map PostsMsg
 
                 NotFound ->
                     -- TODO: create a proper error page

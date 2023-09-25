@@ -40,15 +40,15 @@ type Msg
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
 
-view : Context.Context -> Model -> Html.Html Msg
-view context model =
+view : (String -> String) -> Context.Context -> Model -> Html.Html Msg
+view i context model =
     context.user
-        |> Maybe.map (\user -> viewWithUser user model)
+        |> Maybe.map (\user -> viewWithUser i user model)
         |> Maybe.withDefault (Html.text "")
 
 
-viewWithUser : Business.User.User -> Model -> Html.Html Msg
-viewWithUser _ model =
+viewWithUser : (String -> String) -> Business.User.User -> Model -> Html.Html Msg
+viewWithUser i _ model =
     Html.div []
         [ Html.form [ Html.Events.onSubmit Submit ]
             [ Html.fieldset []
@@ -59,6 +59,21 @@ viewWithUser _ model =
                 , Html.button [] [ Html.text "Post" ]
                 ]
             ]
+        , Html.div [] (model.posts |> List.map (viewPost i))
+        ]
+
+
+viewPost : (String -> String) -> Business.Post.Post -> Html.Html Msg
+viewPost i post =
+    Html.div []
+        [ Html.p [] [ Html.text post.createdAt ]
+        , case post.content of
+            Business.Post.Decrypted content ->
+                Html.div [] [ Html.text content.body ]
+
+            Business.Post.Encrypted _ ->
+                Html.div [] [ Html.text <| i "POST_ENCRYPTED" ]
+        , Html.hr [] []
         ]
 
 
