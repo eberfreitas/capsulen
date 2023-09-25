@@ -1,60 +1,15 @@
+import {
+  TaskDefinition,
+  TaskResult,
+} from "@andrewmacmurray/elm-concurrent-task";
+
 export interface App {
   ports: {
-    sendAccessRequest: {
-      subscribe: (
-        callback: (data: {
-          username: string;
-          privateKey: string;
-          nonce: string;
-          challenge: string;
-        }) => void,
-      ) => void;
+    taskSend: {
+      subscribe: (callback: (defs: TaskDefinition[]) => Promise<void>) => void;
     };
-
-    sendLoginRequest: {
-      subscribe: (
-        callback: (data: {
-          username: string;
-          privateKey: string;
-          challengeEncrypted: string;
-        }) => void,
-      ) => void;
-    };
-
-    sendToken: {
-      subscribe: (
-        callback: (data: { privateKey: string; token: string }) => void,
-      ) => void;
-    };
-
-    sendPost: {
-      subscribe: (callback: (data: { body: string }) => void) => void;
-    };
-
-    sendPostsRequest: {
-      subscribe: (
-        callback: (data: null) => void,
-      ) => void;
-    };
-
-    getChallengeEncrypted: {
-      send: (data: unknown) => void;
-    };
-
-    getLoginChallenge: {
-      send: (data: unknown) => void;
-    };
-
-    getPost: {
-      send: (data: unknown) => void;
-    };
-
-    getPosts: {
-      send: (data: unknown) => void;
-    };
-
-    getError: {
-      send: (data: unknown) => void;
+    taskReceive: {
+      send: (result: TaskResult[]) => void;
     };
   };
 }

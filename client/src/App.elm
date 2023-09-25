@@ -134,7 +134,7 @@ update msg model =
         ( LoginMsg subMsg, Login subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Login.update subMsg subModel
+                    Page.Login.update localeHelper subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -197,6 +197,9 @@ subscriptions model =
                 :: (case model.page of
                         Register subModel ->
                             [ Page.Register.subscriptions subModel.tasks |> Sub.map RegisterMsg ]
+
+                        Login subModel ->
+                            [ Page.Login.subscriptions subModel.tasks |> Sub.map LoginMsg ]
 
                         _ ->
                             []

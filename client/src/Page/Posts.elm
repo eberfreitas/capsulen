@@ -2,7 +2,7 @@ module Page.Posts exposing (Model, Msg, init, subscriptions, update, view)
 
 import Alert
 import Business.Post
-import Business.Username
+import Business.User
 import Context
 import Effect
 import Form
@@ -43,12 +43,11 @@ encodePost post =
 view : Context.Context -> Model -> Html.Html Msg
 view context model =
     context.user
-        |> Maybe.andThen (Business.Username.fromString >> Result.toMaybe)
-        |> Maybe.map (\username -> viewWithUser username model)
+        |> Maybe.map (\user -> viewWithUser user model)
         |> Maybe.withDefault viewWithoutUser
 
 
-viewWithUser : Business.Username.Username -> Model -> Html.Html Msg
+viewWithUser : Business.User.User -> Model -> Html.Html Msg
 viewWithUser _ model =
     Html.div []
         [ Html.form [ Html.Events.onSubmit Submit ]

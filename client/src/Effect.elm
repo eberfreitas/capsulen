@@ -13,6 +13,7 @@ import Alert
 import Browser.Navigation
 import Context
 import List.Extra
+import Business.User
 
 
 type Effect
@@ -21,7 +22,7 @@ type Effect
     | AddAlert Alert.Message
     | RemoveAlert Int
     | Redirect String
-    | Login String
+    | Login Business.User.User
 
 
 none : Effect
@@ -49,7 +50,7 @@ redirect =
     Redirect
 
 
-login : String -> Effect
+login : Business.User.User -> Effect
 login =
     Login
 
@@ -86,5 +87,5 @@ run context effect =
         Redirect path ->
             ( context, Browser.Navigation.pushUrl context.key path )
 
-        Login username ->
-            ( { context | user = Just username }, Cmd.none )
+        Login user ->
+            ( { context | user = Just user }, Cmd.none )

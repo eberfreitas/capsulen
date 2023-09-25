@@ -1,7 +1,7 @@
 module Page.Login exposing (Model, Msg, init, subscriptions, update, view)
 
 import Alert
-import Api
+import Business.User
 import ConcurrentTask
 import ConcurrentTask.Http
 import Effect
@@ -9,38 +9,27 @@ import Form
 import Html
 import Html.Attributes
 import Html.Events
-import Http
 import Json.Decode
 import Json.Encode
+import Page
 import Phosphor
 import Port
-import Task
-
-
-type alias Model =
-    { usernameInput : Form.Input String
-    , privateKeyInput : Form.Input String
-    , showPrivateKey : Bool
-    }
-
-
-type alias LoginChallenge =
-    { username : String
-    , challengeEncrypted : String
-    }
-
-
-type TaskError
-    = RequestError ConcurrentTask.Http.Error
-    | Generic String
 
 
 type TaskOutput
-    = Register ()
+    = Login Business.User.User
 
 
 type alias TaskPool =
-    ConcurrentTask.Pool Msg TaskError TaskOutput
+    ConcurrentTask.Pool Msg Page.TaskError TaskOutput
+
+
+type alias Model =
+    { tasks : TaskPool
+    , usernameInput : Form.Input String
+    , privateKeyInput : Form.Input String
+    , showPrivateKey : Bool
+    }
 
 
 type Msg
@@ -48,16 +37,20 @@ type Msg
     | WithPrivateKey Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
-      -- | GotLoginRequest (Result String LoginRequest)
-      -- | GotLoginChallenge Json.Decode.Value
-      -- | GotLogin (Result String String)
     | OnTaskProgress ( TaskPool, Cmd Msg )
-    | OnTaskComplete (ConcurrentTask.Response TaskError TaskOutput)
+    | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
 
-baseModel : Model
-baseModel =
-    { usernameInput = Form.newInput
+type alias UserData =
+    { username : String
+    , privateKey : String
+    }
+
+
+initModel : Model
+initModel =
+    { tasks = ConcurrentTask.pool
+    , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
     , showPrivateKey = False
     }
@@ -65,7 +58,152 @@ baseModel =
 
 init : ( Model, Cmd Msg )
 init =
-    ( baseModel, Cmd.none )
+    ( initModel, Cmd.none )
+
+
+update : (String -> String) -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i msg model =
+    case msg of
+        WithUsername event ->
+            Page.done { model | usernameInput = Form.updateInput event plainParser model.usernameInput }
+
+        WithPrivateKey event ->
+            Page.done { model | privateKeyInput = Form.updateInput event plainParser model.privateKeyInput }
+
+        ToggleShowPrivateKey ->
+            Page.done { model | showPrivateKey = not model.showPrivateKey }
+
+        Submit ->
+            let
+                newModel =
+                    { model
+                        | usernameInput = Form.parseInput plainParser model.usernameInput
+                        , privateKeyInput = Form.parseInput plainParser model.privateKeyInput
+                    }
+            in
+            case buildUserData newModel of
+                Ok userData ->
+                    let
+                        requestChallengeEncrypted : ConcurrentTask.ConcurrentTask Page.TaskError String
+                        requestChallengeEncrypted =
+                            ConcurrentTask.Http.post
+                                { url = "/api/users/request_login"
+                                , headers = []
+                                , body = ConcurrentTask.Http.stringBody "text/plain" userData.username
+                                , expect = ConcurrentTask.Http.expectString
+                                , timeout = Nothing
+                                }
+                                |> ConcurrentTask.mapError Page.httpErrorMapper
+
+                        decryptChallenge : String -> ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
+                        decryptChallenge challengeEncrypted =
+                            ConcurrentTask.define
+                                { function = "login:decryptChallenge"
+                                , expect = ConcurrentTask.expectJson Json.Decode.value
+                                , errors = ConcurrentTask.expectErrors Json.Decode.string
+                                , args =
+                                    Json.Encode.object
+                                        [ ( "username", Json.Encode.string userData.username )
+                                        , ( "privateKey", Json.Encode.string userData.privateKey )
+                                        , ( "challengeEncrypted", Json.Encode.string challengeEncrypted )
+                                        ]
+                                }
+                                |> ConcurrentTask.mapError Page.Generic
+
+                        requestToken : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError String
+                        requestToken challengeData =
+                            ConcurrentTask.Http.post
+                                { url = "/api/users/login"
+                                , headers = []
+                                , body = ConcurrentTask.Http.jsonBody challengeData
+                                , expect = ConcurrentTask.Http.expectString
+                                , timeout = Nothing
+                                }
+                                |> ConcurrentTask.mapError Page.httpErrorMapper
+
+                        buildUser : String -> ConcurrentTask.ConcurrentTask Page.TaskError Business.User.User
+                        buildUser token =
+                            ConcurrentTask.define
+                                { function = "login:buildUser"
+                                , expect = ConcurrentTask.expectJson Business.User.decode
+                                , errors = ConcurrentTask.expectErrors Json.Decode.string
+                                , args =
+                                    Json.Encode.object
+                                        [ ( "username", Json.Encode.string userData.username )
+                                        , ( "privateKey", Json.Encode.string userData.privateKey )
+                                        , ( "token", Json.Encode.string token )
+                                        ]
+                                }
+                                |> ConcurrentTask.mapError Page.Generic
+
+                        loginTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
+                        loginTask =
+                            requestChallengeEncrypted
+                                |> ConcurrentTask.andThen decryptChallenge
+                                |> ConcurrentTask.andThen requestToken
+                                |> ConcurrentTask.andThen buildUser
+                                |> ConcurrentTask.map Login
+
+                        ( tasks, cmd ) =
+                            ConcurrentTask.attempt
+                                { pool = model.tasks
+                                , send = Port.taskSend
+                                , onComplete = OnTaskComplete
+                                }
+                                loginTask
+                    in
+                    ( { newModel | tasks = tasks }, Effect.none, cmd )
+
+                Err errorKey ->
+                    ( newModel
+                    , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
+                    , Cmd.none
+                    )
+
+        OnTaskProgress ( tasks, cmd ) ->
+            ( { model | tasks = tasks }, Effect.none, cmd )
+
+        OnTaskComplete (ConcurrentTask.Success (Login user)) ->
+            ( model
+            , Effect.batch
+                [ Effect.login user
+                , Effect.redirect "/posts"
+                ]
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i errorMsgKey), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
+            -- TODO: send error to monitoring tool
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
+
+        OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
+            ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
+
+
+buildUserData : Model -> Result String UserData
+buildUserData model =
+    case ( model.usernameInput.valid, model.privateKeyInput.valid ) of
+        ( Form.Valid username, Form.Valid privateKey ) ->
+            Ok { username = username, privateKey = privateKey }
+
+        _ ->
+            Err "INVALID_INPUTS"
+
+
+plainParser : String -> Result String String
+plainParser value =
+    let
+        parsedValue =
+            String.trim value
+    in
+    if parsedValue == "" then
+        Err "INPUT_EMPTY"
+
+    else
+        Ok parsedValue
 
 
 view : (String -> String) -> Model -> Html.Html Msg
@@ -119,216 +257,11 @@ view i model =
         ]
 
 
-update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update msg model =
-    case msg of
-        WithUsername event ->
-            ( { model | usernameInput = Form.updateInput event plainParser model.usernameInput }
-            , Effect.none
-            , Cmd.none
-            )
-
-        WithPrivateKey event ->
-            ( { model | privateKeyInput = Form.updateInput event plainParser model.privateKeyInput }
-            , Effect.none
-            , Cmd.none
-            )
-
-        ToggleShowPrivateKey ->
-            ( { model | showPrivateKey = not model.showPrivateKey }
-            , Effect.none
-            , Cmd.none
-            )
-
-        Submit ->
-            -- let
-            --     requestChallenge : ConcurrentTask.ConcurrentTask TaskError String
-            --     requestChallenge =
-            --         ConcurrentTask.Http.post
-            --             { url = "/api/users/request_login"
-            --             , headers = []
-            --             , body = ConcurrentTask.Http.stringBody "text/plain" model.usernameInput.raw
-            --             , expect = ConcurrentTask.Http.expectString
-            --             , timeout = Nothing
-            --             }
-            --             |> ConcurrentTask.mapError taskErrorMapper
-            --     decryptChallenge : String -> ConcurrentTask.ConcurrentTask TaskError Json.Decode.Value
-            --     decryptChallenge challengeEncrypted =
-            --         ConcurrentTask.define
-            --             { function = "login:decryptChallenge"
-            --             , expect = ConcurrentTask.expectJson Json.Decode.value
-            --             , errors = ConcurrentTask.expectErrors Json.Decode.string
-            --             , args =
-            --                 encodeChallengeEncryptedWithLoginData
-            --                     challengeEncrypted
-            --                     model.usernameInput.raw
-            --                     model.privateKeyInput.raw
-            --             }
-            --             |> ConcurrentTask.mapError Generic
-            --     requestToken : Json.Decode.Value -> ConcurrentTask.ConcurrentTask TaskError String
-            --     requestToken value =
-            --         ConcurrentTask.Http.post
-            --             { url = "/api/users/login"
-            --             , headers = []
-            --             , body = ConcurrentTask.Http.jsonBody value
-            --             , expect = ConcurrentTask.Http.expectString
-            --             , timeout = Nothing
-            --             }
-            --             |> ConcurrentTask.mapError taskErrorMapper
-            --     makeUser : String -> ConcurrentTask.ConcurrentTask TaskError PartialUser
-            --     makeUser token =
-            --         ConcurrentTask.define
-            --             { function = "login:decryptChallenge"
-            --             , expect = ConcurrentTask.expectJson Json.Decode.value
-            --             , errors = ConcurrentTask.expectErrors Json.Decode.string
-            --             , args =
-            --                 encodeChallengeEncryptedWithLoginData
-            --                     challengeEncrypted
-            --                     model.usernameInput.raw
-            --                     model.privateKeyInput.raw
-            --             }
-            --             |> ConcurrentTask.mapError Generic
-            --     loginTask =
-            --         requestChallenge
-            --             |> ConcurrentTask.andThen decryptChallenge
-            --             |> ConcurrentTask.andThen login
-            -- in
-            ( model, Effect.none, Cmd.none )
-
-        _ ->
-            ( model, Effect.none, Cmd.none )
-
-
-
--- type alias PartialUser =
---     { privateKeyObj : Json.Decode.Value
---     , token : String
---     }
--- if validInputs model then
---     ( model
---     , Effect.none
---     , Api.post
---         { url = "/api/users/login_request"
---         , body = Http.stringBody "text/plain" model.usernameInput.raw
---         , decoder = Json.Decode.decodeString decodeLoginRequest
---         }
---         |> Task.attempt GotLoginRequest
---     )
--- else
---     ( model
---     , Effect.addAlert (Alert.new Alert.Warning "Please, fill both fields before submiting.")
---     , Cmd.none
---     )
--- GotLoginRequest result ->
---     case result of
---         Err errorMsg ->
---             ( model
---             , Effect.addAlert (Alert.new Alert.Error errorMsg)
---             , Cmd.none
---             )
---         Ok loginRequest ->
---             ( model
---             , Effect.none
---             , Port.sendLoginRequest <| encodeLoginRequestWithPrivateKey loginRequest model.privateKeyInput.raw
---             )
--- GotLoginChallenge raw ->
---     ( model
---     , Effect.none
---     , Api.post
---         { url = "/api/users/login"
---         , body = Http.jsonBody raw
---         , decoder = identity >> Ok
---         }
---         |> Task.attempt GotLogin
---     )
--- GotLogin result ->
---     case result of
---         Ok token ->
---             ( model
---             , Effect.batch
---                 [ Effect.login model.usernameInput.raw
---                 , Effect.redirect "/posts"
---                 ]
---             , Port.sendToken <| encodeTokenAndPrivateKey model.privateKeyInput.raw token
---             )
---         Err errorMsg ->
---             ( model
---             , Effect.addAlert (Alert.new Alert.Error errorMsg)
---             , Cmd.none
---             )
-
-
-taskErrorMapper : ConcurrentTask.Http.Error -> TaskError
-taskErrorMapper error =
-    case error of
-        ConcurrentTask.Http.BadStatus meta value ->
-            if List.member meta.statusCode [ 400, 500 ] then
-                value
-                    |> Json.Decode.decodeValue Json.Decode.string
-                    |> Result.toMaybe
-                    |> Maybe.withDefault "Unknown error"
-                    |> Generic
-
-            else
-                RequestError error
-
-        _ ->
-            RequestError error
-
-
-encodeTokenAndPrivateKey : String -> String -> Json.Encode.Value
-encodeTokenAndPrivateKey privateKey token =
-    Json.Encode.object
-        [ ( "privateKey", Json.Encode.string privateKey )
-        , ( "token", Json.Encode.string token )
-        ]
-
-
-decodeLoginChallenge : Json.Decode.Decoder LoginChallenge
-decodeLoginChallenge =
-    Json.Decode.map2 LoginChallenge
-        (Json.Decode.field "username" Json.Decode.string)
-        (Json.Decode.field "challenge_encrypted" Json.Decode.string)
-
-
-encodeChallengeEncryptedWithLoginData : String -> String -> String -> Json.Encode.Value
-encodeChallengeEncryptedWithLoginData challengeEncrypted username privateKey =
-    Json.Encode.object
-        [ ( "username", Json.Encode.string username )
-        , ( "privateKey", Json.Encode.string privateKey )
-        , ( "challengeEncrypted", Json.Encode.string challengeEncrypted )
-        ]
-
-
-type alias UserData =
-    { username : String
-    , privateKey : String
-    }
-
-
-buildUserData : Model -> Result String UserData
-buildUserData model =
-    case ( model.usernameInput.valid, model.privateKeyInput.valid ) of
-        ( Form.Valid username, Form.Valid privateKey ) ->
-            Ok { username = username, privateKey = privateKey }
-
-        _ ->
-            Err "INVALID_INPUTS"
-
-
-plainParser : String -> Result String String
-plainParser value =
-    let
-        parsedValue =
-            String.trim value
-    in
-    if parsedValue == "" then
-        Err "INPUT_EMPTY"
-
-    else
-        Ok parsedValue
-
-
-subscriptions : Sub Msg
-subscriptions =
-    Sub.none
+subscriptions : TaskPool -> Sub Msg
+subscriptions pool =
+    ConcurrentTask.onProgress
+        { send = Port.taskSend
+        , receive = Port.taskReceive
+        , onProgress = OnTaskProgress
+        }
+        pool

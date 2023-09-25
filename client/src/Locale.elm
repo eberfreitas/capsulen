@@ -50,13 +50,23 @@ getPhrase locale phraseKey =
 
 phrases : Phrases
 phrases =
-    [ ( "INPUT_EMPTY", { pt = "Este campo não pode ficar vazio", en = "This field can't be empty" } )
+    [ ( "CREDENTIALS_INCORRECT"
+      , { pt = "Nome de usuário ou chave privada incorretos. Por favor, tente novamente"
+        , en = "Username or private key incorrect. Please, try again"
+        }
+      )
+    , ( "INPUT_EMPTY", { pt = "Este campo não pode ficar vazio", en = "This field can't be empty" } )
     , ( "INVALID_INPUTS"
       , { pt = "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"
         , en = "One or more inputs are invalid. Check the messages in the form to fix and try again"
         }
       )
     , ( "LOGIN", { pt = "Login", en = "Login" } )
+    , ( "LOGIN_ERROR"
+      , { pt = "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente"
+        , en = "There was an error trying to log you in. Please, try again"
+        }
+      )
     , ( "PRIVATE_KEY", { pt = "Chave privada", en = "Private key" } )
     , ( "PRIVATE_KEY_NOTICE"
       , { pt = "Sua chave privada nunca será enviada pela rede"

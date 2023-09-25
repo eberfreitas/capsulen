@@ -151,7 +151,7 @@ server.post("/api/users/request_login", async (req, res) => {
     if (possibleUser.length < 1 || !possibleUser[0]) {
       return res
         .status(400)
-        .send("Username or private key incorrect. Please, try again.");
+        .send("CREDENTIALS_INCORRECT");
     }
 
     const user = possibleUser[0];
@@ -161,7 +161,7 @@ server.post("/api/users/request_login", async (req, res) => {
     //TODO: monitor error here
     return res
       .status(500)
-      .send("There was an error trying to log you in. Please, try again.");
+      .send("LOGIN_ERROR");
   }
 });
 
@@ -175,7 +175,7 @@ server.post("/api/users/login", async (req, res) => {
     if (possibleUser.length < 1 || !possibleUser[0]) {
       return res
         .status(400)
-        .send("Username or private key incorrect. Please, try again.");
+        .send("CREDENTIALS_INCORRECT");
     }
 
     const user = possibleUser[0];
@@ -183,7 +183,7 @@ server.post("/api/users/login", async (req, res) => {
     if (user.challenge !== req.body?.challenge) {
       return res
         .status(400)
-        .send("Username or private key incorrect. Please, try again.");
+        .send("CREDENTIALS_INCORRECT");
     }
 
     const key = await getPasetoKey();
@@ -194,7 +194,7 @@ server.post("/api/users/login", async (req, res) => {
     //TODO: monitor error here
     return res
       .status(500)
-      .send("There was an error trying to log you in. Please, try again.");
+      .send("LOGIN_ERROR");
   }
 });
 

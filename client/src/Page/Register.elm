@@ -12,13 +12,9 @@ import Html.Attributes
 import Html.Events
 import Json.Decode
 import Json.Encode
+import Page
 import Phosphor
 import Port
-
-
-type TaskError
-    = RequestError ConcurrentTask.Http.Error
-    | Generic String
 
 
 type TaskOutput
@@ -26,7 +22,7 @@ type TaskOutput
 
 
 type alias TaskPool =
-    ConcurrentTask.Pool Msg TaskError TaskOutput
+    ConcurrentTask.Pool Msg Page.TaskError TaskOutput
 
 
 type Msg
@@ -35,7 +31,7 @@ type Msg
     | ToggleShowPrivateKey
     | Submit
     | OnTaskProgress ( TaskPool, Cmd Msg )
-    | OnTaskComplete (ConcurrentTask.Response TaskError TaskOutput)
+    | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
 
 type alias Model =
@@ -74,14 +70,9 @@ init =
 
 update : (String -> String) -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update i msg model =
-    let
-        done : Model -> ( Model, Effect.Effect, Cmd Msg )
-        done model_ =
-            ( model_, Effect.none, Cmd.none )
-    in
     case msg of
         WithUsername event ->
-            done
+            Page.done
                 { model
                     | usernameInput =
                         Form.updateInput
@@ -91,7 +82,7 @@ update i msg model =
                 }
 
         WithPrivateKey event ->
-            done
+            Page.done
                 { model
                     | privateKeyInput =
                         Form.updateInput
@@ -101,7 +92,7 @@ update i msg model =
                 }
 
         ToggleShowPrivateKey ->
-            done { model | showPrivateKey = not model.showPrivateKey }
+            Page.done { model | showPrivateKey = not model.showPrivateKey }
 
         Submit ->
             let
@@ -114,7 +105,7 @@ update i msg model =
             case buildUserData newModel of
                 Ok userData ->
                     let
-                        requestAccess : ConcurrentTask.ConcurrentTask TaskError Challenge
+                        requestAccess : ConcurrentTask.ConcurrentTask Page.TaskError Challenge
                         requestAccess =
                             ConcurrentTask.Http.post
                                 { url = "/api/users/request_access"
@@ -130,9 +121,9 @@ update i msg model =
                                         )
                                 , timeout = Nothing
                                 }
-                                |> ConcurrentTask.mapError taskErrorMapper
+                                |> ConcurrentTask.mapError Page.httpErrorMapper
 
-                        encryptChallenge : Challenge -> ConcurrentTask.ConcurrentTask TaskError Json.Decode.Value
+                        encryptChallenge : Challenge -> ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
                         encryptChallenge challenge =
                             ConcurrentTask.define
                                 { function = "register:encryptChallenge"
@@ -146,9 +137,9 @@ update i msg model =
                                         , ( "challenge", Json.Encode.string challenge.challenge )
                                         ]
                                 }
-                                |> ConcurrentTask.mapError Generic
+                                |> ConcurrentTask.mapError Page.Generic
 
-                        createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask TaskError ()
+                        createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError ()
                         createUser value =
                             ConcurrentTask.Http.post
                                 { url = "/api/users/create_user"
@@ -157,9 +148,9 @@ update i msg model =
                                 , expect = ConcurrentTask.Http.expectWhatever
                                 , timeout = Nothing
                                 }
-                                |> ConcurrentTask.mapError taskErrorMapper
+                                |> ConcurrentTask.mapError Page.httpErrorMapper
 
-                        registrationTask : ConcurrentTask.ConcurrentTask TaskError TaskOutput
+                        registrationTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         registrationTask =
                             requestAccess
                                 |> ConcurrentTask.andThen encryptChallenge
@@ -195,33 +186,15 @@ update i msg model =
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Generic errorMsgKey)) ->
+        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
             ( model, Effect.addAlert (Alert.new Alert.Error <| i errorMsgKey), Cmd.none )
 
-        OnTaskComplete (ConcurrentTask.Error (RequestError _)) ->
+        OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
             ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
             ( model, Effect.addAlert (Alert.new Alert.Error <| i "REQUEST_ERROR"), Cmd.none )
-
-
-taskErrorMapper : ConcurrentTask.Http.Error -> TaskError
-taskErrorMapper error =
-    case error of
-        ConcurrentTask.Http.BadStatus meta value ->
-            if List.member meta.statusCode [ 400, 500 ] then
-                value
-                    |> Json.Decode.decodeValue Json.Decode.string
-                    |> Result.toMaybe
-                    |> Maybe.withDefault "UNKNOWN_ERROR"
-                    |> Generic
-
-            else
-                RequestError error
-
-        _ ->
-            RequestError error
 
 
 subscriptions : TaskPool -> Sub Msg
