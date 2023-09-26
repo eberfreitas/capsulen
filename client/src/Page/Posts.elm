@@ -13,6 +13,7 @@ import Html.Attributes
 import Html.Events
 import Json.Decode
 import Json.Encode
+import List.Extra
 import Page
 import Port
 
@@ -20,6 +21,7 @@ import Port
 type TaskOutput
     = Posted Business.Post.Post
     | PostsLoaded (List Business.Post.Post)
+    | MorePostsLoaded (List Business.Post.Post)
 
 
 type alias TaskPool =
@@ -36,6 +38,7 @@ type alias Model =
 type Msg
     = WithPostInput Form.InputEvent
     | Submit
+    | LoadMore
     | OnTaskProgress ( TaskPool, Cmd Msg )
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
@@ -60,6 +63,7 @@ viewWithUser i _ model =
                 ]
             ]
         , Html.div [] (model.posts |> List.map (viewPost i))
+        , Html.div [] [ Html.button [ Html.Events.onClick LoadMore ] [ Html.text <| i "LOAD_MORE_POSTS" ] ]
         ]
 
 
@@ -75,6 +79,44 @@ viewPost i post =
                 Html.div [] [ Html.text <| i "POST_ENCRYPTED" ]
         , Html.hr [] []
         ]
+
+
+getPosts : String -> Business.User.User -> ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
+getPosts url user =
+    ConcurrentTask.Http.get
+        { url = url
+        , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
+        , expect = ConcurrentTask.Http.expectJson Json.Decode.value
+        , timeout = Nothing
+        }
+        |> ConcurrentTask.mapError Page.httpErrorMapper
+
+
+decryptPosts : Business.User.User -> Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError (List Business.Post.Post)
+decryptPosts user value =
+    ConcurrentTask.define
+        { function = "posts:decryptPosts"
+        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
+        , errors = ConcurrentTask.expectErrors Json.Decode.string
+        , args =
+            Json.Encode.object
+                [ ( "privateKey", user.privateKey )
+                , ( "posts", value )
+                ]
+        }
+        |> ConcurrentTask.mapError Page.Generic
+
+
+loadPosts :
+    (List Business.Post.Post -> TaskOutput)
+    -> String
+    -> Business.User.User
+    -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
+loadPosts output url user =
+    user
+        |> getPosts url
+        |> ConcurrentTask.andThen (decryptPosts user)
+        |> ConcurrentTask.map output
 
 
 init : Context.Context -> ( Model, Effect.Effect, Cmd Msg )
@@ -99,33 +141,12 @@ init context =
             context.user
                 |> Maybe.map
                     (\user ->
-                        ConcurrentTask.Http.get
-                            { url = "/api/posts"
-                            , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
-                            , expect = ConcurrentTask.Http.expectJson Json.Decode.value
-                            , timeout = Nothing
+                        ConcurrentTask.attempt
+                            { pool = tasks
+                            , send = Port.taskSend
+                            , onComplete = OnTaskComplete
                             }
-                            |> ConcurrentTask.mapError Page.httpErrorMapper
-                            |> ConcurrentTask.andThen
-                                (\value ->
-                                    ConcurrentTask.define
-                                        { function = "posts:decryptPosts"
-                                        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
-                                        , errors = ConcurrentTask.expectErrors Json.Decode.string
-                                        , args =
-                                            Json.Encode.object
-                                                [ ( "privateKey", user.privateKey )
-                                                , ( "posts", value )
-                                                ]
-                                        }
-                                        |> ConcurrentTask.mapError Page.Generic
-                                )
-                            |> ConcurrentTask.map PostsLoaded
-                            |> ConcurrentTask.attempt
-                                { pool = tasks
-                                , send = Port.taskSend
-                                , onComplete = OnTaskComplete
-                                }
+                            (loadPosts PostsLoaded "/api/posts" user)
                     )
                 |> Maybe.withDefault ( tasks, Cmd.none )
     in
@@ -207,6 +228,25 @@ updateWithUser msg model user =
                     , Cmd.none
                     )
 
+        LoadMore ->
+            let
+                url =
+                    model.posts
+                        |> List.Extra.last
+                        |> Maybe.map .id
+                        |> Maybe.map ((++) "/api/posts?from=")
+                        |> Maybe.withDefault "/api/posts"
+
+                ( tasks, cmd ) =
+                    ConcurrentTask.attempt
+                        { pool = model.tasks
+                        , send = Port.taskSend
+                        , onComplete = OnTaskComplete
+                        }
+                        (loadPosts MorePostsLoaded url user)
+            in
+            ( { model | tasks = tasks }, Effect.none, cmd )
+
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )
 
@@ -219,6 +259,20 @@ updateWithUser msg model user =
         OnTaskComplete (ConcurrentTask.Success (PostsLoaded posts)) ->
             ( { model | posts = model.posts ++ posts }
             , Effect.none
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
+            let
+                effect =
+                    if posts == [] then
+                        Effect.addAlert (Alert.new Alert.Warning "POSTS_NO_MORE")
+
+                    else
+                        Effect.none
+            in
+            ( { model | posts = model.posts ++ posts }
+            , effect
             , Cmd.none
             )
 

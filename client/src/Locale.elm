@@ -71,6 +71,11 @@ phrases =
         , en = "One or more inputs are invalid. Check the messages in the form to fix and try again"
         }
       )
+    , ( "LOAD_MORE_POSTS"
+      , { pt = "Carregar mais postagens"
+        , en = "Load more posts"
+        }
+      )
     , ( "LOGIN"
       , { pt = "Login"
         , en = "Login"
@@ -89,6 +94,11 @@ phrases =
     , ( "POST_NEW"
       , { pt = "Novo post adicionado"
         , en = "New post added"
+        }
+      )
+    , ( "POSTS_NO_MORE"
+      , { pt = "Não há mais postagems a serem carregadas"
+        , en = "There are no more posts to load"
         }
       )
     , ( "PRIVATE_KEY"

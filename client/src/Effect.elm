@@ -11,9 +11,9 @@ module Effect exposing
 
 import Alert
 import Browser.Navigation
+import Business.User
 import Context
 import List.Extra
-import Business.User
 
 
 type Effect
@@ -85,7 +85,7 @@ run context effect =
             ( { context | alerts = alerts }, Cmd.none )
 
         Redirect path ->
-            ( { context | alerts = [] }, Browser.Navigation.pushUrl context.key path )
+            ( context, Browser.Navigation.pushUrl context.key path )
 
         Login user ->
             ( { context | user = Just user }, Cmd.none )

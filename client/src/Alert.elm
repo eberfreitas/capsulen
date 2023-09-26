@@ -9,6 +9,7 @@ import Phosphor
 type Severity
     = Success
     | Error
+    | Warning
 
 
 type Message
@@ -28,6 +29,9 @@ messageClass severity =
 
         Error ->
             "error"
+
+        Warning ->
+            "warning"
 
 
 toHtml : (String -> String) -> (Int -> msg) -> Int -> Message -> Html.Html msg

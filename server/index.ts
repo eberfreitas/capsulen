@@ -17,9 +17,9 @@ import {
   persistChallenge,
 } from "./db/queries/users.queries";
 
-import { createPost, getInitialPosts } from "./db/queries/posts.queries";
+import { IGetInitialPostsResult, IGetPostsResult, createPost, getInitialPosts, getPosts } from "./db/queries/posts.queries";
 
-const POSTS_LIMIT = 5;
+const POSTS_LIMIT = 2;
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -77,7 +77,7 @@ server.use(bodyParser.text());
 
 server.listen(port, async () => {
   await db.connect();
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Capsulen listening on port ${port}`);
 });
 
 server.post("/api/users/request_access", async (req, res) => {
@@ -233,14 +233,29 @@ server.post("/api/posts", async (req, res) => {
 server.get("/api/posts", async (req, res) => {
   try {
     const user = await getAuthUser(req);
+    const from = req.query?.from as string ?? null;
+    let rawPosts: IGetInitialPostsResult[] | IGetPostsResult[] = [];
 
-    const rawPosts = await getInitialPosts.run(
-      {
-        user_id: user.id,
-        limit: POSTS_LIMIT,
-      },
-      db,
-    );
+    if (!from) {
+      rawPosts = await getInitialPosts.run(
+        {
+          user_id: user.id,
+          limit: POSTS_LIMIT,
+        },
+        db,
+      );
+    } else {
+      const id = hashids.decode(from)[0] as number ?? 0;
+
+      rawPosts = await getPosts.run(
+        {
+          user_id: user.id,
+          limit: POSTS_LIMIT,
+          id,
+        },
+        db,
+      );
+    }
 
     const posts = rawPosts.map((post) => {
       return {
