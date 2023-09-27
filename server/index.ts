@@ -270,7 +270,7 @@ server.get("/api/posts", async (req, res) => {
     //TODO: monitor error here
     return res
       .status(500)
-      .send("There was an error fetching your posts. Please, try again.");
+      .send("POST_FETCH_ERROR");
   }
 });
 

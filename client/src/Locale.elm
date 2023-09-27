@@ -86,6 +86,21 @@ phrases =
         , en = "There was an error trying to log you in. Please, try again"
         }
       )
+    , ( "TO_POST"
+      , { pt = "Postar"
+        , en = "Post"
+        }
+      )
+    , ( "POST_ABOUT"
+      , { pt = "Sobre o que você quer escrever?"
+        , en = "What do you want to write about?"
+        }
+      )
+    , ( "POST_FETCH_ERROR"
+      , { pt = "Houve um erro ao buscar seus posts. Por favor, tente novamente"
+        , en = "There was an error fetching your posts. Please, try again"
+        }
+      )
     , ( "POST_ERROR"
       , { pt = "Houve um error ao salvar sua postagem. Por favor, tente novamente"
         , en = "There was an error saving your post. Please, try again"

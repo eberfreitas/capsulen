@@ -55,11 +55,11 @@ viewWithUser i _ model =
     Html.div []
         [ Html.form [ Html.Events.onSubmit Submit ]
             [ Html.fieldset []
-                [ Html.legend [] [ Html.text "Write your thoughts..." ]
+                [ Html.legend [] [ Html.text <| i "POST_ABOUT" ]
                 , Html.textarea
                     (Html.Attributes.value model.postInput.raw :: Form.inputEvents WithPostInput)
                     []
-                , Html.button [] [ Html.text "Post" ]
+                , Html.button [] [ Html.text <| i "TO_POST" ]
                 ]
             ]
         , Html.div [] (model.posts |> List.map (viewPost i))
@@ -81,41 +81,39 @@ viewPost i post =
         ]
 
 
-getPosts : String -> Business.User.User -> ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
-getPosts url user =
-    ConcurrentTask.Http.get
-        { url = url
-        , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
-        , expect = ConcurrentTask.Http.expectJson Json.Decode.value
-        , timeout = Nothing
-        }
-        |> ConcurrentTask.mapError Page.httpErrorMapper
-
-
-decryptPosts : Business.User.User -> Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError (List Business.Post.Post)
-decryptPosts user value =
-    ConcurrentTask.define
-        { function = "posts:decryptPosts"
-        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
-        , errors = ConcurrentTask.expectErrors Json.Decode.string
-        , args =
-            Json.Encode.object
-                [ ( "privateKey", user.privateKey )
-                , ( "posts", value )
-                ]
-        }
-        |> ConcurrentTask.mapError Page.Generic
-
-
 loadPosts :
     (List Business.Post.Post -> TaskOutput)
     -> String
     -> Business.User.User
     -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
 loadPosts output url user =
-    user
-        |> getPosts url
-        |> ConcurrentTask.andThen (decryptPosts user)
+    let
+        getPosts : ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
+        getPosts =
+            ConcurrentTask.Http.get
+                { url = url
+                , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
+                , expect = ConcurrentTask.Http.expectJson Json.Decode.value
+                , timeout = Nothing
+                }
+                |> ConcurrentTask.mapError Page.httpErrorMapper
+
+        decryptPosts : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError (List Business.Post.Post)
+        decryptPosts value =
+            ConcurrentTask.define
+                { function = "posts:decryptPosts"
+                , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
+                , errors = ConcurrentTask.expectErrors Json.Decode.string
+                , args =
+                    Json.Encode.object
+                        [ ( "privateKey", user.privateKey )
+                        , ( "posts", value )
+                        ]
+                }
+                |> ConcurrentTask.mapError Page.Generic
+    in
+    getPosts
+        |> ConcurrentTask.andThen decryptPosts
         |> ConcurrentTask.map output
 
 
