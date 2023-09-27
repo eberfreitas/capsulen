@@ -13,6 +13,8 @@ import Page.Register
 import Tuple.Extra
 import Url
 import View.Alerts
+import View.Color as Color
+import View.Logo
 
 
 type alias Model =
@@ -60,12 +62,16 @@ view model =
                 NotFound ->
                     -- TODO: create a proper error page
                     Html.text "404 Not found"
+
+        black =
+            Color.new 0 0 0 1.0
     in
     { title = "Capsulen"
     , body =
         [ Html.div
             []
             [ Html.h1 [] [ Html.text "Capsulen" ]
+            , View.Logo.logo 100 black
             , View.Alerts.view localeHelper model.context.alerts |> Html.map AlertsMsg
             , Html.div [] [ pageHtml ]
             ]

@@ -5,6 +5,9 @@ import { buildUser, decryptChallenge } from "./tasks/login";
 import { decryptPosts, encryptPost } from "./tasks/posts";
 
 (function() {
+  // const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // const locale = navigator.language.split("-")[0] ?? "en";
+
   const app = window.Elm.App.init();
 
   ConcurrentTask.register({
