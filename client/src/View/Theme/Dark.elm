@@ -9,4 +9,5 @@ palette =
     { backgroundColor = View.Color.new 23 23 23 1.0
     , foregroundColor = View.Color.new 154 134 163 1.0
     , textColor = View.Color.new 234 221 239 1.0
+    , errorColor = View.Color.new 100 0 40 1.0
     }

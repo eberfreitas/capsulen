@@ -196,5 +196,10 @@ phrases =
         , en = "Username is already in use. Please, pick a different username"
         }
       )
+    , ( "TAGLINE"
+      , { pt = "“Um diário seguro e simples”"
+        , en = "“Journaling made safe and simple”"
+        }
+      )
     ]
         |> Dict.fromList

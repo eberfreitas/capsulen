@@ -2,6 +2,7 @@
   --background-color: rgb(0, 0, 0);
   --foreground-color: rgb(0, 0, 0);
   --text-color: rgb(0, 0, 0);
+  --error-color: rgb(0, 0, 0);
 }
 
 * {
@@ -16,10 +17,111 @@ html {
 }
 
 .wrapper {
-  align-items: center;
   display: flex;
-  justify-items: center;
+  justify-content: center;
   min-height: 100vh;
-  padding: 4rem;
+  padding: 2rem;
   width: 100%;
+}
+
+.capsulen-tagline {
+  color: var(--foreground-color);
+  font-weight: bold;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.access {
+  width: 300px;
+}
+
+.access__logo {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.access__form {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.access__form fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.access__form legend {
+  color: var(--foreground-color);
+  display: block;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+  width: 100%;
+}
+
+.access__input {
+  margin-bottom:  1.5rem;
+  position: relative;
+}
+
+.access__input label {
+  display: block;
+  font-variant: all-petite-caps;
+  margin-bottom: 0.5rem;
+}
+
+.access__input input {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.input-error {
+  background-color: var(--error-color);
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-weight: bold;
+  margin-top: -0.5rem;
+  padding: 1rem;
+  padding-top: 1.5rem;
+}
+
+.private-key-toggle {
+  position: absolute;
+  right: 0;
+  top: 1.65rem;
+}
+
+.btn {
+  background-color: var(--foreground-color);
+  border: none;
+  border-radius: 0.5rem;
+  color: var(--background-color);
+  cursor: pointer;
+  display: block;
+  font-variant: all-petite-caps;
+  font-weight: bold;
+  padding: 1rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn--inverse {
+  background-color: transparent;
+  border: 2px solid var(--foreground-color);
+  color: var(--text-color);
+}
+
+.notice {
+  border: 1px solid var(--foreground-color);
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  text-align: center;
 }

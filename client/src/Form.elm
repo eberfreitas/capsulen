@@ -11,6 +11,7 @@ module Form exposing
     )
 
 import Html
+import Html.Attributes
 import Html.Events
 
 
@@ -87,7 +88,7 @@ viewInputError : (String -> String) -> Input a -> Html.Html msg
 viewInputError i input =
     case ( input.valid, input.state ) of
         ( Invalid msgKey, Idle ) ->
-            Html.div [] [ Html.text <| i msgKey ]
+            Html.div [ Html.Attributes.class "input-error" ] [ Html.text <| i msgKey ]
 
         _ ->
             Html.text ""

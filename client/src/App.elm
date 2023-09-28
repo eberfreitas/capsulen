@@ -15,7 +15,6 @@ import Port
 import Tuple.Extra
 import Url
 import View.Alerts
-import View.Logo
 import View.Theme
 
 
@@ -56,7 +55,7 @@ view model =
                     subModel |> Page.Register.view localeHelper |> Html.map RegisterMsg
 
                 Login subModel ->
-                    subModel |> Page.Login.view localeHelper |> Html.map LoginMsg
+                    subModel |> Page.Login.view localeHelper model.context |> Html.map LoginMsg
 
                 Posts subModel ->
                     subModel |> Page.Posts.view localeHelper model.context |> Html.map PostsMsg
@@ -150,7 +149,7 @@ init () url key =
     let
         -- TODO: get locale from browser as flag
         initContext =
-            Context.new key (Locale.fromString "pt") View.Theme.Dark
+            Context.new key (Locale.fromString "en") View.Theme.Dark
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url

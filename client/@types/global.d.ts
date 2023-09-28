@@ -7,6 +7,7 @@ interface ColorPalette {
   backgroundColor: string;
   foregroundColor: string;
   textColor: string;
+  errorColor: string;
 }
 
 export interface App {

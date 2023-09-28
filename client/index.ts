@@ -31,5 +31,6 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
     root.style.setProperty("--background-color", data.backgroundColor);
     root.style.setProperty("--foreground-color", data.foregroundColor);
     root.style.setProperty("--text-color", data.textColor);
+    root.style.setProperty("--error-color", data.errorColor);
   });
 })();

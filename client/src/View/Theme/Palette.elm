@@ -8,6 +8,7 @@ type alias Palette =
     { backgroundColor : View.Color.Color
     , foregroundColor : View.Color.Color
     , textColor : View.Color.Color
+    , errorColor : View.Color.Color
     }
 
 
@@ -17,4 +18,5 @@ encode palette =
         [ ( "backgroundColor", View.Color.encode palette.backgroundColor )
         , ( "foregroundColor", View.Color.encode palette.foregroundColor )
         , ( "textColor", View.Color.encode palette.textColor )
+        , ( "errorColor", View.Color.encode palette.errorColor )
         ]
