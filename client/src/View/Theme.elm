@@ -1,13 +1,43 @@
-module View.Theme exposing (..)
+module View.Theme exposing (Theme(..), backgroundColor, encode, foregroundColor, textColor)
 
+import Json.Encode
 import View.Color
+import View.Theme.Dark
+import View.Theme.Palette
 
 
 type Theme
     = Dark
+    | Light
 
 
-type alias ThemeDefinition =
-    { backgroundColor : View.Color.Color
-    , foregroundColor : View.Color.Color
-    }
+themePalette : Theme -> View.Theme.Palette.Palette
+themePalette theme =
+    case theme of
+        Dark ->
+            View.Theme.Dark.palette
+
+        Light ->
+            Debug.todo "Implement light theme"
+
+
+backgroundColor : Theme -> View.Color.Color
+backgroundColor theme =
+    theme |> themePalette |> .backgroundColor
+
+
+foregroundColor : Theme -> View.Color.Color
+foregroundColor theme =
+    theme |> themePalette |> .foregroundColor
+
+
+textColor : Theme -> View.Color.Color
+textColor theme =
+    theme |> themePalette |> .textColor
+
+
+encode : Theme -> Json.Encode.Value
+encode theme =
+    theme
+        |> themePalette
+        |> View.Theme.Palette.encode

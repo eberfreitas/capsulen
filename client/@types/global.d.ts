@@ -3,13 +3,24 @@ import {
   TaskResult,
 } from "@andrewmacmurray/elm-concurrent-task";
 
+interface ColorPalette {
+  backgroundColor: string;
+  foregroundColor: string;
+  textColor: string;
+}
+
 export interface App {
   ports: {
     taskSend: {
       subscribe: (callback: (defs: TaskDefinition[]) => Promise<void>) => void;
     };
+
     taskReceive: {
       send: (result: TaskResult[]) => void;
+    };
+
+    setTheme: {
+      subscribe: (callback: (palette: ColorPalette) => void) => void;
     };
   };
 }

@@ -1,0 +1,25 @@
+:root {
+  --background-color: rgb(0, 0, 0);
+  --foreground-color: rgb(0, 0, 0);
+  --text-color: rgb(0, 0, 0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: sans-serif;
+  font-size: 12px;
+}
+
+.wrapper {
+  align-items: center;
+  display: flex;
+  justify-items: center;
+  min-height: 100vh;
+  padding: 4rem;
+  width: 100%;
+}

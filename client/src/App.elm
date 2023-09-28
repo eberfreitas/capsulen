@@ -6,15 +6,17 @@ import Browser.Navigation
 import Context
 import Effect
 import Html
+import Html.Attributes
 import Locale
 import Page.Login
 import Page.Posts
 import Page.Register
+import Port
 import Tuple.Extra
 import Url
 import View.Alerts
-import View.Color as Color
 import View.Logo
+import View.Theme
 
 
 type alias Model =
@@ -62,19 +64,11 @@ view model =
                 NotFound ->
                     -- TODO: create a proper error page
                     Html.text "404 Not found"
-
-        black =
-            Color.new 0 0 0 1.0
     in
     { title = "Capsulen"
     , body =
-        [ Html.div
-            []
-            [ Html.h1 [] [ Html.text "Capsulen" ]
-            , View.Logo.logo 100 black
-            , View.Alerts.view localeHelper model.context.alerts |> Html.map AlertsMsg
-            , Html.div [] [ pageHtml ]
-            ]
+        [ Html.div [ Html.Attributes.class "wrapper" ] [ pageHtml ]
+        , View.Alerts.view localeHelper model.context.alerts |> Html.map AlertsMsg
         ]
     }
 
@@ -156,19 +150,22 @@ init () url key =
     let
         -- TODO: get locale from browser as flag
         initContext =
-            Context.new key (Locale.fromString "pt")
+            Context.new key (Locale.fromString "pt") View.Theme.Dark
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url
 
         ( nextContext, effectCmd ) =
             Effect.run initContext effect
+
+        setTheme =
+            Port.setTheme <| View.Theme.encode nextContext.theme
     in
     ( { url = url
       , context = nextContext
       , page = page
       }
-    , Cmd.batch [ effectCmd, pageCmd ]
+    , Cmd.batch [ effectCmd, pageCmd, setTheme ]
     )
 
 

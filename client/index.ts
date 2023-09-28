@@ -23,4 +23,13 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
       receive: app.ports.taskReceive,
     },
   });
+
+  app.ports.setTheme.subscribe((data) => {
+    // https://css-tricks.com/updating-a-css-variable-with-javascript/
+    const root = document.documentElement;
+
+    root.style.setProperty("--background-color", data.backgroundColor);
+    root.style.setProperty("--foreground-color", data.foregroundColor);
+    root.style.setProperty("--text-color", data.textColor);
+  });
 })();

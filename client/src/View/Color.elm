@@ -1,12 +1,14 @@
-module View.Color exposing (Color, new, toCss, withAlpha)
+module View.Color exposing (Color, encode, new, toCss, withAlpha)
+
+import Json.Encode
 
 
 type Color
     = Color
-        { r : Int
-        , g : Int
-        , b : Int
-        , a : Float
+        { red : Int
+        , green : Int
+        , blue : Int
+        , alpha : Float
         }
 
 
@@ -17,10 +19,10 @@ new red green blue alpha =
             clamp 0 255
     in
     Color
-        { r = rgbClamp red
-        , g = rgbClamp green
-        , b = rgbClamp blue
-        , a = clamp 0 1.0 alpha
+        { red = rgbClamp red
+        , green = rgbClamp green
+        , blue = rgbClamp blue
+        , alpha = clamp 0 1.0 alpha
         }
 
 
@@ -38,13 +40,18 @@ clamp min max value =
 
 withAlpha : Float -> Color -> Color
 withAlpha alpha (Color color) =
-    Color { color | a = clamp 0 1.0 alpha }
+    Color { color | alpha = clamp 0 1.0 alpha }
 
 
 toCss : Color -> String
 toCss (Color color) =
     "rgb({r} {g} {b} / {a})"
-        |> String.replace "{r}" (String.fromInt color.r)
-        |> String.replace "{g}" (String.fromInt color.g)
-        |> String.replace "{b}" (String.fromInt color.b)
-        |> String.replace "{a}" (String.fromFloat color.a)
+        |> String.replace "{r}" (String.fromInt color.red)
+        |> String.replace "{g}" (String.fromInt color.green)
+        |> String.replace "{b}" (String.fromInt color.blue)
+        |> String.replace "{a}" (String.fromFloat color.alpha)
+
+
+encode : Color -> Json.Encode.Value
+encode color =
+    color |> toCss |> Json.Encode.string
