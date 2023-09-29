@@ -52,7 +52,7 @@ view model =
         pageHtml =
             case model.page of
                 Register subModel ->
-                    subModel |> Page.Register.view localeHelper |> Html.map RegisterMsg
+                    subModel |> Page.Register.view localeHelper model.context |> Html.map RegisterMsg
 
                 Login subModel ->
                     subModel |> Page.Login.view localeHelper model.context |> Html.map LoginMsg

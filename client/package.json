@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@andrewmacmurray/elm-concurrent-task": "^1.0.0"
+    "@andrewmacmurray/elm-concurrent-task": "^1.0.0",
+    "topbar": "^2.0.1"
   }
 }

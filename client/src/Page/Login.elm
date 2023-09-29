@@ -165,7 +165,7 @@ update msg model =
                                 }
                                 loginTask
                     in
-                    ( { newModel | tasks = tasks }, Effect.none, cmd )
+                    ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
                     ( newModel
@@ -181,19 +181,38 @@ update msg model =
             , Effect.batch
                 [ Effect.login user
                 , Effect.redirect "/posts"
+                , Effect.toggleLoader
                 ]
             , Cmd.none
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error errorMsgKey), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error errorMsgKey)
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
 
 buildUserData : Model -> Result String UserData

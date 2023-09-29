@@ -218,7 +218,7 @@ updateWithUser msg model user =
                                 }
                                 postTask
                     in
-                    ( { newModel | tasks = tasks }, Effect.none, cmd )
+                    ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
                     ( newModel
@@ -243,14 +243,17 @@ updateWithUser msg model user =
                         }
                         (loadPosts MorePostsLoaded url user)
             in
-            ( { model | tasks = tasks }, Effect.none, cmd )
+            ( { model | tasks = tasks }, Effect.toggleLoader, cmd )
 
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )
 
         OnTaskComplete (ConcurrentTask.Success (Posted post)) ->
             ( { model | posts = post :: model.posts }
-            , Effect.addAlert (Alert.new Alert.Success "POST_NEW")
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Success "POST_NEW")
+                , Effect.toggleLoader
+                ]
             , Cmd.none
             )
 
@@ -270,19 +273,37 @@ updateWithUser msg model user =
                         Effect.none
             in
             ( { model | posts = model.posts ++ posts }
-            , effect
+            , Effect.batch [ effect, Effect.toggleLoader ]
             , Cmd.none
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error errorMsgKey), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error errorMsgKey)
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
 
 buildPostContent : Model -> Result String Business.Post.PostContent

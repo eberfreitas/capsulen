@@ -7,6 +7,7 @@ module Effect exposing
     , redirect
     , removeAlert
     , run
+    , toggleLoader
     )
 
 import Alert
@@ -14,6 +15,7 @@ import Browser.Navigation
 import Business.User
 import Context
 import List.Extra
+import Port
 
 
 type Effect
@@ -23,6 +25,7 @@ type Effect
     | RemoveAlert Int
     | Redirect String
     | Login Business.User.User
+    | ToggleLoader
 
 
 none : Effect
@@ -53,6 +56,11 @@ redirect =
 login : Business.User.User -> Effect
 login =
     Login
+
+
+toggleLoader : Effect
+toggleLoader =
+    ToggleLoader
 
 
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
@@ -89,3 +97,6 @@ run context effect =
 
         Login user ->
             ( { context | user = Just user }, Cmd.none )
+
+        ToggleLoader ->
+            ( context, Port.toggleLoader () )

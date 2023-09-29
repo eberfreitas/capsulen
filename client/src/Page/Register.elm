@@ -15,6 +15,7 @@ import Business.PrivateKey
 import Business.Username
 import ConcurrentTask
 import ConcurrentTask.Http
+import Context
 import Effect
 import Form
 import Html
@@ -25,6 +26,8 @@ import Json.Encode
 import Page
 import Phosphor
 import Port
+import View.Logo
+import View.Theme
 
 
 type TaskOutput
@@ -176,8 +179,7 @@ update msg model =
                                 }
                                 registrationTask
                     in
-                    -- TODO: Use loader effect here, to show fake progress bar
-                    ( { newModel | tasks = tasks }, Effect.none, cmd )
+                    ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
                     ( newModel
@@ -193,19 +195,38 @@ update msg model =
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Success "REGISTER_SUCCESS")
                 , Effect.redirect "/"
+                , Effect.toggleLoader
                 ]
             , Cmd.none
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error errorMsgKey), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error errorMsgKey)
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model, Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR"), Cmd.none )
+            ( model
+            , Effect.batch
+                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                , Effect.toggleLoader
+                ]
+            , Cmd.none
+            )
 
 
 subscriptions : TaskPool -> Sub Msg
@@ -228,8 +249,8 @@ buildUserData { usernameInput, privateKeyInput } =
             Err "INVALID_INPUTS"
 
 
-view : (String -> String) -> Model -> Html.Html Msg
-view i model =
+view : (String -> String) -> Context.Context -> Model -> Html.Html Msg
+view i context model =
     let
         ( privateKeyInputType, togglePrivateKeyIcon ) =
             if model.showPrivateKey then
@@ -238,42 +259,47 @@ view i model =
             else
                 ( "password", Phosphor.eye Phosphor.Regular |> Phosphor.toHtml [] )
     in
-    Html.div []
-        [ Html.form [ Html.Events.onSubmit Submit ]
+    Html.div [ Html.Attributes.class "access" ]
+        [ Html.div [ Html.Attributes.class "access__logo" ]
+            [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
+        , Html.form [ Html.Events.onSubmit Submit, Html.Attributes.class "access__form" ]
             [ Html.fieldset []
                 [ Html.legend [] [ Html.text <| i "REGISTER" ]
-                , Html.label []
-                    [ Html.div []
-                        [ Html.text <| i "USERNAME"
-                        , Html.input
-                            ([ Html.Attributes.type_ "text"
-                             , Html.Attributes.value model.usernameInput.raw
-                             ]
-                                ++ Form.inputEvents WithUsername
-                            )
-                            []
-                        , Form.viewInputError i model.usernameInput
-                        ]
+                , Html.div [ Html.Attributes.class "access__input" ]
+                    [ Html.label [ Html.Attributes.for "username" ] [ Html.text <| i "USERNAME" ]
+                    , Html.input
+                        ([ Html.Attributes.type_ "text"
+                         , Html.Attributes.name "username"
+                         , Html.Attributes.id "username"
+                         , Html.Attributes.value model.usernameInput.raw
+                         ]
+                            ++ Form.inputEvents WithUsername
+                        )
+                        []
+                    , Form.viewInputError i model.usernameInput
                     ]
-                , Html.label []
-                    [ Html.div []
-                        [ Html.text <| i "PRIVATE_KEY"
-                        , Html.input
-                            ([ Html.Attributes.type_ privateKeyInputType
-                             , Html.Attributes.value model.privateKeyInput.raw
-                             ]
-                                ++ Form.inputEvents WithPrivateKey
-                            )
-                            []
-                        , Html.button
-                            [ Html.Attributes.type_ "button", Html.Events.onClick ToggleShowPrivateKey ]
-                            [ togglePrivateKeyIcon ]
-                        , Form.viewInputError i model.privateKeyInput
-                        , Html.div [] [ Html.text <| i "PRIVATE_KEY_NOTICE" ]
+                , Html.div [ Html.Attributes.class "access__input" ]
+                    [ Html.label [ Html.Attributes.for "privateKey" ] [ Html.text <| i "PRIVATE_KEY" ]
+                    , Html.input
+                        ([ Html.Attributes.type_ privateKeyInputType
+                         , Html.Attributes.name "privateKey"
+                         , Html.Attributes.id "privateKey"
+                         , Html.Attributes.value model.privateKeyInput.raw
+                         ]
+                            ++ Form.inputEvents WithPrivateKey
+                        )
+                        []
+                    , Html.button
+                        [ Html.Attributes.type_ "button"
+                        , Html.Events.onClick ToggleShowPrivateKey
+                        , Html.Attributes.class "btn private-key-toggle"
                         ]
+                        [ togglePrivateKeyIcon ]
+                    , Form.viewInputError i model.privateKeyInput
                     ]
-                , Html.button [] [ Html.text <| i "REGISTER" ]
+                , Html.div [ Html.Attributes.class "notice" ] [ Html.text <| i "PRIVATE_KEY_NOTICE" ]
+                , Html.button [ Html.Attributes.class "btn btn--full" ] [ Html.text <| i "REGISTER" ]
                 ]
             ]
-        , Html.a [ Html.Attributes.href "/" ] [ Html.text <| i "LOGIN" ]
+        , Html.a [ Html.Attributes.href "/", Html.Attributes.class "btn btn--full btn--inverse" ] [ Html.text <| i "LOGIN" ]
         ]

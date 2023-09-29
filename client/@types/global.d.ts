@@ -23,6 +23,10 @@ export interface App {
     setTheme: {
       subscribe: (callback: (palette: ColorPalette) => void) => void;
     };
+
+    toggleLoader: {
+      subscribe: (callback: () => void) => void;
+    };
   };
 }
 

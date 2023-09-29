@@ -1,4 +1,4 @@
-port module Port exposing (taskReceive, taskSend, setTheme)
+port module Port exposing (setTheme, taskReceive, taskSend, toggleLoader)
 
 import Json.Decode
 import Json.Encode
@@ -11,3 +11,6 @@ port taskReceive : (Json.Decode.Value -> msg) -> Sub msg
 
 
 port setTheme : Json.Encode.Value -> Cmd msg
+
+
+port toggleLoader : () -> Cmd msg
