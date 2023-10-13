@@ -112,6 +112,10 @@ html {
   width: 100%;
 }
 
+.btn--left-flat {
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
 .btn--inverse {
   background-color: transparent;
   border: 2px solid var(--foreground-color);

@@ -269,7 +269,7 @@ view i context model =
                     , Html.button
                         [ Html.Attributes.type_ "button"
                         , Html.Events.onClick ToggleShowPrivateKey
-                        , Html.Attributes.class "btn private-key-toggle"
+                        , Html.Attributes.class "btn btn--left-flat private-key-toggle"
                         ]
                         [ togglePrivateKeyIcon ]
                     , Form.viewInputError i model.privateKeyInput
