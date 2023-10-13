@@ -62,7 +62,7 @@ html {
 }
 
 .access__input {
-  margin-bottom:  1.5rem;
+  margin-bottom: 1.5rem;
   position: relative;
 }
 
@@ -122,10 +122,65 @@ html {
   color: var(--text-color);
 }
 
+.btn--short {
+  padding: 0.5rem 1rem;
+}
+
 .notice {
   border: 1px solid var(--foreground-color);
   border-radius: 0.5rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
   text-align: center;
+}
+
+.posts {
+  width: 600px;
+}
+
+.posts__header {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.posts__logout {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.posts__form {
+  margin-bottom: 1.5rem;
+}
+
+.posts__form fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.posts__form legend {
+  color: var(--foreground-color);
+  display: block;
+  font-variant: all-petite-caps;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.posts__textarea {
+  border: none;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.hr {
+  background-color: var(--foreground-color);
+  border-radius: 0.25rem;
+  height: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  width: 100%;
 }

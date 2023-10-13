@@ -16,6 +16,8 @@ import Json.Encode
 import List.Extra
 import Page
 import Port
+import View.Logo
+import View.Theme
 
 
 type TaskOutput
@@ -39,6 +41,7 @@ type Msg
     = WithPostInput Form.InputEvent
     | Submit
     | LoadMore
+    | Logout
     | OnTaskProgress ( TaskPool, Cmd Msg )
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
@@ -46,24 +49,49 @@ type Msg
 view : (String -> String) -> Context.Context -> Model -> Html.Html Msg
 view i context model =
     context.user
-        |> Maybe.map (\user -> viewWithUser i user model)
+        |> Maybe.map (\user -> viewWithUser i user context model)
         |> Maybe.withDefault (Html.text "")
 
 
-viewWithUser : (String -> String) -> Business.User.User -> Model -> Html.Html Msg
-viewWithUser i _ model =
-    Html.div []
-        [ Html.form [ Html.Events.onSubmit Submit ]
+viewWithUser :
+    (String -> String)
+    -> Business.User.User
+    -> Context.Context
+    -> Model
+    -> Html.Html Msg
+viewWithUser i _ context model =
+    Html.div [ Html.Attributes.class "posts" ]
+        [ Html.div [ Html.Attributes.class "posts__header" ]
+            [ Html.div []
+                [ View.Logo.logo 40 <| View.Theme.foregroundColor context.theme ]
+            , Html.div [ Html.Attributes.class "posts__logout" ]
+                [ Html.button
+                    [ Html.Events.onClick Logout
+                    , Html.Attributes.class "btn btn--inverse btn--short"
+                    ]
+                    [ Html.text <| i "LOGOUT" ]
+                ]
+            ]
+        , Html.form [ Html.Events.onSubmit Submit, Html.Attributes.class "posts__form" ]
             [ Html.fieldset []
                 [ Html.legend [] [ Html.text <| i "POST_ABOUT" ]
                 , Html.textarea
-                    (Html.Attributes.value model.postInput.raw :: Form.inputEvents WithPostInput)
+                    ([ Html.Attributes.value model.postInput.raw
+                     , Html.Attributes.class "posts__textarea"
+                     ]
+                        ++ Form.inputEvents WithPostInput
+                    )
                     []
-                , Html.button [] [ Html.text <| i "TO_POST" ]
+                , Html.button [ Html.Attributes.class "btn" ] [ Html.text <| i "TO_POST" ]
                 ]
             ]
+        , hr
         , Html.div [] (model.posts |> List.map (viewPost i))
-        , Html.div [] [ Html.button [ Html.Events.onClick LoadMore ] [ Html.text <| i "LOAD_MORE_POSTS" ] ]
+        , Html.div []
+            [ Html.button
+                [ Html.Events.onClick LoadMore, Html.Attributes.class "btn btn--full" ]
+                [ Html.text <| i "LOAD_MORE_POSTS" ]
+            ]
         ]
 
 
@@ -77,8 +105,13 @@ viewPost i post =
 
             Business.Post.Encrypted _ ->
                 Html.div [] [ Html.text <| i "POST_ENCRYPTED" ]
-        , Html.hr [] []
+        , hr
         ]
+
+
+hr : Html.Html msg
+hr =
+    Html.div [ Html.Attributes.class "hr" ] []
 
 
 loadPosts :
@@ -244,6 +277,16 @@ updateWithUser msg model user =
                         (loadPosts MorePostsLoaded url user)
             in
             ( { model | tasks = tasks }, Effect.toggleLoader, cmd )
+
+        Logout ->
+            ( model
+            , Effect.batch
+                [ Effect.logout
+                , Effect.redirect "/"
+                , Effect.addAlert (Alert.new Alert.Success "LOGOUT_SUCCESS")
+                ]
+            , Cmd.none
+            )
 
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )

@@ -3,6 +3,7 @@ module Effect exposing
     , addAlert
     , batch
     , login
+    , logout
     , none
     , redirect
     , removeAlert
@@ -25,6 +26,7 @@ type Effect
     | RemoveAlert Int
     | Redirect String
     | Login Business.User.User
+    | Logout
     | ToggleLoader
 
 
@@ -63,6 +65,11 @@ toggleLoader =
     ToggleLoader
 
 
+logout : Effect
+logout =
+    Logout
+
+
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
 run context effect =
     case effect of
@@ -97,6 +104,9 @@ run context effect =
 
         Login user ->
             ( { context | user = Just user }, Cmd.none )
+
+        Logout ->
+            ( { context | user = Nothing }, Cmd.none )
 
         ToggleLoader ->
             ( context, Port.toggleLoader () )

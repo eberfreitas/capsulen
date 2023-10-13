@@ -86,6 +86,16 @@ phrases =
         , en = "There was an error trying to log you in. Please, try again"
         }
       )
+    , ( "LOGOUT"
+      , { pt = "Sair"
+        , en = "Logout"
+        }
+      )
+    , ( "LOGOUT_SUCCESS"
+      , { pt = "Até breve!"
+        , en = "See you soon!"
+        }
+      )
     , ( "TO_POST"
       , { pt = "Postar"
         , en = "Post"
