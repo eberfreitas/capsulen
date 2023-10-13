@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "run-pty % npm run watch -w server % npm run watch:elm -w client % npm run watch:ts -w client"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,7 @@
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.3",
+    "run-pty": "^4.1.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },

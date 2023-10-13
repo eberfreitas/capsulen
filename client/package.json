@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "devDependencies": {
-    "elm-review": "^2.10.2"
+    "elm-review": "^2.10.2",
+    "elm-watch": "^1.2.0-beta.4",
+    "nodemon": "^3.0.1"
   },
   "scripts": {
-    "build:dev:elm": "elm make src/App.elm --output ../server/public/js/app.js --debug",
-    "build:dev:ts": "esbuild index.ts --bundle --outfile=../server/public/js/index.js",
-    "build:dev": "npm run build:dev:elm && npm run build:dev:ts"
+    "watch:elm": "elm-watch hot",
+    "watch:ts": "esbuild index.ts --bundle --watch --outfile=../server/public/js/index.js"
   },
   "keywords": [],
   "author": "",
