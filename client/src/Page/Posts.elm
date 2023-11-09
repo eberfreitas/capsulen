@@ -101,7 +101,18 @@ viewPost i post =
         [ Html.p [] [ Html.text post.createdAt ]
         , case post.content of
             Business.Post.Decrypted content ->
-                Html.div [] [ Html.text content.body ]
+                Html.div []
+                    (content.body
+                        |> String.lines
+                        |> List.map
+                            (\line ->
+                                if line == "" then
+                                    Html.br [] []
+
+                                else
+                                    Html.text line
+                            )
+                    )
 
             Business.Post.Encrypted _ ->
                 Html.div [] [ Html.text <| i "POST_ENCRYPTED" ]
@@ -292,7 +303,7 @@ updateWithUser msg model user =
             ( { model | tasks = tasks }, Effect.none, cmd )
 
         OnTaskComplete (ConcurrentTask.Success (Posted post)) ->
-            ( { model | posts = post :: model.posts }
+            ( { model | posts = post :: model.posts, postInput = Form.newInput }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Success "POST_NEW")
                 , Effect.toggleLoader
