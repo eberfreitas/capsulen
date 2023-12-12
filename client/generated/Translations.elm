@@ -66,6 +66,109 @@ languageToString language =
             "pt"
 
 
+keyFromString : String -> Key
+keyFromString key =
+    case key of
+        "CREDENTIALS_INCORRECT" ->
+            CredentialsIncorrect
+
+        "FORBIDDEN_AREA" ->
+            ForbiddenArea
+
+        "INPUT_EMPTY" ->
+            InputEmpty
+
+        "INVALID_INPUTS" ->
+            InvalidInputs
+
+        "LOAD_MORE_POSTS" ->
+            LoadMorePosts
+
+        "LOGIN" ->
+            Login
+
+        "LOGIN_ERROR" ->
+            LoginError
+
+        "LOGOUT" ->
+            Logout
+
+        "LOGOUT_SUCCESS" ->
+            LogoutSuccess
+
+        "POSTS_NO_MORE" ->
+            PostsNoMore
+
+        "POST_ABOUT" ->
+            PostAbout
+
+        "POST_ERROR" ->
+            PostError
+
+        "POST_FETCH_ERROR" ->
+            PostFetchError
+
+        "POST_NEW" ->
+            PostNew
+
+        "PRIVATE_KEY" ->
+            PrivateKey
+
+        "PRIVATE_KEY_NOTICE" ->
+            PrivateKeyNotice
+
+        "PRIVATE_KEY_SHORT" ->
+            PrivateKeyShort
+
+        "PRIVATE_KEY_WS" ->
+            PrivateKeyWs
+
+        "REGISTER" ->
+            Register
+
+        "REGISTER_ERROR" ->
+            RegisterError
+
+        "REGISTER_NEW" ->
+            RegisterNew
+
+        "REGISTER_SUCCESS" ->
+            RegisterSuccess
+
+        "REQUEST_ERROR" ->
+            RequestError
+
+        "TAGLINE" ->
+            Tagline
+
+        "TO_POST" ->
+            ToPost
+
+        "UNEXPECTED_REGISTER_ERROR" ->
+            UnexpectedRegisterError
+
+        "UNKNOWN_ERROR" ->
+            UnknownError
+
+        "USERNAME" ->
+            Username
+
+        "USERNAME_EMPTY" ->
+            UsernameEmpty
+
+        "USERNAME_INVALID" ->
+            UsernameInvalid
+
+        "USERNAME_IN_USE" ->
+            UsernameInUse
+
+        "USER_NOT_FOUND" ->
+            UserNotFound
+
+        _ ->
+            UnknownError
+
+
 keyToString : Key -> String
 keyToString key =
     case key of
@@ -178,17 +281,6 @@ translate lang key =
     Dict.get langString phrases
         |> (\maybePhrases -> Maybe.andThen (Dict.get keyString) maybePhrases)
         |> (\maybePhrase -> Maybe.withDefault keyString maybePhrase)
-
-
-translateUnsafe : Language -> String -> String
-translateUnsafe lang key =
-    let
-        langString =
-            lang |> languageToString
-    in
-    Dict.get langString phrases
-        |> (\maybePhrases -> Maybe.andThen (Dict.get key) maybePhrases)
-        |> (\maybePhrase -> Maybe.withDefault key maybePhrase)
 
 
 phrases : Dict.Dict String (Dict.Dict String String)
