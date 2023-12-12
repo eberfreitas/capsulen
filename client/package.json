@@ -11,7 +11,8 @@
   },
   "scripts": {
     "watch:elm": "elm-watch hot",
-    "watch:ts": "esbuild index.ts --bundle --watch --outfile=../server/public/js/index.js"
+    "watch:ts": "esbuild index.ts --bundle --watch --outfile=../server/public/js/index.js",
+    "gen:translations": "ts-node ./scripts/gen-translations.ts"
   },
   "keywords": [],
   "author": "",
