@@ -91,6 +91,18 @@ generate translations =
                         )
                 )
             )
+        , Elm.declaration "keyFromString"
+            (Elm.fn
+                ( "key", Just Elm.Annotation.string )
+                (\key ->
+                    Elm.Case.string key
+                        { cases =
+                            translations |> Dict.keys |> List.map (\k -> ( k, k |> camelCase |> Elm.val ))
+                        , otherwise = Elm.val "UnknownError"
+                        }
+                )
+                |> Elm.withType (Elm.Annotation.function [ Elm.Annotation.string ] keyTypeAnnotation)
+            )
         , Elm.declaration "keyToString"
             (Elm.fn
                 ( "key", Just keyTypeAnnotation )
@@ -133,38 +145,6 @@ generate translations =
                 |> Elm.withType
                     (Elm.Annotation.function
                         [ languageTypeAnnotation, keyTypeAnnotation ]
-                        Elm.Annotation.string
-                    )
-            )
-        , Elm.declaration "translateUnsafe"
-            (Elm.fn2
-                ( "lang", Just languageTypeAnnotation )
-                ( "key", Just Elm.Annotation.string )
-                (\lang key ->
-                    Elm.Let.letIn
-                        (\langString ->
-                            Gen.Dict.get langString (Elm.val "phrases")
-                                |> Elm.Op.pipe
-                                    (Elm.fn ( "maybePhrases", Nothing )
-                                        (\maybePhrases ->
-                                            Gen.Maybe.andThen
-                                                (\phrases_ -> Gen.Dict.get key phrases_)
-                                                maybePhrases
-                                        )
-                                    )
-                                |> Elm.Op.pipe
-                                    (Elm.fn ( "maybePhrase", Nothing )
-                                        (\maybePhrase ->
-                                            Gen.Maybe.withDefault key maybePhrase
-                                        )
-                                    )
-                        )
-                        |> Elm.Let.value "langString" (lang |> Elm.Op.pipe (Elm.val "languageToString"))
-                        |> Elm.Let.toExpression
-                )
-                |> Elm.withType
-                    (Elm.Annotation.function
-                        [ languageTypeAnnotation, Elm.Annotation.string ]
                         Elm.Annotation.string
                     )
             )
