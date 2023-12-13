@@ -24,6 +24,7 @@ import Json.Encode
 import Page
 import Phosphor
 import Port
+import Translations
 import View.Logo
 import View.Theme
 
@@ -73,8 +74,8 @@ init =
     ( initModel, Effect.none, Cmd.none )
 
 
-update : Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update msg model =
+update : Translations.Helper -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i msg model =
     case msg of
         WithUsername event ->
             Page.done { model | usernameInput = Form.updateInput event Page.nonEmptyInputParser model.usernameInput }
@@ -169,7 +170,7 @@ update msg model =
 
                 Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error errorKey)
+                    , Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
                     , Cmd.none
                     )
 
@@ -186,10 +187,10 @@ update msg model =
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
+        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error errorMsgKey)
+                [ Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -199,7 +200,7 @@ update msg model =
             -- TODO: send error to monitoring tool
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -208,7 +209,7 @@ update msg model =
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -225,7 +226,7 @@ buildUserData model =
             Err "INVALID_INPUTS"
 
 
-view : (String -> String) -> Context.Context -> Model -> Html.Html Msg
+view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
 view i context model =
     let
         ( privateKeyInputType, togglePrivateKeyIcon ) =
@@ -238,12 +239,12 @@ view i context model =
     Html.div [ Html.Attributes.class "access" ]
         [ Html.div [ Html.Attributes.class "access__logo" ]
             [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
-        , Html.div [ Html.Attributes.class "capsulen-tagline" ] [ Html.text <| i "TAGLINE" ]
+        , Html.div [ Html.Attributes.class "capsulen-tagline" ] [ Html.text <| i Translations.Tagline ]
         , Html.form [ Html.Events.onSubmit Submit, Html.Attributes.class "access__form" ]
             [ Html.fieldset []
-                [ Html.legend [] [ Html.text <| i "LOGIN" ]
+                [ Html.legend [] [ Html.text <| i Translations.Login ]
                 , Html.div [ Html.Attributes.class "access__input" ]
-                    [ Html.label [ Html.Attributes.for "username" ] [ Html.text <| i "USERNAME" ]
+                    [ Html.label [ Html.Attributes.for "username" ] [ Html.text <| i Translations.Username ]
                     , Html.input
                         ([ Html.Attributes.type_ "text"
                          , Html.Attributes.name "username"
@@ -256,7 +257,7 @@ view i context model =
                     , Form.viewInputError i model.usernameInput
                     ]
                 , Html.div [ Html.Attributes.class "access__input" ]
-                    [ Html.label [ Html.Attributes.for "privateKey" ] [ Html.text <| i "PRIVATE_KEY" ]
+                    [ Html.label [ Html.Attributes.for "privateKey" ] [ Html.text <| i Translations.PrivateKey ]
                     , Html.input
                         ([ Html.Attributes.type_ privateKeyInputType
                          , Html.Attributes.name "privateKey"
@@ -274,11 +275,11 @@ view i context model =
                         [ togglePrivateKeyIcon ]
                     , Form.viewInputError i model.privateKeyInput
                     ]
-                , Html.div [ Html.Attributes.class "notice" ] [ Html.text <| i "PRIVATE_KEY_NOTICE" ]
-                , Html.button [ Html.Attributes.class "btn btn--full" ] [ Html.text <| i "LOGIN" ]
+                , Html.div [ Html.Attributes.class "notice" ] [ Html.text <| i Translations.PrivateKeyNotice ]
+                , Html.button [ Html.Attributes.class "btn btn--full" ] [ Html.text <| i Translations.Login ]
                 ]
             ]
-        , Html.a [ Html.Attributes.href "/register", Html.Attributes.class "btn btn--full btn--inverse" ] [ Html.text <| i "REGISTER_NEW" ]
+        , Html.a [ Html.Attributes.href "/register", Html.Attributes.class "btn btn--full btn--inverse" ] [ Html.text <| i Translations.RegisterNew ]
         ]
 
 
