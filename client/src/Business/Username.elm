@@ -2,13 +2,14 @@ module Business.Username exposing (Username, encode, fromString, toString)
 
 import Json.Encode
 import Regex
+import Translations
 
 
 type Username
     = Username String
 
 
-fromString : String -> Result String Username
+fromString : String -> Result Translations.Key Username
 fromString raw =
     let
         username : String
@@ -20,10 +21,10 @@ fromString raw =
                 |> String.trim
     in
     if username == "" then
-        Err "USERNAME_EMPTY"
+        Err Translations.UsernameEmpty
 
     else if username /= raw then
-        Err "USERNAME_INVALID"
+        Err Translations.UsernameInvalid
 
     else
         Ok (Username username)

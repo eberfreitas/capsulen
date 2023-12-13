@@ -3,6 +3,7 @@ module Page exposing (TaskError(..), done, httpErrorMapper, nonEmptyInputParser)
 import ConcurrentTask.Http
 import Effect
 import Json.Decode
+import Translations
 
 
 type TaskError
@@ -33,7 +34,7 @@ done model =
     ( model, Effect.none, Cmd.none )
 
 
-nonEmptyInputParser : String -> Result String String
+nonEmptyInputParser : String -> Result Translations.Key String
 nonEmptyInputParser value =
     let
         parsedValue : String
@@ -41,7 +42,7 @@ nonEmptyInputParser value =
             String.trim value
     in
     if parsedValue == "" then
-        Err "INPUT_EMPTY"
+        Err Translations.InputEmpty
 
     else
         Ok parsedValue
