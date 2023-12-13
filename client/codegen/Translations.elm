@@ -59,6 +59,7 @@ generate translations =
                 |> List.map
                     (\key -> key |> camelCase |> Elm.variant)
             )
+        , Elm.alias "Helper" (Elm.Annotation.function [ keyTypeAnnotation ] Elm.Annotation.string)
         , Elm.declaration "languageFromString"
             (Elm.fn
                 ( "language", Nothing )
@@ -122,12 +123,12 @@ generate translations =
                 (\lang key ->
                     Elm.Let.letIn
                         (\langString keyString ->
-                            Gen.Dict.get langString (Elm.val "phrases")
+                            Gen.Dict.get keyString (Elm.val "phrases")
                                 |> Elm.Op.pipe
                                     (Elm.fn ( "maybePhrases", Nothing )
                                         (\maybePhrases ->
                                             Gen.Maybe.andThen
-                                                (\phrases_ -> Gen.Dict.get keyString phrases_)
+                                                (\phrases_ -> Gen.Dict.get langString phrases_)
                                                 maybePhrases
                                         )
                                     )

@@ -127,4 +127,8 @@ export const translations = {
     en: "“Journaling made safe and simple”",
     pt: "“Um diário seguro e simples”",
   },
+  POST_ENCRYPTED: {
+    en: "This post is encrypted",
+    pt: "Este post está criptografado",
+  }
 };
