@@ -1,4 +1,4 @@
-module View.Theme exposing (Theme(..), backgroundColor, encode, errorColor, foregroundColor, textColor)
+module View.Theme exposing (Theme(..), encode, foregroundColor)
 
 import Json.Encode
 import View.Color

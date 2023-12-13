@@ -1,4 +1,4 @@
-module View.Logo exposing (..)
+module View.Logo exposing (logo)
 
 import Html
 import Svg
