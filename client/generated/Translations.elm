@@ -20,6 +20,7 @@ type Key
     | LogoutSuccess
     | PostsNoMore
     | PostAbout
+    | PostEncrypted
     | PostError
     | PostFetchError
     | PostNew
@@ -41,6 +42,10 @@ type Key
     | UsernameInvalid
     | UsernameInUse
     | UserNotFound
+
+
+type alias Helper =
+    Key -> String
 
 
 languageFromString : String -> Language
@@ -101,6 +106,9 @@ keyFromString key =
 
         "POST_ABOUT" ->
             PostAbout
+
+        "POST_ENCRYPTED" ->
+            PostEncrypted
 
         "POST_ERROR" ->
             PostError
@@ -205,6 +213,9 @@ keyToString key =
         PostAbout ->
             "POST_ABOUT"
 
+        PostEncrypted ->
+            "POST_ENCRYPTED"
+
         PostError ->
             "POST_ERROR"
 
@@ -278,8 +289,8 @@ translate lang key =
         keyString =
             key |> keyToString
     in
-    Dict.get langString phrases
-        |> (\maybePhrases -> Maybe.andThen (Dict.get keyString) maybePhrases)
+    Dict.get keyString phrases
+        |> (\maybePhrases -> Maybe.andThen (Dict.get langString) maybePhrases)
         |> (\maybePhrase -> Maybe.withDefault keyString maybePhrase)
 
 
@@ -351,6 +362,12 @@ phrases =
           , Dict.fromList
                 [ ( "en", "What do you want to write about?" )
                 , ( "pt", "Sobre o que você quer escrever?" )
+                ]
+          )
+        , ( "POST_ENCRYPTED"
+          , Dict.fromList
+                [ ( "en", "This post is encrypted" )
+                , ( "pt", "Este post está criptografado" )
                 ]
           )
         , ( "POST_ERROR"
