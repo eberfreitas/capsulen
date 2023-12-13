@@ -1,6 +1,7 @@
 module Business.PrivateKey exposing (PrivateKey, encode, fromString)
 
 import Json.Encode
+import Translations
 
 
 type PrivateKey
@@ -12,7 +13,7 @@ minLength =
     4
 
 
-fromString : String -> Result String PrivateKey
+fromString : String -> Result Translations.Key PrivateKey
 fromString raw =
     let
         privateKey : String
@@ -20,10 +21,10 @@ fromString raw =
             String.trim raw
     in
     if String.length privateKey < minLength then
-        Err "PRIVATE_KEY_SHORT"
+        Err Translations.PrivateKeyShort
 
     else if raw /= String.trim raw then
-        Err "PRIVATE_KEY_WS"
+        Err Translations.PrivateKeyWs
 
     else
         Ok (PrivateKey privateKey)

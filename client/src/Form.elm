@@ -40,22 +40,22 @@ type InputEvent
     | OnInput String
 
 
-resultToValidity : Result String a -> Validity a
+resultToValidity : Result Translations.Key a -> Validity a
 resultToValidity result =
     case result of
         Ok value ->
             Valid value
 
         Err error ->
-            Invalid (error |> Translations.keyFromString)
+            Invalid error
 
 
-parseInput : (String -> Result String a) -> Input a -> Input a
+parseInput : (String -> Result Translations.Key a) -> Input a -> Input a
 parseInput parser input =
     { input | valid = input.raw |> parser |> resultToValidity }
 
 
-updateInput : InputEvent -> (String -> Result String a) -> Input a -> Input a
+updateInput : InputEvent -> (String -> Result Translations.Key a) -> Input a -> Input a
 updateInput event parser input =
     case event of
         OnFocus ->
