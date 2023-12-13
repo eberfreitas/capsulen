@@ -32,12 +32,8 @@ export async function buildUser(args: {
       privateKey: privateKey,
       token: args.token
     };
-  } catch(e) {
-    const error =
-      e instanceof Error
-        ? e.message
-        : "LOGIN_ERROR";
-
-    return { error };
+  } catch(_) {
+    // TODO: monitor error
+    return { error: "LOGIN_ERROR" };
   }
 }

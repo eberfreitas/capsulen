@@ -11,10 +11,9 @@ export async function encryptPost(args: {
     );
 
     return content;
-  } catch (e) {
-    const error = e instanceof Error ? e.message : "UNKNOWN_ERROR";
-
-    return { error };
+  } catch (_) {
+    //TODO: monitor error
+    return { error: "ENCRYPT_ERROR" };
   }
 }
 
@@ -33,9 +32,8 @@ export async function decryptPosts(args: {
     }
 
     return posts;
-  } catch (e) {
-    const error = e instanceof Error ? e.message : "UNKNOWN_ERROR";
-
-    return { error };
+  } catch (_) {
+    //TODO: monitor error
+    return { error: "DECRYPT_ERROR" };
   }
 }
