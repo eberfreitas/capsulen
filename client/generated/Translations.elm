@@ -10,6 +10,8 @@ type Language
 
 type Key
     = CredentialsIncorrect
+    | DecryptError
+    | EncryptError
     | ForbiddenArea
     | InputEmpty
     | InvalidInputs
@@ -76,6 +78,12 @@ keyFromString key =
     case key of
         "CREDENTIALS_INCORRECT" ->
             CredentialsIncorrect
+
+        "DECRYPT_ERROR" ->
+            DecryptError
+
+        "ENCRYPT_ERROR" ->
+            EncryptError
 
         "FORBIDDEN_AREA" ->
             ForbiddenArea
@@ -182,6 +190,12 @@ keyToString key =
     case key of
         CredentialsIncorrect ->
             "CREDENTIALS_INCORRECT"
+
+        DecryptError ->
+            "DECRYPT_ERROR"
+
+        EncryptError ->
+            "ENCRYPT_ERROR"
 
         ForbiddenArea ->
             "FORBIDDEN_AREA"
@@ -305,6 +319,18 @@ phrases =
                 , ( "pt"
                   , "Nome de usuário ou chave privada incorretos. Por favor, tente novamente"
                   )
+                ]
+          )
+        , ( "DECRYPT_ERROR"
+          , Dict.fromList
+                [ ( "en", "There was an error during decryption" )
+                , ( "pt", "Ocorreu um erro no processo de descriptografia" )
+                ]
+          )
+        , ( "ENCRYPT_ERROR"
+          , Dict.fromList
+                [ ( "en", "There was an error during encryption" )
+                , ( "pt", "Ocorreu um error no processo de criptografia" )
                 ]
           )
         , ( "FORBIDDEN_AREA"

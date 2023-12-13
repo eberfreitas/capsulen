@@ -130,5 +130,13 @@ export const translations = {
   POST_ENCRYPTED: {
     en: "This post is encrypted",
     pt: "Este post está criptografado",
-  }
+  },
+  ENCRYPT_ERROR: {
+    en: "There was an error during encryption",
+    pt: "Ocorreu um error no processo de criptografia",
+  },
+  DECRYPT_ERROR: {
+    en: "There was an error during decryption",
+    pt: "Ocorreu um erro no processo de descriptografia",
+  },
 };
