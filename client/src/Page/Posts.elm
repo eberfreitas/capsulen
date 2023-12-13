@@ -1,7 +1,7 @@
-module Page.Posts exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Posts exposing (Model, Msg, TaskOutput, TaskPool, init, subscriptions, update, view)
 
 import Alert
-import Business.Post exposing (Content(..))
+import Business.Post
 import Business.User
 import ConcurrentTask
 import ConcurrentTask.Http

@@ -1,4 +1,4 @@
-module View.Color exposing (Color, encode, new, toCss, withAlpha)
+module View.Color exposing (Color, encode, new, toCss)
 
 import Json.Encode
 
