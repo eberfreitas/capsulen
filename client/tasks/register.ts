@@ -15,12 +15,8 @@ export async function encryptChallenge(args: {
       nonce: args.nonce,
       challengeEncrypted,
     };
-  } catch (e) {
-    const error =
-      e instanceof Error
-        ? e.message
-        : "UNEXPECTED_REGISTER_ERROR";
-
-    return { error };
+  } catch (_) {
+    //TODO: monitor error
+    return { error: "UNEXPECTED_REGISTER_ERROR" };
   }
 }
