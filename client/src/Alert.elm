@@ -34,11 +34,11 @@ messageClass severity =
             "warning"
 
 
-toHtml : (String -> String) -> (Int -> msg) -> Int -> Message -> Html.Html msg
-toHtml i closeFn index (Message message) =
+toHtml : (Int -> msg) -> Int -> Message -> Html.Html msg
+toHtml closeFn index (Message message) =
     Html.div
         [ Html.Attributes.class <| messageClass message.severity ]
-        [ Html.div [] [ Html.text <| i message.body ]
+        [ Html.div [] [ Html.text <| message.body ]
         , Html.div []
             [ Html.button [ Html.Events.onClick <| closeFn index ]
                 [ Phosphor.xCircle Phosphor.Regular |> Phosphor.toHtml [] ]

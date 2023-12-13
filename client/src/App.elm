@@ -7,11 +7,11 @@ import Context
 import Effect
 import Html
 import Html.Attributes
-import Locale
 import Page.Login
 import Page.Posts
 import Page.Register
 import Port
+import Translations
 import Tuple.Extra
 import Url
 import View.Alerts
@@ -44,21 +44,21 @@ type Msg
 view : Model -> Browser.Document Msg
 view model =
     let
-        localeHelper : String -> String
-        localeHelper =
-            Locale.getPhrase model.context.locale
+        i : Translations.Helper
+        i =
+            Translations.translate model.context.language
 
         pageHtml : Html.Html Msg
         pageHtml =
             case model.page of
                 Register subModel ->
-                    subModel |> Page.Register.view localeHelper model.context |> Html.map RegisterMsg
+                    subModel |> Page.Register.view i model.context |> Html.map RegisterMsg
 
                 Login subModel ->
-                    subModel |> Page.Login.view localeHelper model.context |> Html.map LoginMsg
+                    subModel |> Page.Login.view i model.context |> Html.map LoginMsg
 
                 Posts subModel ->
-                    subModel |> Page.Posts.view localeHelper model.context |> Html.map PostsMsg
+                    subModel |> Page.Posts.view i model.context |> Html.map PostsMsg
 
                 NotFound ->
                     -- TODO: create a proper error page
@@ -67,13 +67,18 @@ view model =
     { title = "Capsulen"
     , body =
         [ Html.div [ Html.Attributes.class "wrapper" ] [ pageHtml ]
-        , View.Alerts.view localeHelper model.context.alerts |> Html.map AlertsMsg
+        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
         ]
     }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        i : Translations.Helper
+        i =
+            Translations.translate model.context.language
+    in
     case ( msg, model.page ) of
         ( UrlRequest request, _ ) ->
             case request of
@@ -107,7 +112,7 @@ update msg model =
         ( RegisterMsg subMsg, Register subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Register.update subMsg subModel
+                    Page.Register.update i subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -119,7 +124,7 @@ update msg model =
         ( LoginMsg subMsg, Login subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Login.update subMsg subModel
+                    Page.Login.update i subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -131,7 +136,7 @@ update msg model =
         ( PostsMsg subMsg, Posts subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Posts.update model.context subMsg subModel
+                    Page.Posts.update i model.context subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -149,7 +154,7 @@ init () url key =
     let
         -- TODO: get locale from browser as flag
         initContext =
-            Context.new key (Locale.fromString "en") View.Theme.Dark
+            Context.new key (Translations.languageFromString "en") View.Theme.Dark
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url
@@ -186,7 +191,7 @@ router context url =
                     (Cmd.map RegisterMsg)
 
         [ "posts" ] ->
-            Page.Posts.init context
+            Page.Posts.init (Translations.translate context.language) context
                 |> Tuple.Extra.mapTrio
                     Posts
                     identity

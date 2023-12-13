@@ -13,6 +13,7 @@ module Form exposing
 import Html
 import Html.Attributes
 import Html.Events
+import Translations
 
 
 type alias Input a =
@@ -24,7 +25,7 @@ type alias Input a =
 
 type Validity a
     = Unparsed
-    | Invalid String
+    | Invalid Translations.Key
     | Valid a
 
 
@@ -46,7 +47,7 @@ resultToValidity result =
             Valid value
 
         Err error ->
-            Invalid error
+            Invalid (error |> Translations.keyFromString)
 
 
 parseInput : (String -> Result String a) -> Input a -> Input a
@@ -84,7 +85,7 @@ newInput =
     { raw = "", valid = Unparsed, state = Idle }
 
 
-viewInputError : (String -> String) -> Input a -> Html.Html msg
+viewInputError : Translations.Helper -> Input a -> Html.Html msg
 viewInputError i input =
     case ( input.valid, input.state ) of
         ( Invalid msgKey, Idle ) ->

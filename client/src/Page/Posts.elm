@@ -16,6 +16,7 @@ import Json.Encode
 import List.Extra
 import Page
 import Port
+import Translations
 import View.Logo
 import View.Theme
 
@@ -46,7 +47,7 @@ type Msg
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
 
-view : (String -> String) -> Context.Context -> Model -> Html.Html Msg
+view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
 view i context model =
     context.user
         |> Maybe.map (\user -> viewWithUser i user context model)
@@ -54,7 +55,7 @@ view i context model =
 
 
 viewWithUser :
-    (String -> String)
+    Translations.Helper
     -> Business.User.User
     -> Context.Context
     -> Model
@@ -69,12 +70,12 @@ viewWithUser i _ context model =
                     [ Html.Events.onClick Logout
                     , Html.Attributes.class "btn btn--inverse btn--short"
                     ]
-                    [ Html.text <| i "LOGOUT" ]
+                    [ Html.text <| i Translations.Logout ]
                 ]
             ]
         , Html.form [ Html.Events.onSubmit Submit, Html.Attributes.class "posts__form" ]
             [ Html.fieldset []
-                [ Html.legend [] [ Html.text <| i "POST_ABOUT" ]
+                [ Html.legend [] [ Html.text <| i Translations.PostAbout ]
                 , Html.textarea
                     ([ Html.Attributes.value model.postInput.raw
                      , Html.Attributes.class "posts__textarea"
@@ -82,7 +83,7 @@ viewWithUser i _ context model =
                         ++ Form.inputEvents WithPostInput
                     )
                     []
-                , Html.button [ Html.Attributes.class "btn" ] [ Html.text <| i "TO_POST" ]
+                , Html.button [ Html.Attributes.class "btn" ] [ Html.text <| i Translations.ToPost ]
                 ]
             ]
         , hr
@@ -90,12 +91,12 @@ viewWithUser i _ context model =
         , Html.div []
             [ Html.button
                 [ Html.Events.onClick LoadMore, Html.Attributes.class "btn btn--full" ]
-                [ Html.text <| i "LOAD_MORE_POSTS" ]
+                [ Html.text <| i Translations.LoadMorePosts ]
             ]
         ]
 
 
-viewPost : (String -> String) -> Business.Post.Post -> Html.Html Msg
+viewPost : Translations.Helper -> Business.Post.Post -> Html.Html Msg
 viewPost i post =
     Html.div []
         [ Html.p [] [ Html.text post.createdAt ]
@@ -115,7 +116,7 @@ viewPost i post =
                     )
 
             Business.Post.Encrypted _ ->
-                Html.div [] [ Html.text <| i "POST_ENCRYPTED" ]
+                Html.div [] [ Html.text <| i Translations.PostEncrypted ]
         , hr
         ]
 
@@ -161,8 +162,8 @@ loadPosts output url user =
         |> ConcurrentTask.map output
 
 
-init : Context.Context -> ( Model, Effect.Effect, Cmd Msg )
-init context =
+init : Translations.Helper -> Context.Context -> ( Model, Effect.Effect, Cmd Msg )
+init i context =
     let
         effect : Effect.Effect
         effect =
@@ -170,7 +171,7 @@ init context =
                 |> Maybe.map (always Effect.none)
                 |> Maybe.withDefault
                     (Effect.batch
-                        [ Effect.addAlert (Alert.new Alert.Error "FORBIDDEN_AREA")
+                        [ Effect.addAlert (Alert.new Alert.Error <| i Translations.ForbiddenArea)
                         , Effect.redirect "/"
                         ]
                     )
@@ -201,15 +202,15 @@ init context =
     )
 
 
-update : Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update context msg model =
+update : Translations.Helper -> Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i context msg model =
     context.user
-        |> Maybe.map (updateWithUser msg model)
+        |> Maybe.map (updateWithUser i msg model)
         |> Maybe.withDefault ( model, Effect.none, Cmd.none )
 
 
-updateWithUser : Msg -> Model -> Business.User.User -> ( Model, Effect.Effect, Cmd Msg )
-updateWithUser msg model user =
+updateWithUser : Translations.Helper -> Msg -> Model -> Business.User.User -> ( Model, Effect.Effect, Cmd Msg )
+updateWithUser i msg model user =
     case msg of
         WithPostInput event ->
             ( { model | postInput = Form.updateInput event Page.nonEmptyInputParser model.postInput }
@@ -266,7 +267,7 @@ updateWithUser msg model user =
 
                 Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error errorKey)
+                    , Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
                     , Cmd.none
                     )
 
@@ -294,7 +295,7 @@ updateWithUser msg model user =
             , Effect.batch
                 [ Effect.logout
                 , Effect.redirect "/"
-                , Effect.addAlert (Alert.new Alert.Success "LOGOUT_SUCCESS")
+                , Effect.addAlert (Alert.new Alert.Success <| i Translations.LogoutSuccess)
                 ]
             , Cmd.none
             )
@@ -305,7 +306,7 @@ updateWithUser msg model user =
         OnTaskComplete (ConcurrentTask.Success (Posted post)) ->
             ( { model | posts = post :: model.posts, postInput = Form.newInput }
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Success "POST_NEW")
+                [ Effect.addAlert (Alert.new Alert.Success <| i Translations.PostNew)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -321,7 +322,7 @@ updateWithUser msg model user =
             let
                 effect =
                     if posts == [] then
-                        Effect.addAlert (Alert.new Alert.Warning "POSTS_NO_MORE")
+                        Effect.addAlert (Alert.new Alert.Warning <| i Translations.PostsNoMore)
 
                     else
                         Effect.none
@@ -331,10 +332,10 @@ updateWithUser msg model user =
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorMsgKey)) ->
+        OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error errorMsgKey)
+                [ Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -344,7 +345,7 @@ updateWithUser msg model user =
             -- TODO: send error to monitoring tool
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
@@ -353,7 +354,7 @@ updateWithUser msg model user =
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error "REQUEST_ERROR")
+                [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
