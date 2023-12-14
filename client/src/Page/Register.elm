@@ -237,7 +237,7 @@ subscriptions pool =
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
 view i context model =
-    Html.div [ HtmlAttributes.css [ Css.maxWidth <| Css.px 300 ] ]
+    Html.div [ HtmlAttributes.css [ Css.maxWidth <| Css.px 300, Css.width <| Css.pct 100 ] ]
         [ Html.div [ HtmlAttributes.css [ View.Style.logo ] ]
             [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
         , View.Access.Form.form i

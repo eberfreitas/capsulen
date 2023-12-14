@@ -79,7 +79,7 @@ view model =
                 ]
             ]
             [ pageHtml ]
-        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
+        , View.Alerts.view model.context.theme model.context.alerts |> Html.map AlertsMsg
         ]
             |> List.map Html.toUnstyled
     }

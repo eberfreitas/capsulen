@@ -106,7 +106,7 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
                         ++ Form.inputEvents msgs.username
                     )
                     []
-                , Form.viewInputError i usernameInput
+                , Form.viewInputError i theme usernameInput
                 ]
             , Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
                 [ Html.label
@@ -136,7 +136,7 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
                         ]
                     ]
                     [ togglePrivateKeyIcon ]
-                , Form.viewInputError i privateKeyInput
+                , Form.viewInputError i theme privateKeyInput
                 ]
             , Html.div
                 [ HtmlAttributes.css

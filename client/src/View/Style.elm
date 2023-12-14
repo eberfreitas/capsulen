@@ -1,4 +1,4 @@
-module View.Style exposing (app, btn, btnFull, btnInverse, logo)
+module View.Style exposing (app, btn, btnFull, btnInverse, btnShort, logo)
 
 import Css
 import Css.Global
@@ -48,6 +48,11 @@ btn theme =
 btnFull : Css.Style
 btnFull =
     Css.width <| Css.pct 100
+
+
+btnShort : Css.Style
+btnShort =
+    Css.padding2 (Css.rem 0.5) (Css.rem 1)
 
 
 btnInverse : View.Theme.Theme -> Css.Style

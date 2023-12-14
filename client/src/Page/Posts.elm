@@ -6,6 +6,7 @@ import Business.User
 import ConcurrentTask
 import ConcurrentTask.Http
 import Context
+import Css exposing (jis04)
 import Effect
 import Form
 import Html.Styled as Html
@@ -17,7 +18,9 @@ import List.Extra
 import Page
 import Port
 import Translations
+import View.Color
 import View.Logo
+import View.Style
 import View.Theme
 
 
@@ -61,36 +64,78 @@ viewWithUser :
     -> Model
     -> Html.Html Msg
 viewWithUser i _ context model =
-    Html.div [ HtmlAttributes.class "posts" ]
-        [ Html.div [ HtmlAttributes.class "posts__header" ]
+    Html.div
+        [ HtmlAttributes.css
+            [ Css.maxWidth <| Css.px 600
+            , Css.width <| Css.pct 100
+            ]
+        ]
+        [ Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2, Css.position Css.relative ] ]
             [ Html.div []
                 [ View.Logo.logo 40 <| View.Theme.foregroundColor context.theme ]
-            , Html.div [ HtmlAttributes.class "posts__logout" ]
+            , Html.div
+                [ HtmlAttributes.css
+                    [ Css.position Css.absolute
+                    , Css.right <| Css.px 0
+                    , Css.top <| Css.px 0
+                    ]
+                ]
                 [ Html.button
                     [ HtmlEvents.onClick Logout
-                    , HtmlAttributes.class "btn btn--inverse btn--short"
+                    , HtmlAttributes.css
+                        [ View.Style.btn context.theme
+                        , View.Style.btnInverse context.theme
+                        , View.Style.btnShort
+                        ]
                     ]
                     [ Html.text <| i Translations.Logout ]
                 ]
             ]
-        , Html.form [ HtmlEvents.onSubmit Submit, HtmlAttributes.class "posts__form" ]
-            [ Html.fieldset []
-                [ Html.legend [] [ Html.text <| i Translations.PostAbout ]
+        , Html.form
+            [ HtmlEvents.onSubmit Submit
+            , HtmlAttributes.css [ Css.marginBottom <| Css.rem 1.5 ]
+            ]
+            [ Html.fieldset
+                [ HtmlAttributes.css
+                    [ Css.border <| Css.px 0
+                    , Css.margin <| Css.px 0
+                    , Css.padding <| Css.px 0
+                    ]
+                ]
+                [ Html.legend
+                    [ HtmlAttributes.css
+                        [ Css.color (context.theme |> View.Theme.foregroundColor |> View.Color.toCss)
+                        , Css.display Css.block
+                        , Css.fontVariant Css.allPetiteCaps
+                        , Css.marginBottom <| Css.rem 0.5
+                        , Css.width <| Css.pct 100
+                        ]
+                    ]
+                    [ Html.text <| i Translations.PostAbout ]
                 , Html.textarea
                     ([ HtmlAttributes.value model.postInput.raw
-                     , HtmlAttributes.class "posts__textarea"
+                     , HtmlAttributes.css
+                        [ Css.border <| Css.px 0
+                        , Css.borderRadius <| Css.rem 0.5
+                        , Css.marginBottom <| Css.rem 1.5
+                        , Css.padding <| Css.rem 1
+                        , Css.resize Css.vertical
+                        , Css.width <| Css.pct 100
+                        ]
                      ]
                         ++ Form.inputEvents WithPostInput
                     )
                     []
-                , Html.button [ HtmlAttributes.class "btn" ] [ Html.text <| i Translations.ToPost ]
+                , Html.button [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
+                    [ Html.text <| i Translations.ToPost ]
                 ]
             ]
-        , hr
         , Html.div [] (model.posts |> List.map (viewPost i))
         , Html.div []
             [ Html.button
-                [ HtmlEvents.onClick LoadMore, HtmlAttributes.class "btn btn--full" ]
+                [ HtmlEvents.onClick LoadMore
+                , HtmlAttributes.css [ View.Style.btn context.theme, View.Style.btnFull ]
+                ]
                 [ Html.text <| i Translations.LoadMorePosts ]
             ]
         ]
@@ -117,13 +162,7 @@ viewPost i post =
 
             Business.Post.Encrypted _ ->
                 Html.div [] [ Html.text <| i Translations.PostEncrypted ]
-        , hr
         ]
-
-
-hr : Html.Html msg
-hr =
-    Html.div [ HtmlAttributes.class "hr" ] []
 
 
 loadPosts :
