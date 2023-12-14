@@ -40,12 +40,14 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
             else
                 ( "password", Phosphor.eye Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled )
 
+        inputWrapperStyle : Css.Style
         inputWrapperStyle =
             Css.batch
                 [ Css.marginBottom <| Css.rem 1.5
                 , Css.position Css.relative
                 ]
 
+        inputLabelStyle : Css.Style
         inputLabelStyle =
             Css.batch
                 [ Css.display Css.block
@@ -53,6 +55,7 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
                 , Css.marginBottom <| Css.rem 0.5
                 ]
 
+        inputStyle : Css.Style
         inputStyle =
             Css.batch
                 [ Css.border <| Css.px 0

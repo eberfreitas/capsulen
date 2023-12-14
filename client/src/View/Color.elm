@@ -17,6 +17,7 @@ type Color
 new : Int -> Int -> Int -> Float -> Color
 new red green blue alpha =
     let
+        rgbClamp : Int -> Int
         rgbClamp =
             clamp 0 255
     in

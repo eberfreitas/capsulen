@@ -220,6 +220,7 @@ updateWithUser i msg model user =
 
         Submit ->
             let
+                newModel : Model
                 newModel =
                     { model | postInput = Form.parseInput Page.nonEmptyInputParser model.postInput }
             in
@@ -252,6 +253,7 @@ updateWithUser i msg model user =
                                 |> ConcurrentTask.mapError Page.httpErrorMapper
                                 |> ConcurrentTask.map (\post -> Posted { post | content = Business.Post.Decrypted postContent })
 
+                        postTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         postTask =
                             encryptPost |> ConcurrentTask.andThen persistPost
 
@@ -273,11 +275,12 @@ updateWithUser i msg model user =
 
         LoadMore ->
             let
+                url : String
                 url =
                     model.posts
                         |> List.Extra.last
                         |> Maybe.map .id
-                        |> Maybe.map ((++) "/api/posts?from=")
+                        |> Maybe.map (\id -> "/api/posts?from=" ++ id)
                         |> Maybe.withDefault "/api/posts"
 
                 ( tasks, cmd ) =
@@ -320,6 +323,7 @@ updateWithUser i msg model user =
 
         OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
             let
+                effect : Effect.Effect
                 effect =
                     if posts == [] then
                         Effect.addAlert (Alert.new Alert.Warning <| i Translations.PostsNoMore)
