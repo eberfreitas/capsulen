@@ -8,7 +8,7 @@ import Translations
 
 type TaskError
     = RequestError ConcurrentTask.Http.Error
-    | Generic String
+    | Generic Translations.Key
 
 
 httpErrorMapper : ConcurrentTask.Http.Error -> TaskError
@@ -19,7 +19,8 @@ httpErrorMapper error =
                 value
                     |> Json.Decode.decodeValue Json.Decode.string
                     |> Result.toMaybe
-                    |> Maybe.withDefault "UNKNOWN_ERROR"
+                    |> Maybe.map Translations.keyFromString
+                    |> Maybe.withDefault Translations.UnknownError
                     |> Generic
 
             else

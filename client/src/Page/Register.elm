@@ -147,7 +147,7 @@ update i msg model =
                                         , ( "challenge", Json.Encode.string challenge.challenge )
                                         ]
                                 }
-                                |> ConcurrentTask.mapError Page.Generic
+                                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
 
                         createUser : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError ()
                         createUser value =
@@ -199,7 +199,7 @@ update i msg model =
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
+                [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
                 ]
             , Cmd.none

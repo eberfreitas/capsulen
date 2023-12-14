@@ -120,7 +120,7 @@ update i msg model =
                                         , ( "challengeEncrypted", Json.Encode.string challengeEncrypted )
                                         ]
                                 }
-                                |> ConcurrentTask.mapError Page.Generic
+                                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
 
                         requestToken : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError String
                         requestToken challengeData =
@@ -146,7 +146,7 @@ update i msg model =
                                         , ( "token", Json.Encode.string token )
                                         ]
                                 }
-                                |> ConcurrentTask.mapError Page.Generic
+                                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
 
                         loginTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         loginTask =
@@ -188,7 +188,7 @@ update i msg model =
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
+                [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
                 ]
             , Cmd.none

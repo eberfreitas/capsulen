@@ -155,7 +155,7 @@ loadPosts output url user =
                         , ( "posts", value )
                         ]
                 }
-                |> ConcurrentTask.mapError Page.Generic
+                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
     in
     getPosts
         |> ConcurrentTask.andThen decryptPosts
@@ -239,7 +239,7 @@ updateWithUser i msg model user =
                                         , ( "postContent", Business.Post.encodePostContent postContent )
                                         ]
                                 }
-                                |> ConcurrentTask.mapError Page.Generic
+                                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
 
                         persistPost : String -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         persistPost encryptedPost =
@@ -339,7 +339,7 @@ updateWithUser i msg model user =
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
+                [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
                 ]
             , Cmd.none
