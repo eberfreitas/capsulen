@@ -8,6 +8,7 @@
     "dependencies": {
         "direct": {
             "andrewMacmurray/elm-concurrent-task": "1.0.0",
+            "dzuk-mutant/elm-css": "3.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -21,7 +22,9 @@
         "indirect": {
             "elm/random": "1.0.0",
             "elm/time": "1.0.0",
-            "elm/virtual-dom": "1.0.3"
+            "elm/virtual-dom": "1.0.3",
+            "robinheghan/murmur3": "1.0.0",
+            "rtfeldman/elm-hex": "1.0.0"
         }
     },
     "test-dependencies": {

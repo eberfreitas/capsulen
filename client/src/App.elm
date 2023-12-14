@@ -5,8 +5,8 @@ import Browser
 import Browser.Navigation
 import Context
 import Effect
-import Html
-import Html.Attributes
+import Html.Styled as Html
+import Html.Styled.Attributes as HtmlAttributes
 import Page.Login
 import Page.Posts
 import Page.Register
@@ -66,8 +66,8 @@ view model =
     in
     { title = "Capsulen"
     , body =
-        [ Html.div [ Html.Attributes.class "wrapper" ] [ pageHtml ]
-        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
+        [ Html.div [ HtmlAttributes.class "wrapper" ] [ pageHtml ] |> Html.toUnstyled
+        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg |> Html.toUnstyled
         ]
     }
 

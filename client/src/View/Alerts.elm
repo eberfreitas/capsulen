@@ -2,7 +2,7 @@ module View.Alerts exposing (Msg, update, view)
 
 import Alert
 import Effect
-import Html
+import Html.Styled as Html
 
 
 type Msg
