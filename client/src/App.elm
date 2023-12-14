@@ -15,6 +15,7 @@ import Translations
 import Tuple.Extra
 import Url
 import View.Alerts
+import View.Style
 import View.Theme
 
 
@@ -66,9 +67,11 @@ view model =
     in
     { title = "Capsulen"
     , body =
-        [ Html.div [ HtmlAttributes.class "wrapper" ] [ pageHtml ] |> Html.toUnstyled
-        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg |> Html.toUnstyled
+        [ View.Style.html model.context.theme
+        , Html.div [ HtmlAttributes.class "wrapper" ] [ pageHtml ]
+        , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
         ]
+            |> List.map Html.toUnstyled
     }
 
 
