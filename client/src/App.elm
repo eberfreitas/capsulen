@@ -165,7 +165,8 @@ update msg model =
 init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init () url key =
     let
-        -- TODO: get locale from browser as flag
+        -- TODO: get language from browser as flag
+        initContext : Context.Context
         initContext =
             Context.new key (Translations.languageFromString "en") View.Theme.Dark
 
@@ -175,6 +176,7 @@ init () url key =
         ( nextContext, effectCmd ) =
             Effect.run initContext effect
 
+        setTheme : Cmd msg
         setTheme =
             Port.setTheme <| View.Theme.encode nextContext.theme
     in
