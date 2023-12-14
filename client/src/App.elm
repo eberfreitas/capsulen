@@ -4,6 +4,7 @@ import AppUrl
 import Browser
 import Browser.Navigation
 import Context
+import Css
 import Effect
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
@@ -67,8 +68,17 @@ view model =
     in
     { title = "Capsulen"
     , body =
-        [ View.Style.html model.context.theme
-        , Html.div [ HtmlAttributes.class "wrapper" ] [ pageHtml ]
+        [ View.Style.app model.context.theme
+        , Html.div
+            [ HtmlAttributes.css
+                [ Css.display Css.flex_
+                , Css.justifyContent Css.center
+                , Css.minHeight <| Css.vh 100
+                , Css.padding <| Css.rem 2
+                , Css.width <| Css.pct 100
+                ]
+            ]
+            [ pageHtml ]
         , View.Alerts.view model.context.alerts |> Html.map AlertsMsg
         ]
             |> List.map Html.toUnstyled

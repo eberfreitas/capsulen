@@ -3,7 +3,6 @@ module Page.Register exposing
     , Msg
     , TaskOutput
     , TaskPool
-    , UserData
     , init
     , subscriptions
     , update
@@ -12,22 +11,24 @@ module Page.Register exposing
 
 import Alert
 import Business.PrivateKey
+import Business.User
 import Business.Username
 import ConcurrentTask
 import ConcurrentTask.Http
 import Context
+import Css
 import Effect
 import Form
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
-import Html.Styled.Events as HtmlEvents
 import Json.Decode
 import Json.Encode
 import Page
-import Phosphor
 import Port
 import Translations
+import View.Access.Form
 import View.Logo
+import View.Style
 import View.Theme
 
 
@@ -59,12 +60,6 @@ type alias Model =
 type alias Challenge =
     { nonce : String
     , challenge : String
-    }
-
-
-type alias UserData =
-    { username : Business.Username.Username
-    , privateKey : Business.PrivateKey.PrivateKey
     }
 
 
@@ -117,7 +112,7 @@ update i msg model =
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
                     }
             in
-            case buildUserData newModel of
+            case Business.User.buildUserData newModel.usernameInput newModel.privateKeyInput of
                 Ok userData ->
                     let
                         requestAccess : ConcurrentTask.ConcurrentTask Page.TaskError Challenge
@@ -184,7 +179,7 @@ update i msg model =
 
                 Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
+                    , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                     , Cmd.none
                     )
 
@@ -240,68 +235,29 @@ subscriptions pool =
         pool
 
 
-buildUserData : Model -> Result String UserData
-buildUserData { usernameInput, privateKeyInput } =
-    case ( usernameInput.valid, privateKeyInput.valid ) of
-        ( Form.Valid username, Form.Valid privateKey ) ->
-            Ok { username = username, privateKey = privateKey }
-
-        _ ->
-            Err "INVALID_INPUTS"
-
-
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
 view i context model =
-    let
-        ( privateKeyInputType, togglePrivateKeyIcon ) =
-            if model.showPrivateKey then
-                ( "text", Phosphor.eyeClosed Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled )
-
-            else
-                ( "password", Phosphor.eye Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled )
-    in
-    Html.div [ HtmlAttributes.class "access" ]
-        [ Html.div [ HtmlAttributes.class "access__logo" ]
+    Html.div [ HtmlAttributes.css [ Css.maxWidth <| Css.px 300 ] ]
+        [ Html.div [ HtmlAttributes.css [ View.Style.logo ] ]
             [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
-        , Html.form [ HtmlEvents.onSubmit Submit, HtmlAttributes.class "access__form" ]
-            [ Html.fieldset []
-                [ Html.legend [] [ Html.text <| i Translations.Register ]
-                , Html.div [ HtmlAttributes.class "access__input" ]
-                    [ Html.label [ HtmlAttributes.for "username" ] [ Html.text <| i Translations.Username ]
-                    , Html.input
-                        ([ HtmlAttributes.type_ "text"
-                         , HtmlAttributes.name "username"
-                         , HtmlAttributes.id "username"
-                         , HtmlAttributes.value model.usernameInput.raw
-                         ]
-                            ++ Form.inputEvents WithUsername
-                        )
-                        []
-                    , Form.viewInputError i model.usernameInput
-                    ]
-                , Html.div [ HtmlAttributes.class "access__input" ]
-                    [ Html.label [ HtmlAttributes.for "privateKey" ] [ Html.text <| i Translations.PrivateKey ]
-                    , Html.input
-                        ([ HtmlAttributes.type_ privateKeyInputType
-                         , HtmlAttributes.name "privateKey"
-                         , HtmlAttributes.id "privateKey"
-                         , HtmlAttributes.value model.privateKeyInput.raw
-                         ]
-                            ++ Form.inputEvents WithPrivateKey
-                        )
-                        []
-                    , Html.button
-                        [ HtmlAttributes.type_ "button"
-                        , HtmlEvents.onClick ToggleShowPrivateKey
-                        , HtmlAttributes.class "btn btn--left-flat private-key-toggle"
-                        ]
-                        [ togglePrivateKeyIcon ]
-                    , Form.viewInputError i model.privateKeyInput
-                    ]
-                , Html.div [ HtmlAttributes.class "notice" ] [ Html.text <| i Translations.PrivateKeyNotice ]
-                , Html.button [ HtmlAttributes.class "btn btn--full" ] [ Html.text <| i Translations.Register ]
+        , View.Access.Form.form i
+            context.theme
+            model.showPrivateKey
+            Translations.Register
+            { submit = Submit
+            , username = WithUsername
+            , privateKey = WithPrivateKey
+            , togglePrivateKey = ToggleShowPrivateKey
+            }
+            model.usernameInput
+            model.privateKeyInput
+        , Html.a
+            [ HtmlAttributes.href "/"
+            , HtmlAttributes.css
+                [ View.Style.btn context.theme
+                , View.Style.btnFull
+                , View.Style.btnInverse context.theme
                 ]
             ]
-        , Html.a [ HtmlAttributes.href "/", HtmlAttributes.class "btn btn--full btn--inverse" ]
             [ Html.text <| i Translations.Login ]
         ]
