@@ -1,8 +1,8 @@
 module Alert exposing (Message, Severity(..), new, toHtml)
 
-import Html
-import Html.Attributes
-import Html.Events
+import Html.Styled as Html
+import Html.Styled.Attributes as HtmlAttributes
+import Html.Styled.Events as HtmlEvents
 import Phosphor
 
 
@@ -37,10 +37,10 @@ messageClass severity =
 toHtml : (Int -> msg) -> Int -> Message -> Html.Html msg
 toHtml closeFn index (Message message) =
     Html.div
-        [ Html.Attributes.class <| messageClass message.severity ]
+        [ HtmlAttributes.class <| messageClass message.severity ]
         [ Html.div [] [ Html.text <| message.body ]
         , Html.div []
-            [ Html.button [ Html.Events.onClick <| closeFn index ]
-                [ Phosphor.xCircle Phosphor.Regular |> Phosphor.toHtml [] ]
+            [ Html.button [ HtmlEvents.onClick <| closeFn index ]
+                [ Phosphor.xCircle Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
             ]
         ]

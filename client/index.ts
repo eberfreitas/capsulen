@@ -27,18 +27,10 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
     },
   });
 
-  let colorPalette: ColorPalette | null = null;
+  let theme: ColorPalette | null = null;
 
   app.ports.setTheme.subscribe((data) => {
-    // https://css-tricks.com/updating-a-css-variable-with-javascript/
-    const root = document.documentElement;
-
-    root.style.setProperty("--background-color", data.backgroundColor);
-    root.style.setProperty("--foreground-color", data.foregroundColor);
-    root.style.setProperty("--text-color", data.textColor);
-    root.style.setProperty("--error-color", data.errorColor);
-
-    colorPalette = data;
+    theme = data;
   });
 
   let loading = false;
@@ -46,8 +38,8 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
   app.ports.toggleLoader.subscribe(() => {
     topbar.config({
       barColors: {
-        "0": colorPalette?.foregroundColor ?? "rgb(0, 0, 0 / 1.0)",
-        "1": colorPalette?.textColor ?? "rgb(0, 0, 0 / 1.0)",
+        "0": theme?.foregroundColor ?? "rgb(0, 0, 0 / 1.0)",
+        "1": theme?.textColor ?? "rgb(0, 0, 0 / 1.0)",
       }
     });
 

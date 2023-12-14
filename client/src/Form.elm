@@ -10,9 +10,9 @@ module Form exposing
     , viewInputError
     )
 
-import Html
-import Html.Attributes
-import Html.Events
+import Html.Styled as Html
+import Html.Styled.Attributes as HtmlAttributes
+import Html.Styled.Events as HtmlEvents
 import Translations
 
 
@@ -74,9 +74,9 @@ updateInput event parser input =
 
 inputEvents : (InputEvent -> msg) -> List (Html.Attribute msg)
 inputEvents msg =
-    [ Html.Events.onInput (OnInput >> msg)
-    , Html.Events.onBlur (msg OnBlur)
-    , Html.Events.onFocus (msg OnFocus)
+    [ HtmlEvents.onInput (OnInput >> msg)
+    , HtmlEvents.onBlur (msg OnBlur)
+    , HtmlEvents.onFocus (msg OnFocus)
     ]
 
 
@@ -89,7 +89,7 @@ viewInputError : Translations.Helper -> Input a -> Html.Html msg
 viewInputError i input =
     case ( input.valid, input.state ) of
         ( Invalid msgKey, Idle ) ->
-            Html.div [ Html.Attributes.class "input-error" ] [ Html.text <| i msgKey ]
+            Html.div [ HtmlAttributes.class "input-error" ] [ Html.text <| i msgKey ]
 
         _ ->
             Html.text ""

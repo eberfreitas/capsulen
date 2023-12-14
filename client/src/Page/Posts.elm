@@ -8,9 +8,9 @@ import ConcurrentTask.Http
 import Context
 import Effect
 import Form
-import Html
-import Html.Attributes
-import Html.Events
+import Html.Styled as Html
+import Html.Styled.Attributes as HtmlAttributes
+import Html.Styled.Events as HtmlEvents
 import Json.Decode
 import Json.Encode
 import List.Extra
@@ -61,36 +61,36 @@ viewWithUser :
     -> Model
     -> Html.Html Msg
 viewWithUser i _ context model =
-    Html.div [ Html.Attributes.class "posts" ]
-        [ Html.div [ Html.Attributes.class "posts__header" ]
+    Html.div [ HtmlAttributes.class "posts" ]
+        [ Html.div [ HtmlAttributes.class "posts__header" ]
             [ Html.div []
                 [ View.Logo.logo 40 <| View.Theme.foregroundColor context.theme ]
-            , Html.div [ Html.Attributes.class "posts__logout" ]
+            , Html.div [ HtmlAttributes.class "posts__logout" ]
                 [ Html.button
-                    [ Html.Events.onClick Logout
-                    , Html.Attributes.class "btn btn--inverse btn--short"
+                    [ HtmlEvents.onClick Logout
+                    , HtmlAttributes.class "btn btn--inverse btn--short"
                     ]
                     [ Html.text <| i Translations.Logout ]
                 ]
             ]
-        , Html.form [ Html.Events.onSubmit Submit, Html.Attributes.class "posts__form" ]
+        , Html.form [ HtmlEvents.onSubmit Submit, HtmlAttributes.class "posts__form" ]
             [ Html.fieldset []
                 [ Html.legend [] [ Html.text <| i Translations.PostAbout ]
                 , Html.textarea
-                    ([ Html.Attributes.value model.postInput.raw
-                     , Html.Attributes.class "posts__textarea"
+                    ([ HtmlAttributes.value model.postInput.raw
+                     , HtmlAttributes.class "posts__textarea"
                      ]
                         ++ Form.inputEvents WithPostInput
                     )
                     []
-                , Html.button [ Html.Attributes.class "btn" ] [ Html.text <| i Translations.ToPost ]
+                , Html.button [ HtmlAttributes.class "btn" ] [ Html.text <| i Translations.ToPost ]
                 ]
             ]
         , hr
         , Html.div [] (model.posts |> List.map (viewPost i))
         , Html.div []
             [ Html.button
-                [ Html.Events.onClick LoadMore, Html.Attributes.class "btn btn--full" ]
+                [ HtmlEvents.onClick LoadMore, HtmlAttributes.class "btn btn--full" ]
                 [ Html.text <| i Translations.LoadMorePosts ]
             ]
         ]
@@ -123,7 +123,7 @@ viewPost i post =
 
 hr : Html.Html msg
 hr =
-    Html.div [ Html.Attributes.class "hr" ] []
+    Html.div [ HtmlAttributes.class "hr" ] []
 
 
 loadPosts :
