@@ -10,10 +10,13 @@ module Form exposing
     , viewInputError
     )
 
+import Css
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
 import Translations
+import View.Color
+import View.Theme
 
 
 type alias Input a =
@@ -85,11 +88,21 @@ newInput =
     { raw = "", valid = Unparsed, state = Idle }
 
 
-viewInputError : Translations.Helper -> Input a -> Html.Html msg
-viewInputError i input =
+viewInputError : Translations.Helper -> View.Theme.Theme -> Input a -> Html.Html msg
+viewInputError i theme input =
     case ( input.valid, input.state ) of
         ( Invalid msgKey, Idle ) ->
-            Html.div [ HtmlAttributes.class "input-error" ] [ Html.text <| i msgKey ]
+            Html.div
+                [ HtmlAttributes.css
+                    [ Css.backgroundColor (theme |> View.Theme.errorColor |> View.Color.toCss)
+                    , Css.borderRadius4 (Css.rem 0) (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5)
+                    , Css.fontWeight Css.bold
+                    , Css.marginTop <| Css.rem -0.5
+                    , Css.padding <| Css.rem 1
+                    , Css.paddingTop <| Css.rem 1.5
+                    ]
+                ]
+                [ Html.text <| i msgKey ]
 
         _ ->
             Html.text ""

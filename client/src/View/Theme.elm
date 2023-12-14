@@ -1,4 +1,4 @@
-module View.Theme exposing (Theme(..), backgroundColor, encode, foregroundColor, textColor)
+module View.Theme exposing (Theme(..), backgroundColor, encode, errorColor, foregroundColor, textColor)
 
 import Json.Encode
 import View.Color
@@ -36,10 +36,9 @@ textColor theme =
     theme |> themePalette |> .textColor
 
 
-
--- errorColor : Theme -> View.Color.Color
--- errorColor theme =
---     theme |> themePalette |> .errorColor
+errorColor : Theme -> View.Color.Color
+errorColor theme =
+    theme |> themePalette |> .errorColor
 
 
 encode : Theme -> Json.Encode.Value
