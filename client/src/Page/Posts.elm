@@ -6,7 +6,7 @@ import Business.User
 import ConcurrentTask
 import ConcurrentTask.Http
 import Context
-import Css exposing (jis04)
+import Css
 import Effect
 import Form
 import Html.Styled as Html
@@ -308,7 +308,7 @@ updateWithUser i msg model user =
 
                 Err errorKey ->
                     ( newModel
-                    , Effect.addAlert (Alert.new Alert.Error (errorKey |> Translations.keyFromString |> i))
+                    , Effect.addAlert (Alert.new Alert.Error (i errorKey))
                     , Cmd.none
                     )
 
@@ -404,14 +404,14 @@ updateWithUser i msg model user =
             )
 
 
-buildPostContent : Model -> Result String Business.Post.PostContent
+buildPostContent : Model -> Result Translations.Key Business.Post.PostContent
 buildPostContent model =
     case model.postInput.valid of
         Form.Valid body ->
             Ok { body = body }
 
         _ ->
-            Err "INVALID_INPUTS"
+            Err Translations.InvalidInputs
 
 
 subscriptions : TaskPool -> Sub Msg
