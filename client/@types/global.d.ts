@@ -4,10 +4,10 @@ import {
 } from "@andrewmacmurray/elm-concurrent-task";
 
 interface ColorPalette {
-  backgroundColor: string;
-  foregroundColor: string;
-  textColor: string;
-  errorColor: string;
+  background: string;
+  foreground: string;
+  text: string;
+  error: string;
 }
 
 export interface App {

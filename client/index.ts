@@ -38,8 +38,8 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
   app.ports.toggleLoader.subscribe(() => {
     topbar.config({
       barColors: {
-        "0": theme?.foregroundColor ?? "rgb(0, 0, 0 / 1.0)",
-        "1": theme?.textColor ?? "rgb(0, 0, 0 / 1.0)",
+        "0": theme?.foreground ?? "rgb(0, 0, 0 / 1.0)",
+        "1": theme?.text ?? "rgb(0, 0, 0 / 1.0)",
       }
     });
 
