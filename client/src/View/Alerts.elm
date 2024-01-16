@@ -1,4 +1,4 @@
-module View.Alerts exposing (Msg, update, view)
+module View.Alerts exposing (Msg, decay, update, view)
 
 import Alert
 import Css
@@ -10,6 +10,12 @@ import View.Theme
 
 type Msg
     = CloseAlert Int
+    | Decay Float
+
+
+decay : Float -> Msg
+decay =
+    Decay
 
 
 view : View.Theme.Theme -> List Alert.Message -> Html.Html Msg
@@ -33,3 +39,6 @@ update msg =
     case msg of
         CloseAlert index ->
             Effect.removeAlert index
+
+        Decay delta ->
+            Effect.decayAlerts delta

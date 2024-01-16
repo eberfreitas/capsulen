@@ -2,6 +2,7 @@ module App exposing (main)
 
 import AppUrl
 import Browser
+import Browser.Events
 import Browser.Navigation
 import Context
 import Css
@@ -219,8 +220,8 @@ router context url =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        batch : List (Sub Msg)
-        batch =
+        pageBatch : List (Sub Msg)
+        pageBatch =
             case model.page of
                 Register subModel ->
                     [ Page.Register.subscriptions subModel.tasks |> Sub.map RegisterMsg ]
@@ -233,8 +234,16 @@ subscriptions model =
 
                 _ ->
                     []
+
+        alertSub =
+            case model.context.alerts of
+                [] ->
+                    Sub.none
+
+                _ ->
+                    Browser.Events.onAnimationFrameDelta View.Alerts.decay |> Sub.map AlertsMsg
     in
-    Sub.batch batch
+    Sub.batch (alertSub :: pageBatch)
 
 
 main : Program () Model Msg

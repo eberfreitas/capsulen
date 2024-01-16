@@ -2,6 +2,7 @@ module Effect exposing
     ( Effect
     , addAlert
     , batch
+    , decayAlerts
     , login
     , logout
     , none
@@ -23,6 +24,7 @@ type Effect
     = None
     | Batch (List Effect)
     | AddAlert Alert.Message
+    | DecayAlerts Float
     | RemoveAlert Int
     | Redirect String
     | Login Business.User.User
@@ -48,6 +50,11 @@ addAlert =
 removeAlert : Int -> Effect
 removeAlert =
     RemoveAlert
+
+
+decayAlerts : Float -> Effect
+decayAlerts =
+    DecayAlerts
 
 
 redirect : String -> Effect
@@ -96,6 +103,13 @@ run context effect =
                 alerts : List Alert.Message
                 alerts =
                     context.alerts |> List.Extra.indexedFilter (\idx _ -> idx /= index)
+            in
+            ( { context | alerts = alerts }, Cmd.none )
+
+        DecayAlerts delta ->
+            let
+                alerts =
+                    context.alerts |> List.filterMap (Alert.applyDecay delta)
             in
             ( { context | alerts = alerts }, Cmd.none )
 

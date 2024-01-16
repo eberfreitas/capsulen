@@ -1,4 +1,4 @@
-module Alert exposing (Message, Severity(..), new, toHtml)
+module Alert exposing (Message, Severity(..), applyDecay, new, toHtml)
 
 import Css
 import Html.Styled as Html
@@ -16,12 +16,25 @@ type Severity
 
 
 type Message
-    = Message { severity : Severity, body : String }
+    = Message { severity : Severity, body : String, decay : Float }
 
 
 new : Severity -> String -> Message
 new severity body =
-    Message { severity = severity, body = body }
+    Message { severity = severity, body = body, decay = 10 * 1000 }
+
+
+applyDecay : Float -> Message -> Maybe Message
+applyDecay delta (Message msg) =
+    let
+        newDecay =
+            msg.decay - delta
+    in
+    if newDecay < 0 then
+        Nothing
+
+    else
+        Just (Message { msg | decay = newDecay })
 
 
 messageClass : Severity -> String
