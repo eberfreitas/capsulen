@@ -5,18 +5,18 @@ import View.Color
 
 
 type alias Palette =
-    { backgroundColor : View.Color.Color
-    , foregroundColor : View.Color.Color
-    , textColor : View.Color.Color
-    , errorColor : View.Color.Color
+    { background : View.Color.Color
+    , foreground : View.Color.Color
+    , text : View.Color.Color
+    , error : View.Color.Color
     }
 
 
 encode : Palette -> Json.Encode.Value
 encode palette =
     Json.Encode.object
-        [ ( "backgroundColor", View.Color.encode palette.backgroundColor )
-        , ( "foregroundColor", View.Color.encode palette.foregroundColor )
-        , ( "textColor", View.Color.encode palette.textColor )
-        , ( "errorColor", View.Color.encode palette.errorColor )
+        [ ( "background", View.Color.encode palette.background )
+        , ( "foreground", View.Color.encode palette.foreground )
+        , ( "text", View.Color.encode palette.text )
+        , ( "error", View.Color.encode palette.error )
         ]

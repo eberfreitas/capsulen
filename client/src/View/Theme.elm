@@ -23,22 +23,22 @@ themePalette theme =
 
 backgroundColor : Theme -> View.Color.Color
 backgroundColor theme =
-    theme |> themePalette |> .backgroundColor
+    theme |> themePalette |> .background
 
 
 foregroundColor : Theme -> View.Color.Color
 foregroundColor theme =
-    theme |> themePalette |> .foregroundColor
+    theme |> themePalette |> .foreground
 
 
 textColor : Theme -> View.Color.Color
 textColor theme =
-    theme |> themePalette |> .textColor
+    theme |> themePalette |> .text
 
 
 errorColor : Theme -> View.Color.Color
 errorColor theme =
-    theme |> themePalette |> .errorColor
+    theme |> themePalette |> .error
 
 
 encode : Theme -> Json.Encode.Value
