@@ -10,6 +10,6 @@ palette =
     , foreground = Color.rgb255 154 134 163
     , text = Color.rgb255 234 221 239
     , error = Color.rgb255 100 0 40
-    , warning = Color.rgb255 100 0 40
-    , success = Color.rgb255 100 0 40
+    , warning = Color.rgb255 100 50 0
+    , success = Color.rgb255 25 100 115
     }
