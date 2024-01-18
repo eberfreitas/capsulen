@@ -1,7 +1,16 @@
-module View.Theme exposing (Theme(..), backgroundColor, encode, errorColor, foregroundColor, textColor)
+module View.Theme exposing
+    ( Theme(..)
+    , backgroundColor
+    , encode
+    , errorColor
+    , foregroundColor
+    , successColor
+    , textColor
+    , warningColor
+    )
 
+import Color
 import Json.Encode
-import View.Color
 import View.Theme.Dark
 import View.Theme.Palette
 
@@ -21,24 +30,34 @@ themePalette theme =
             Debug.todo "Implement light theme"
 
 
-backgroundColor : Theme -> View.Color.Color
+backgroundColor : Theme -> Color.Color
 backgroundColor theme =
     theme |> themePalette |> .background
 
 
-foregroundColor : Theme -> View.Color.Color
+foregroundColor : Theme -> Color.Color
 foregroundColor theme =
     theme |> themePalette |> .foreground
 
 
-textColor : Theme -> View.Color.Color
+textColor : Theme -> Color.Color
 textColor theme =
     theme |> themePalette |> .text
 
 
-errorColor : Theme -> View.Color.Color
+errorColor : Theme -> Color.Color
 errorColor theme =
     theme |> themePalette |> .error
+
+
+warningColor : Theme -> Color.Color
+warningColor theme =
+    theme |> themePalette |> .warning
+
+
+successColor : Theme -> Color.Color
+successColor theme =
+    theme |> themePalette |> .success
 
 
 encode : Theme -> Json.Encode.Value

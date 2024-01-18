@@ -3,6 +3,7 @@ module Page.Posts exposing (Model, Msg, TaskOutput, TaskPool, init, subscription
 import Alert
 import Business.Post
 import Business.User
+import Color.Extra
 import ConcurrentTask
 import ConcurrentTask.Http
 import Context
@@ -18,7 +19,6 @@ import List.Extra
 import Page
 import Port
 import Translations
-import View.Color
 import View.Logo
 import View.Style
 import View.Theme
@@ -104,7 +104,7 @@ viewWithUser i _ context model =
                 ]
                 [ Html.legend
                     [ HtmlAttributes.css
-                        [ Css.color (context.theme |> View.Theme.foregroundColor |> View.Color.toCss)
+                        [ Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
                         , Css.display Css.block
                         , Css.fontVariant Css.allPetiteCaps
                         , Css.marginBottom <| Css.rem 0.5
