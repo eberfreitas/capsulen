@@ -1,4 +1,4 @@
-module Color.Extra exposing (toContrast, toCss)
+module Color.Extra exposing (toContrast, toCss, withAlpha)
 
 import Color
 import Css
@@ -55,3 +55,13 @@ toContrast delta color =
                 hsla.lightness - delta
     in
     Color.fromHsla { hsla | lightness = lightness }
+
+
+withAlpha : Float -> Color.Color -> Color.Color
+withAlpha alpha color =
+    let
+        rgba : Rgba
+        rgba =
+            Color.toRgba color
+    in
+    Color.fromRgba { rgba | alpha = alpha }

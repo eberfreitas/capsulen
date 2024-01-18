@@ -8,20 +8,25 @@ import ConcurrentTask
 import ConcurrentTask.Http
 import Context
 import Css
+import DateFormat.Languages
 import Effect
 import Form
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
+import Iso8601
 import Json.Decode
 import Json.Encode
 import List.Extra
 import Page
+import Phosphor
 import Port
 import Translations
 import View.Logo
 import View.Style
 import View.Theme
+import DateFormat
+import Time
 
 
 type TaskOutput
@@ -130,7 +135,7 @@ viewWithUser i _ context model =
                     [ Html.text <| i Translations.ToPost ]
                 ]
             ]
-        , Html.div [] (model.posts |> List.map (viewPost i))
+        , Html.div [] (model.posts |> List.map (viewPost context.language context.theme))
         , Html.div []
             [ Html.button
                 [ HtmlEvents.onClick LoadMore
@@ -141,13 +146,48 @@ viewWithUser i _ context model =
         ]
 
 
-viewPost : Translations.Helper -> Business.Post.Post -> Html.Html Msg
-viewPost i post =
-    Html.div []
-        [ Html.p [] [ Html.text post.createdAt ]
+viewPost : Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
+viewPost language theme post =
+    Html.div
+        [ HtmlAttributes.css
+            [ Css.backgroundColor
+                (theme
+                    |> View.Theme.textColor
+                    |> Color.Extra.withAlpha 0.05
+                    |> Color.Extra.toCss
+                )
+            , Css.padding <| Css.rem 1
+            , Css.marginBottom <| Css.rem 1.5
+            , Css.borderRadius <| Css.rem 0.5
+            ]
+        ]
+        [ Html.div
+            [ HtmlAttributes.css
+                [ Css.marginBottom <| Css.rem 1
+                , Css.fontSize <| Css.rem 0.75
+                , Css.position Css.relative
+                , Css.color (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.5 |> Color.Extra.toCss)
+                ]
+            ]
+            [ Html.div [ HtmlAttributes.css [ Css.display Css.flex_, Css.alignItems Css.center ] ]
+                [ Html.div [ HtmlAttributes.css [ Css.marginRight <| Css.rem 0.5 ] ]
+                    [ Phosphor.clock Phosphor.Bold
+                        |> Phosphor.withSize 1.5
+                        |> Phosphor.withSizeUnit "em"
+                        |> Phosphor.toHtml []
+                        |> Html.fromUnstyled
+                    ]
+                , Html.text <| formatDate language post.createdAt
+                ]
+            ]
         , case post.content of
             Business.Post.Decrypted content ->
-                Html.div []
+                Html.div
+                    [ HtmlAttributes.css
+                        [ Css.lineHeight <| Css.num 1.5
+                        , Css.fontSize <| Css.rem 1.25
+                        ]
+                    ]
                     (content.body
                         |> String.lines
                         |> List.map
@@ -161,8 +201,63 @@ viewPost i post =
                     )
 
             Business.Post.Encrypted ->
-                Html.div [] [ Html.text <| i Translations.PostEncrypted ]
+                Html.text ""
         ]
+
+
+formatDate : Translations.Language -> String -> String
+formatDate language date =
+    let
+        dateFormatLanguage : DateFormat.Languages.Language
+        dateFormatLanguage =
+            case language of
+                Translations.En ->
+                    DateFormat.Languages.english
+
+                Translations.Pt ->
+                    DateFormat.Languages.portuguese
+
+        dateFormatTokens : List DateFormat.Token
+        dateFormatTokens =
+            case language of
+                Translations.En ->
+                    [ DateFormat.dayOfWeekNameAbbreviated
+                    , DateFormat.text ", "
+                    , DateFormat.monthNameAbbreviated
+                    , DateFormat.text " "
+                    , DateFormat.dayOfMonthSuffix
+                    , DateFormat.text ", "
+                    , DateFormat.yearNumber
+                    , DateFormat.text " - "
+                    , DateFormat.hourFixed
+                    , DateFormat.text ":"
+                    , DateFormat.minuteFixed
+                    , DateFormat.text " "
+                    , DateFormat.amPmUppercase
+                    ]
+
+                Translations.Pt ->
+                    [ DateFormat.dayOfWeekNameAbbreviated
+                    , DateFormat.text ", "
+                    , DateFormat.dayOfMonthFixed
+                    , DateFormat.text " de "
+                    , DateFormat.monthNameAbbreviated
+                    , DateFormat.text " de "
+                    , DateFormat.yearNumber
+                    , DateFormat.text " - "
+                    , DateFormat.hourMilitaryFixed
+                    , DateFormat.text ":"
+                    , DateFormat.minuteFixed
+                    ]
+    in
+    date
+        |> Iso8601.toTime
+        |> Result.toMaybe
+        |> Maybe.map
+            (\posix ->
+                DateFormat.formatWithLanguage dateFormatLanguage dateFormatTokens Time.utc posix
+            )
+        |> Maybe.withDefault ""
 
 
 loadPosts :
