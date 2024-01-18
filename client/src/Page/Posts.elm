@@ -160,7 +160,7 @@ viewPost i post =
                             )
                     )
 
-            Business.Post.Encrypted _ ->
+            Business.Post.Encrypted ->
                 Html.div [] [ Html.text <| i Translations.PostEncrypted ]
         ]
 
