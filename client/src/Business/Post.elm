@@ -16,7 +16,7 @@ type alias PostContent =
 
 
 type Content
-    = Encrypted String
+    = Encrypted
     | Decrypted PostContent
 
 
@@ -42,7 +42,7 @@ decodeDecryptedContent =
 
 decodeEncryptedContent : Json.Decode.Decoder Content
 decodeEncryptedContent =
-    Json.Decode.map Encrypted Json.Decode.string
+    Json.Decode.succeed Encrypted
 
 
 decodeContent : Json.Decode.Decoder Content

@@ -28,19 +28,21 @@ new severity body =
 applyDecay : Float -> Message -> Maybe Message
 applyDecay delta (Message msg) =
     let
-        newDecay =
+        decay : Float
+        decay =
             msg.decay - delta
     in
-    if newDecay < 0 then
+    if decay < 0 then
         Nothing
 
     else
-        Just (Message { msg | decay = newDecay })
+        Just (Message { msg | decay = decay })
 
 
 messageColor : View.Theme.Theme -> Severity -> Color.Color
 messageColor theme severity =
     let
+        fn : View.Theme.Theme -> Color.Color
         fn =
             case severity of
                 Success ->
@@ -58,9 +60,11 @@ messageColor theme severity =
 toHtml : View.Theme.Theme -> (Int -> msg) -> Int -> Message -> Html.Html msg
 toHtml theme closeFn index (Message message) =
     let
+        backgroundColor : Color.Color
         backgroundColor =
             message.severity |> messageColor theme
 
+        textColor : Color.Color
         textColor =
             backgroundColor |> Color.Extra.toContrast 0.75
     in

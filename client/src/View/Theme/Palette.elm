@@ -17,6 +17,7 @@ type alias Palette =
 encode : Palette -> Json.Encode.Value
 encode palette =
     let
+        encodeColor : Color.Color -> Json.Encode.Value
         encodeColor =
             Color.toCssString >> Json.Encode.string
     in
