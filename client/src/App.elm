@@ -235,6 +235,7 @@ subscriptions model =
                 _ ->
                     []
 
+        alertSub : Sub Msg
         alertSub =
             case model.context.alerts of
                 [] ->

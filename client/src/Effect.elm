@@ -108,6 +108,7 @@ run context effect =
 
         DecayAlerts delta ->
             let
+                alerts : List Alert.Message
                 alerts =
                     context.alerts |> List.filterMap (Alert.applyDecay delta)
             in
