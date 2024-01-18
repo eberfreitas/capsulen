@@ -13,6 +13,7 @@ import Alert
 import Business.PrivateKey
 import Business.User
 import Business.Username
+import Color.Extra
 import ConcurrentTask
 import ConcurrentTask.Http
 import Context
@@ -27,7 +28,6 @@ import Page
 import Port
 import Translations
 import View.Access.Form
-import View.Color
 import View.Logo
 import View.Style
 import View.Theme
@@ -221,7 +221,7 @@ view i context model =
             [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
         , Html.div
             [ HtmlAttributes.css
-                [ Css.color (context.theme |> View.Theme.foregroundColor |> View.Color.toCss)
+                [ Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
                 , Css.fontWeight Css.bold
                 , Css.marginBottom <| Css.rem 3
                 , Css.textAlign Css.center

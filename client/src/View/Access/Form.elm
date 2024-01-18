@@ -2,6 +2,7 @@ module View.Access.Form exposing (Msgs, form)
 
 import Business.PrivateKey
 import Business.Username
+import Color.Extra
 import Css
 import Form
 import Html.Styled as Html
@@ -9,7 +10,6 @@ import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
 import Phosphor
 import Translations
-import View.Color
 import View.Style
 import View.Theme
 
@@ -80,7 +80,7 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
             ]
             [ Html.legend
                 [ HtmlAttributes.css
-                    [ Css.color (theme |> View.Theme.foregroundColor |> View.Color.toCss)
+                    [ Css.color (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
                     , Css.display Css.block
                     , Css.fontSize <| Css.rem 2
                     , Css.fontWeight Css.bold

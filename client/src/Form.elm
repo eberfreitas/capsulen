@@ -10,12 +10,12 @@ module Form exposing
     , viewInputError
     )
 
+import Color.Extra
 import Css
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
 import Translations
-import View.Color
 import View.Theme
 
 
@@ -94,7 +94,8 @@ viewInputError i theme input =
         ( Invalid msgKey, Idle ) ->
             Html.div
                 [ HtmlAttributes.css
-                    [ Css.backgroundColor (theme |> View.Theme.errorColor |> View.Color.toCss)
+                    [ Css.backgroundColor (theme |> View.Theme.errorColor |> Color.Extra.toCss)
+                    , Css.color (theme |> View.Theme.errorColor |> Color.Extra.toContrast 0.75 |> Color.Extra.toCss)
                     , Css.borderRadius4 (Css.rem 0) (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5)
                     , Css.fontWeight Css.bold
                     , Css.marginTop <| Css.rem -0.5

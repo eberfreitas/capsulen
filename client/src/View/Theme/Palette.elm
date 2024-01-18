@@ -1,22 +1,30 @@
 module View.Theme.Palette exposing (Palette, encode)
 
+import Color
 import Json.Encode
-import View.Color
 
 
 type alias Palette =
-    { background : View.Color.Color
-    , foreground : View.Color.Color
-    , text : View.Color.Color
-    , error : View.Color.Color
+    { background : Color.Color
+    , foreground : Color.Color
+    , text : Color.Color
+    , error : Color.Color
+    , warning : Color.Color
+    , success : Color.Color
     }
 
 
 encode : Palette -> Json.Encode.Value
 encode palette =
+    let
+        encodeColor =
+            Color.toCssString >> Json.Encode.string
+    in
     Json.Encode.object
-        [ ( "background", View.Color.encode palette.background )
-        , ( "foreground", View.Color.encode palette.foreground )
-        , ( "text", View.Color.encode palette.text )
-        , ( "error", View.Color.encode palette.error )
+        [ ( "background", encodeColor palette.background )
+        , ( "foreground", encodeColor palette.foreground )
+        , ( "text", encodeColor palette.text )
+        , ( "error", encodeColor palette.error )
+        , ( "warning", encodeColor palette.warning )
+        , ( "success", encodeColor palette.success )
         ]
