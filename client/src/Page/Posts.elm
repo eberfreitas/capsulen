@@ -157,7 +157,7 @@ viewWithUser i _ context model =
                         Html.div
                             [ HtmlAttributes.css
                                 [ Css.display Css.grid_
-                                , Css.property "grid-template-columns" "repeat(3, 1fr)"
+                                , Css.property "grid-template-columns" "repeat(4, 1fr)"
                                 , Css.columnGap <| Css.rem 0.5
                                 , Css.rowGap <| Css.rem 0.5
                                 , Css.marginBottom <| Css.rem 0.95
