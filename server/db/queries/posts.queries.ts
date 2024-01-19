@@ -156,3 +156,33 @@ const getPostsIR: any = {"usedParamSet":{"user_id":true,"id":true,"limit":true},
 export const getPosts = new PreparedQuery<IGetPostsParams,IGetPostsResult>(getPostsIR);
 
 
+/** 'DeletePost' parameters type */
+export interface IDeletePostParams {
+  id?: number | null | void;
+  user_id?: number | null | void;
+}
+
+/** 'DeletePost' return type */
+export type IDeletePostResult = void;
+
+/** 'DeletePost' query type */
+export interface IDeletePostQuery {
+  params: IDeletePostParams;
+  result: IDeletePostResult;
+}
+
+const deletePostIR: any = {"usedParamSet":{"user_id":true,"id":true},"params":[{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":42,"b":49}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":64,"b":66}]}],"statement":"DELETE FROM\n    posts\nWHERE\n    user_id = :user_id\n    AND id = :id"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * DELETE FROM
+ *     posts
+ * WHERE
+ *     user_id = :user_id
+ *     AND id = :id
+ * ```
+ */
+export const deletePost = new PreparedQuery<IDeletePostParams,IDeletePostResult>(deletePostIR);
+
+

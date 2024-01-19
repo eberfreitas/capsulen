@@ -5,7 +5,7 @@ import { ColorPalette } from "./@types/global";
 
 import { encryptChallenge } from "./tasks/register";
 import { buildUser, decryptChallenge } from "./tasks/login";
-import { decryptPosts, encryptPost } from "./tasks/posts";
+import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
 
 (function() {
   // const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -20,6 +20,7 @@ import { decryptPosts, encryptPost } from "./tasks/posts";
       "login:buildUser": buildUser,
       "posts:encryptPost": encryptPost,
       "posts:decryptPosts": decryptPosts,
+      "posts:deleteConfirm": deleteConfirm,
     },
     ports: {
       send: app.ports.taskSend,

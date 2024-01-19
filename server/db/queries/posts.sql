@@ -44,3 +44,10 @@ WHERE
 ORDER BY
     id DESC
 LIMIT :limit;
+
+/* @name deletePost */
+DELETE FROM
+    posts
+WHERE
+    user_id = :user_id
+    AND id = :id;

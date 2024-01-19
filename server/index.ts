@@ -17,7 +17,14 @@ import {
   persistChallenge,
 } from "./db/queries/users.queries";
 
-import { IGetInitialPostsResult, IGetPostsResult, createPost, getInitialPosts, getPosts } from "./db/queries/posts.queries";
+import {
+  IGetInitialPostsResult,
+  IGetPostsResult,
+  createPost,
+  deletePost,
+  getInitialPosts,
+  getPosts,
+} from "./db/queries/posts.queries";
 
 const POSTS_LIMIT = 2;
 
@@ -91,9 +98,7 @@ server.post("/api/users/request_access", async (req, res) => {
     const exists = await existingUser.run({ username: user.username }, db);
 
     if (exists.length > 0) {
-      return res
-        .status(400)
-        .send("USERNAME_IN_USE");
+      return res.status(400).send("USERNAME_IN_USE");
     }
 
     await createUserRequest.run({ user }, db);
@@ -104,15 +109,12 @@ server.post("/api/users/request_access", async (req, res) => {
     });
   } catch (e) {
     // TODO: monitor error here...
-    return res
-      .status(500)
-      .send("REGISTER_ERROR");
+    return res.status(500).send("REGISTER_ERROR");
   }
 });
 
 server.post("/api/users/create_user", async (req, res) => {
-  const defaultError =
-    "REGISTER_ERROR";
+  const defaultError = "REGISTER_ERROR";
 
   try {
     const possibleUser = await getPendingUser.run(
@@ -149,9 +151,7 @@ server.post("/api/users/request_login", async (req, res) => {
     const possibleUser = await getUser.run({ username: req.body }, db);
 
     if (possibleUser.length < 1 || !possibleUser[0]) {
-      return res
-        .status(400)
-        .send("CREDENTIALS_INCORRECT");
+      return res.status(400).send("CREDENTIALS_INCORRECT");
     }
 
     const user = possibleUser[0];
@@ -159,9 +159,7 @@ server.post("/api/users/request_login", async (req, res) => {
     res.send(user.challenge_encrypted);
   } catch (_) {
     //TODO: monitor error here
-    return res
-      .status(500)
-      .send("LOGIN_ERROR");
+    return res.status(500).send("LOGIN_ERROR");
   }
 });
 
@@ -173,17 +171,13 @@ server.post("/api/users/login", async (req, res) => {
     );
 
     if (possibleUser.length < 1 || !possibleUser[0]) {
-      return res
-        .status(400)
-        .send("CREDENTIALS_INCORRECT");
+      return res.status(400).send("CREDENTIALS_INCORRECT");
     }
 
     const user = possibleUser[0];
 
     if (user.challenge !== req.body?.challenge) {
-      return res
-        .status(400)
-        .send("CREDENTIALS_INCORRECT");
+      return res.status(400).send("CREDENTIALS_INCORRECT");
     }
 
     const key = await getPasetoKey();
@@ -192,9 +186,7 @@ server.post("/api/users/login", async (req, res) => {
     res.send(token);
   } catch (_) {
     //TODO: monitor error here
-    return res
-      .status(500)
-      .send("LOGIN_ERROR");
+    return res.status(500).send("LOGIN_ERROR");
   }
 });
 
@@ -210,9 +202,7 @@ server.post("/api/posts", async (req, res) => {
     const possiblePost = await createPost.run({ post: postData }, db);
 
     if (possiblePost.length < 1) {
-      return res
-        .status(500)
-        .send("POST_ERROR");
+      return res.status(500).send("POST_ERROR");
     }
 
     const post = possiblePost[0];
@@ -224,16 +214,14 @@ server.post("/api/posts", async (req, res) => {
     });
   } catch (_) {
     //TODO: monitor error here
-    return res
-      .status(500)
-      .send("POST_ERROR");
+    return res.status(500).send("POST_ERROR");
   }
 });
 
 server.get("/api/posts", async (req, res) => {
   try {
     const user = await getAuthUser(req);
-    const from = req.query?.from as string ?? null;
+    const from = (req.query?.from as string) ?? null;
     let rawPosts: IGetInitialPostsResult[] | IGetPostsResult[] = [];
 
     if (!from) {
@@ -245,7 +233,7 @@ server.get("/api/posts", async (req, res) => {
         db,
       );
     } else {
-      const id = hashids.decode(from)[0] as number ?? 0;
+      const id = (hashids.decode(from)?.[0] as number) ?? 0;
 
       rawPosts = await getPosts.run(
         {
@@ -268,10 +256,22 @@ server.get("/api/posts", async (req, res) => {
     res.send(posts);
   } catch (_) {
     //TODO: monitor error here
-    return res
-      .status(500)
-      .send("POST_FETCH_ERROR");
+    return res.status(500).send("POST_FETCH_ERROR");
   }
+});
+
+server.post("/api/posts/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    const rawPostId = req.params?.id || "";
+    const id = (hashids.decode(rawPostId)?.[0] as number) || null;
+
+    id && await deletePost.run({ user_id: user.id, id: id }, db);
+  } catch (_) {
+    // We don't really care if something goes wrong here...
+  }
+
+  res.send(true);
 });
 
 server.get("*", (_req, res) =>

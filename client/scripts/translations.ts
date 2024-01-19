@@ -19,6 +19,14 @@ export const translations = {
     en: "Load more posts",
     pt: "Carregar mais postagens",
   },
+  ALL_POSTS_LOADED: {
+    en: "All posts loaded",
+    pt: "Todos os posts carregados",
+  },
+  LOADING: {
+    en: "Loading",
+    pt: "Carregando",
+  },
   LOGIN: {
     en: "Login",
     pt: "Login",
@@ -138,5 +146,9 @@ export const translations = {
   DECRYPT_ERROR: {
     en: "There was an error during decryption",
     pt: "Ocorreu um erro no processo de descriptografia",
+  },
+  DELETE_CONFIRM: {
+    en: "Are you sure you want to delete this post? This action is final.",
+    pt: "Você tem certeza que deseja apagar este post? Esta ação é final.",
   },
 };

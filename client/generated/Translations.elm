@@ -9,12 +9,15 @@ type Language
 
 
 type Key
-    = CredentialsIncorrect
+    = AllPostsLoaded
+    | CredentialsIncorrect
     | DecryptError
+    | DeleteConfirm
     | EncryptError
     | ForbiddenArea
     | InputEmpty
     | InvalidInputs
+    | Loading
     | LoadMorePosts
     | Login
     | LoginError
@@ -76,11 +79,17 @@ languageToString language =
 keyFromString : String -> Key
 keyFromString key =
     case key of
+        "ALL_POSTS_LOADED" ->
+            AllPostsLoaded
+
         "CREDENTIALS_INCORRECT" ->
             CredentialsIncorrect
 
         "DECRYPT_ERROR" ->
             DecryptError
+
+        "DELETE_CONFIRM" ->
+            DeleteConfirm
 
         "ENCRYPT_ERROR" ->
             EncryptError
@@ -93,6 +102,9 @@ keyFromString key =
 
         "INVALID_INPUTS" ->
             InvalidInputs
+
+        "LOADING" ->
+            Loading
 
         "LOAD_MORE_POSTS" ->
             LoadMorePosts
@@ -188,11 +200,17 @@ keyFromString key =
 keyToString : Key -> String
 keyToString key =
     case key of
+        AllPostsLoaded ->
+            "ALL_POSTS_LOADED"
+
         CredentialsIncorrect ->
             "CREDENTIALS_INCORRECT"
 
         DecryptError ->
             "DECRYPT_ERROR"
+
+        DeleteConfirm ->
+            "DELETE_CONFIRM"
 
         EncryptError ->
             "ENCRYPT_ERROR"
@@ -205,6 +223,9 @@ keyToString key =
 
         InvalidInputs ->
             "INVALID_INPUTS"
+
+        Loading ->
+            "LOADING"
 
         LoadMorePosts ->
             "LOAD_MORE_POSTS"
@@ -311,7 +332,13 @@ translate lang key =
 phrases : Dict.Dict String (Dict.Dict String String)
 phrases =
     Dict.fromList
-        [ ( "CREDENTIALS_INCORRECT"
+        [ ( "ALL_POSTS_LOADED"
+          , Dict.fromList
+                [ ( "en", "All posts loaded" )
+                , ( "pt", "Todos os posts carregados" )
+                ]
+          )
+        , ( "CREDENTIALS_INCORRECT"
           , Dict.fromList
                 [ ( "en"
                   , "Username or private key incorrect. Please, try again"
@@ -325,6 +352,16 @@ phrases =
           , Dict.fromList
                 [ ( "en", "There was an error during decryption" )
                 , ( "pt", "Ocorreu um erro no processo de descriptografia" )
+                ]
+          )
+        , ( "DELETE_CONFIRM"
+          , Dict.fromList
+                [ ( "en"
+                  , "Are you sure you want to delete this post? This action is final."
+                  )
+                , ( "pt"
+                  , "Você tem certeza que deseja apagar este post? Esta ação é final."
+                  )
                 ]
           )
         , ( "ENCRYPT_ERROR"
@@ -356,6 +393,9 @@ phrases =
                   , "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"
                   )
                 ]
+          )
+        , ( "LOADING"
+          , Dict.fromList [ ( "en", "Loading" ), ( "pt", "Carregando" ) ]
           )
         , ( "LOAD_MORE_POSTS"
           , Dict.fromList

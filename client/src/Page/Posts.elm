@@ -8,6 +8,7 @@ import ConcurrentTask
 import ConcurrentTask.Http
 import Context
 import Css
+import DateFormat
 import DateFormat.Languages
 import Effect
 import Form
@@ -21,28 +22,36 @@ import List.Extra
 import Page
 import Phosphor
 import Port
+import Time
 import Translations
 import View.Logo
 import View.Style
 import View.Theme
-import DateFormat
-import Time
 
 
 type TaskOutput
     = Posted Business.Post.Post
     | PostsLoaded (List Business.Post.Post)
     | MorePostsLoaded (List Business.Post.Post)
+    | DeleteConfirm (Maybe String)
+    | BlackHole ()
 
 
 type alias TaskPool =
     ConcurrentTask.Pool Msg Page.TaskError TaskOutput
 
 
+type PostsLoading
+    = Loading
+    | Loaded
+    | NoMore
+
+
 type alias Model =
     { tasks : TaskPool
     , postInput : Form.Input String
     , posts : List Business.Post.Post
+    , loadingState : PostsLoading
     }
 
 
@@ -51,6 +60,7 @@ type Msg
     | Submit
     | LoadMore
     | Logout
+    | Delete String
     | OnTaskProgress ( TaskPool, Cmd Msg )
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
@@ -135,15 +145,61 @@ viewWithUser i _ context model =
                     [ Html.text <| i Translations.ToPost ]
                 ]
             ]
-        , Html.div [] (model.posts |> List.map (viewPost context.language context.theme))
         , Html.div []
-            [ Html.button
-                [ HtmlEvents.onClick LoadMore
-                , HtmlAttributes.css [ View.Style.btn context.theme, View.Style.btnFull ]
-                ]
-                [ Html.text <| i Translations.LoadMorePosts ]
-            ]
+            (case model.posts of
+                [] ->
+                    [ Html.div
+                        [ HtmlAttributes.css
+                            [ Css.fontSize <| Css.rem 2
+                            , Css.textAlign Css.center
+                            , Css.fontWeight Css.bold
+                            , Css.color
+                                (context.theme
+                                    |> View.Theme.textColor
+                                    |> Color.Extra.withAlpha 0.5
+                                    |> Color.Extra.toCss
+                                )
+                            ]
+                        ]
+                        [ Html.text "No posts" ]
+                    ]
+
+                posts ->
+                    [ Html.div [] (posts |> List.map (viewPost context.language context.theme))
+                    , Html.div []
+                        [ loadMoreBtn i context.theme model.loadingState ]
+                    ]
+            )
         ]
+
+
+loadMoreBtn : Translations.Helper -> View.Theme.Theme -> PostsLoading -> Html.Html Msg
+loadMoreBtn i theme loading =
+    let
+        ( disabled, label ) =
+            case loading of
+                Loaded ->
+                    ( False, Translations.LoadMorePosts )
+
+                Loading ->
+                    ( True, Translations.Loading )
+
+                NoMore ->
+                    ( True, Translations.AllPostsLoaded )
+
+        btnStyle =
+            if disabled then
+                View.Style.btnDisabled
+
+            else
+                Css.batch []
+    in
+    Html.button
+        [ HtmlEvents.onClick LoadMore
+        , HtmlAttributes.css [ View.Style.btn theme, View.Style.btnFull, btnStyle ]
+        , HtmlAttributes.disabled disabled
+        ]
+        [ Html.text <| i label ]
 
 
 viewPost : Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
@@ -178,6 +234,29 @@ viewPost language theme post =
                         |> Html.fromUnstyled
                     ]
                 , Html.text <| formatDate language post.createdAt
+                ]
+            , Html.div
+                [ HtmlAttributes.css
+                    [ Css.position Css.absolute
+                    , Css.right <| Css.px 0
+                    , Css.top <| Css.px 0
+                    ]
+                ]
+                [ Html.button
+                    [ HtmlAttributes.css
+                        [ Css.backgroundColor Css.transparent
+                        , Css.border <| Css.px 0
+                        , Css.color (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.5 |> Color.Extra.toCss)
+                        , Css.cursor Css.pointer
+                        ]
+                    , HtmlEvents.onClick <| Delete post.id
+                    ]
+                    [ Phosphor.trash Phosphor.Bold
+                        |> Phosphor.withSize 1.5
+                        |> Phosphor.withSizeUnit "em"
+                        |> Phosphor.toHtml []
+                        |> Html.fromUnstyled
+                    ]
                 ]
             ]
         , case post.content of
@@ -330,6 +409,7 @@ init i context =
     ( { tasks = newTasks
       , postInput = Form.newInput
       , posts = []
+      , loadingState = Loading
       }
     , effect
     , cmd
@@ -407,6 +487,32 @@ updateWithUser i msg model user =
                     , Cmd.none
                     )
 
+        Delete hashId ->
+            let
+                task =
+                    ConcurrentTask.define
+                        { function = "posts:deleteConfirm"
+                        , expect = ConcurrentTask.expectJson (Json.Decode.nullable Json.Decode.string)
+                        , errors = ConcurrentTask.expectNoErrors
+                        , args =
+                            Json.Encode.object
+                                [ ( "hashId", Json.Encode.string hashId )
+                                , ( "confirmText", Json.Encode.string (i Translations.DeleteConfirm) )
+                                ]
+                        }
+                        |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
+                        |> ConcurrentTask.map DeleteConfirm
+
+                ( tasks, cmd ) =
+                    ConcurrentTask.attempt
+                        { pool = model.tasks
+                        , send = Port.taskSend
+                        , onComplete = OnTaskComplete
+                        }
+                        task
+            in
+            ( { model | tasks = tasks }, Effect.none, cmd )
+
         LoadMore ->
             let
                 url : String
@@ -425,7 +531,7 @@ updateWithUser i msg model user =
                         }
                         (loadPosts MorePostsLoaded url user)
             in
-            ( { model | tasks = tasks }, Effect.toggleLoader, cmd )
+            ( { model | tasks = tasks, loadingState = Loading }, Effect.toggleLoader, cmd )
 
         Logout ->
             ( model
@@ -450,25 +556,60 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.Success (PostsLoaded posts)) ->
-            ( { model | posts = model.posts ++ posts }
+            ( { model | posts = model.posts ++ posts, loadingState = Loaded }
             , Effect.none
             , Cmd.none
             )
 
         OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
             let
-                effect : Effect.Effect
-                effect =
+                ( effect, loading ) =
                     if posts == [] then
-                        Effect.addAlert (Alert.new Alert.Warning <| i Translations.PostsNoMore)
+                        ( Effect.addAlert (Alert.new Alert.Warning <| i Translations.PostsNoMore)
+                        , NoMore
+                        )
 
                     else
-                        Effect.none
+                        ( Effect.none, Loaded )
             in
-            ( { model | posts = model.posts ++ posts }
+            ( { model | posts = model.posts ++ posts, loadingState = loading }
             , Effect.batch [ effect, Effect.toggleLoader ]
             , Cmd.none
             )
+
+        OnTaskComplete (ConcurrentTask.Success (DeleteConfirm confirm)) ->
+            case confirm of
+                Nothing ->
+                    ( model, Effect.none, Cmd.none )
+
+                Just hashId ->
+                    let
+                        task =
+                            ConcurrentTask.Http.post
+                                { url = "/api/posts/" ++ hashId
+                                , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
+                                , body = ConcurrentTask.Http.emptyBody
+                                , expect = ConcurrentTask.Http.expectWhatever
+                                , timeout = Nothing
+                                }
+                                |> ConcurrentTask.mapError Page.httpErrorMapper
+                                |> ConcurrentTask.map BlackHole
+
+                        posts =
+                            model.posts |> List.filter (\post -> post.id /= hashId)
+
+                        ( tasks, cmd ) =
+                            ConcurrentTask.attempt
+                                { pool = model.tasks
+                                , send = Port.taskSend
+                                , onComplete = OnTaskComplete
+                                }
+                                task
+                    in
+                    ( { model | posts = posts, tasks = tasks }, Effect.none, cmd )
+
+        OnTaskComplete (ConcurrentTask.Success (BlackHole ())) ->
+            ( model, Effect.none, Cmd.none )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
             ( model
@@ -481,7 +622,7 @@ updateWithUser i msg model user =
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
             -- TODO: send error to monitoring tool
-            ( model
+            ( { model | loadingState = Loaded }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -490,7 +631,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model
+            ( { model | loadingState = Loaded }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader

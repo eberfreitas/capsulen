@@ -1,4 +1,4 @@
-module View.Style exposing (app, btn, btnFull, btnInverse, btnShort, logo)
+module View.Style exposing (app, btn, btnDisabled, btnFull, btnInverse, btnShort, logo)
 
 import Color.Extra
 import Css
@@ -63,4 +63,12 @@ btnInverse theme =
         , Css.borderStyle Css.solid
         , Css.borderColor (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
         , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+        ]
+
+
+btnDisabled : Css.Style
+btnDisabled =
+    Css.batch
+        [ Css.opacity <| Css.num 0.45
+        , Css.cursor Css.notAllowed
         ]
