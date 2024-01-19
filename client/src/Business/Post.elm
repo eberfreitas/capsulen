@@ -12,6 +12,7 @@ import Json.Encode
 
 type alias PostContent =
     { body : String
+    , images : List String
     }
 
 
@@ -31,13 +32,15 @@ encodePostContent : PostContent -> Json.Encode.Value
 encodePostContent postContent =
     Json.Encode.object
         [ ( "body", Json.Encode.string postContent.body )
+        , ( "images", Json.Encode.list Json.Encode.string postContent.images )
         ]
 
 
 decodeDecryptedContent : Json.Decode.Decoder Content
 decodeDecryptedContent =
-    Json.Decode.map (PostContent >> Decrypted)
+    Json.Decode.map2 (\body images -> Decrypted { body = body, images = images })
         (Json.Decode.field "body" Json.Decode.string)
+        (Json.Decode.field "images" (Json.Decode.list Json.Decode.string))
 
 
 decodeEncryptedContent : Json.Decode.Decoder Content

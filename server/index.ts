@@ -79,8 +79,8 @@ async function getAuthUser(req: Request): Promise<IGetUserResult> {
 const server = express();
 
 server.use(express.static(path.join(__dirname, "public")));
-server.use(bodyParser.json());
-server.use(bodyParser.text());
+server.use(bodyParser.json({ limit: "10mb" }));
+server.use(bodyParser.text({ limit: "10mb" }));
 
 server.listen(port, async () => {
   await db.connect();
@@ -266,7 +266,7 @@ server.post("/api/posts/:id", async (req, res) => {
     const rawPostId = req.params?.id || "";
     const id = (hashids.decode(rawPostId)?.[0] as number) || null;
 
-    id && await deletePost.run({ user_id: user.id, id: id }, db);
+    id && (await deletePost.run({ user_id: user.id, id: id }, db));
   } catch (_) {
     // We don't really care if something goes wrong here...
   }

@@ -298,6 +298,7 @@ viewPost language theme post =
                     |> Color.Extra.toCss
                 )
             , Css.padding <| Css.rem 1
+            , Css.paddingBottom <| Css.px 1
             , Css.marginBottom <| Css.rem 1.5
             , Css.borderRadius <| Css.rem 0.5
             ]
@@ -344,28 +345,69 @@ viewPost language theme post =
                     ]
                 ]
             ]
-        , case post.content of
-            Business.Post.Decrypted content ->
-                Html.div
-                    [ HtmlAttributes.css
-                        [ Css.lineHeight <| Css.num 1.5
-                        , Css.fontSize <| Css.rem 1.25
-                        ]
+        , Html.div []
+            (case post.content of
+                Business.Post.Decrypted content ->
+                    [ case content.body of
+                        "" ->
+                            Html.text ""
+
+                        body ->
+                            Html.div
+                                [ HtmlAttributes.css
+                                    [ Css.lineHeight <| Css.num 1.5
+                                    , Css.fontSize <| Css.rem 1.25
+                                    , Css.marginBottom <| Css.rem 1
+                                    ]
+                                ]
+                                (body
+                                    |> String.lines
+                                    |> List.map
+                                        (\line ->
+                                            if line == "" then
+                                                Html.br [] []
+
+                                            else
+                                                Html.text line
+                                        )
+                                )
+                    , case content.images of
+                        [] ->
+                            Html.text ""
+
+                        images ->
+                            Html.div
+                                [ HtmlAttributes.css
+                                    [ Css.display Css.grid_
+                                    , Css.property "grid-template-columns" "repeat(3, 1fr)"
+                                    , Css.columnGap <| Css.rem 1
+                                    , Css.rowGap <| Css.rem 1
+                                    , Css.marginBottom <| Css.rem 1
+                                    ]
+                                ]
+                                (images
+                                    |> List.map
+                                        (\image ->
+                                            Html.div []
+                                                [ Html.img
+                                                    [ HtmlAttributes.src image
+                                                    , HtmlAttributes.css
+                                                        [ Css.width <| Css.pct 100
+                                                        , Css.property "aspect-ratio" "1/1"
+                                                        , Css.objectFit Css.cover
+                                                        , Css.display Css.block
+                                                        , Css.borderRadius <| Css.rem 0.5
+                                                        ]
+                                                    ]
+                                                    []
+                                                ]
+                                        )
+                                )
                     ]
-                    (content.body
-                        |> String.lines
-                        |> List.map
-                            (\line ->
-                                if line == "" then
-                                    Html.br [] []
 
-                                else
-                                    Html.text line
-                            )
-                    )
-
-            Business.Post.Encrypted ->
-                Html.text ""
+                Business.Post.Encrypted ->
+                    [ Html.text "" ]
+            )
         ]
 
 
@@ -521,7 +563,7 @@ updateWithUser i msg model user =
         RequestImages ->
             ( model
             , Effect.none
-            , File.Select.files [ "image/png", "image/jpg" ] GotImages
+            , File.Select.files [ "image/png", "image/jpg", "image/jpeg" ] GotImages
             )
 
         GotImages file files ->
@@ -659,7 +701,11 @@ updateWithUser i msg model user =
             ( { model | tasks = tasks }, Effect.none, cmd )
 
         OnTaskComplete (ConcurrentTask.Success (Posted post)) ->
-            ( { model | posts = post :: model.posts, postInput = Form.newInput }
+            ( { model
+                | posts = post :: model.posts
+                , postImages = []
+                , postInput = Form.newInput
+              }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Success <| i Translations.PostNew)
                 , Effect.toggleLoader
@@ -754,12 +800,15 @@ updateWithUser i msg model user =
 
 buildPostContent : Model -> Result Translations.Key Business.Post.PostContent
 buildPostContent model =
-    case model.postInput.valid of
-        Form.Valid body ->
-            Ok { body = body }
+    case ( model.postInput.valid, model.postImages ) of
+        ( Form.Valid body, images ) ->
+            Ok { body = body, images = images }
 
-        _ ->
+        ( _, [] ) ->
             Err Translations.InvalidInputs
+
+        ( _, images ) ->
+            Ok { body = "", images = images }
 
 
 subscriptions : TaskPool -> Sub Msg
