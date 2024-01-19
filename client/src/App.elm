@@ -169,7 +169,7 @@ init () url key =
         -- TODO: get language from browser as flag
         initContext : Context.Context
         initContext =
-            Context.new key (Translations.languageFromString "pt") View.Theme.Dark
+            Context.new key (Translations.languageFromString "pt") View.Theme.Light
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url

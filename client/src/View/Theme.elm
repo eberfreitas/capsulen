@@ -12,6 +12,7 @@ module View.Theme exposing
 import Color
 import Json.Encode
 import View.Theme.Dark
+import View.Theme.Light
 import View.Theme.Palette
 
 
@@ -27,7 +28,7 @@ themePalette theme =
             View.Theme.Dark.palette
 
         Light ->
-            Debug.todo "Implement light theme"
+            View.Theme.Light.palette
 
 
 backgroundColor : Theme -> Color.Color
