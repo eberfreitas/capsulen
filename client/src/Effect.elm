@@ -102,7 +102,7 @@ run context effect =
             let
                 alerts : List Alert.Message
                 alerts =
-                    context.alerts |> List.Extra.indexedFilter (\idx _ -> idx /= index)
+                    context.alerts |> List.Extra.removeAt index
             in
             ( { context | alerts = alerts }, Cmd.none )
 

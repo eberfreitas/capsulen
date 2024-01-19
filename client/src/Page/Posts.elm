@@ -11,6 +11,8 @@ import Css
 import DateFormat
 import DateFormat.Languages
 import Effect
+import File
+import File.Select
 import Form
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
@@ -22,6 +24,7 @@ import List.Extra
 import Page
 import Phosphor
 import Port
+import Task
 import Time
 import Translations
 import View.Logo
@@ -50,6 +53,7 @@ type PostsLoading
 type alias Model =
     { tasks : TaskPool
     , postInput : Form.Input String
+    , postImages : List String
     , posts : List Business.Post.Post
     , loadingState : PostsLoading
     }
@@ -57,6 +61,10 @@ type alias Model =
 
 type Msg
     = WithPostInput Form.InputEvent
+    | RequestImages
+    | GotImages File.File (List File.File)
+    | GotImagesUrls (Result () (List String))
+    | RemoveImage Int
     | Submit
     | LoadMore
     | Logout
@@ -141,8 +149,85 @@ viewWithUser i _ context model =
                         ++ Form.inputEvents WithPostInput
                     )
                     []
-                , Html.button [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
-                    [ Html.text <| i Translations.ToPost ]
+                , case model.postImages of
+                    [] ->
+                        Html.text ""
+
+                    _ ->
+                        Html.div
+                            [ HtmlAttributes.css
+                                [ Css.display Css.grid_
+                                , Css.property "grid-template-columns" "repeat(3, 1fr)"
+                                , Css.columnGap <| Css.rem 0.5
+                                , Css.rowGap <| Css.rem 0.5
+                                , Css.marginBottom <| Css.rem 0.95
+                                ]
+                            ]
+                            (model.postImages
+                                |> List.indexedMap
+                                    (\index image ->
+                                        Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
+                                            [ Html.img
+                                                [ HtmlAttributes.src image
+                                                , HtmlAttributes.css
+                                                    [ Css.width <| Css.pct 100
+                                                    , Css.property "aspect-ratio" "1/1"
+                                                    , Css.objectFit Css.cover
+                                                    , Css.display Css.block
+                                                    , Css.borderRadius <| Css.rem 0.5
+                                                    ]
+                                                ]
+                                                []
+                                            , Html.button
+                                                [ HtmlAttributes.type_ "button"
+                                                , HtmlAttributes.css
+                                                    [ Css.border <| Css.px 0
+                                                    , Css.backgroundColor (context.theme |> View.Theme.errorColor |> Color.Extra.toCss)
+                                                    , Css.position Css.absolute
+                                                    , Css.top <| Css.px 0
+                                                    , Css.right <| Css.px 0
+                                                    , Css.color (context.theme |> View.Theme.errorColor |> Color.Extra.toContrast 0.5 |> Color.Extra.toCss)
+                                                    , Css.fontSize <| Css.rem 1.5
+                                                    , Css.padding <| Css.rem 0.5
+                                                    , Css.paddingBottom <| Css.rem 0.25
+                                                    , Css.borderRadius2 (Css.rem 0) (Css.rem 0.5)
+                                                    , Css.cursor Css.pointer
+                                                    ]
+                                                , HtmlEvents.onClick (RemoveImage index)
+                                                ]
+                                                [ Phosphor.x Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                                            ]
+                                    )
+                            )
+                , Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
+                    [ Html.button
+                        [ HtmlEvents.onClick RequestImages
+                        , HtmlAttributes.type_ "button"
+                        , HtmlAttributes.css
+                            [ Css.border <| Css.px 0
+                            , Css.backgroundColor Css.transparent
+                            , Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                            , Css.fontSize <| Css.rem 2.5
+                            , Css.margin <| Css.px 0
+                            , Css.padding <| Css.px 0
+                            , Css.display Css.flex_
+                            , Css.alignItems Css.center
+                            , Css.justifyItems Css.center
+                            , Css.height <| Css.rem 3.2
+                            , Css.cursor Css.pointer
+                            ]
+                        ]
+                        [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                    , Html.button
+                        [ HtmlAttributes.css
+                            [ View.Style.btn context.theme
+                            , Css.position Css.absolute
+                            , Css.right <| Css.px 0
+                            , Css.top <| Css.px 0
+                            ]
+                        ]
+                        [ Html.text <| i Translations.ToPost ]
+                    ]
                 ]
             ]
         , Html.div []
@@ -408,6 +493,7 @@ init i context =
     in
     ( { tasks = newTasks
       , postInput = Form.newInput
+      , postImages = []
       , posts = []
       , loadingState = Loading
       }
@@ -428,6 +514,32 @@ updateWithUser i msg model user =
     case msg of
         WithPostInput event ->
             ( { model | postInput = Form.updateInput event Page.nonEmptyInputParser model.postInput }
+            , Effect.none
+            , Cmd.none
+            )
+
+        RequestImages ->
+            ( model
+            , Effect.none
+            , File.Select.files [ "image/png", "image/jpg" ] GotImages
+            )
+
+        GotImages file files ->
+            ( model
+            , Effect.none
+            , Task.attempt GotImagesUrls (Task.sequence (file :: files |> List.map File.toUrl))
+            )
+
+        GotImagesUrls result ->
+            case result of
+                Ok images ->
+                    ( { model | postImages = model.postImages ++ images }, Effect.none, Cmd.none )
+
+                _ ->
+                    ( model, Effect.none, Cmd.none )
+
+        RemoveImage index ->
+            ( { model | postImages = model.postImages |> List.Extra.removeAt index }
             , Effect.none
             , Cmd.none
             )

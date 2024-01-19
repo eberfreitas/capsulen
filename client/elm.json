@@ -12,10 +12,12 @@
             "dzuk-mutant/elm-css": "3.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
+            "elm/file": "1.0.5",
             "elm/json": "1.1.3",
             "elm/regex": "1.0.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
+            "elm-community/list-extra": "8.7.0",
             "lydell/elm-app-url": "1.0.4",
             "miniBill/date-format-languages": "1.2.1",
             "phosphor-icons/phosphor-elm": "2.0.0",
@@ -23,6 +25,7 @@
             "ryannhg/date-format": "2.3.0"
         },
         "indirect": {
+            "elm/bytes": "1.0.8",
             "elm/html": "1.0.0",
             "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
