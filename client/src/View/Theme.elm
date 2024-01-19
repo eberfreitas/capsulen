@@ -4,6 +4,7 @@ module View.Theme exposing
     , encode
     , errorColor
     , foregroundColor
+    , fromString
     , successColor
     , textColor
     , warningColor
@@ -19,6 +20,19 @@ import View.Theme.Palette
 type Theme
     = Dark
     | Light
+
+
+fromString : String -> Theme
+fromString theme =
+    case theme of
+        "light" ->
+            Light
+
+        "dark" ->
+            Dark
+
+        _ ->
+            Light
 
 
 themePalette : Theme -> View.Theme.Palette.Palette

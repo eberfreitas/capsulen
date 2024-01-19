@@ -8,10 +8,10 @@ import { buildUser, decryptChallenge } from "./tasks/login";
 import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
 
 (function() {
-  // const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  // const language = navigator.language.split("-")[0] ?? "en";
+  const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const language = navigator.language.split("-")[0] ?? "en";
 
-  const app = window.Elm.App.init();
+  const app = window.Elm.App.init({ flags: { colorScheme, language }});
 
   ConcurrentTask.register({
     tasks: {

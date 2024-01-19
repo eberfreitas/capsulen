@@ -32,7 +32,7 @@ export interface App {
 
 interface Elm {
   App: {
-    init: () => App;
+    init: (args: { flags: { colorScheme: string; language: string } }) => App;
   };
 }
 

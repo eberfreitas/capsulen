@@ -9,6 +9,7 @@ import Css
 import Effect
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
+import Json.Decode
 import Page.Login
 import Page.Posts
 import Page.Register
@@ -163,13 +164,24 @@ update msg model =
             ( model, Cmd.none )
 
 
-init : () -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
-init () url key =
+init : Json.Decode.Value -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
-        -- TODO: get language from browser as flag
+        (theme, language) =
+            flags
+                |> Json.Decode.decodeValue
+                    (Json.Decode.map2
+                        (\color lang -> ( color, lang ))
+                        (Json.Decode.field "colorScheme" Json.Decode.string)
+                        (Json.Decode.field "language" Json.Decode.string)
+                    )
+                |> Result.toMaybe
+                |> Maybe.map(\(color, lang) -> (View.Theme.fromString color, Translations.languageFromString lang))
+                |> Maybe.withDefault (View.Theme.Light, Translations.En)
+
         initContext : Context.Context
         initContext =
-            Context.new key (Translations.languageFromString "pt") View.Theme.Light
+            Context.new key language theme
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url
@@ -247,7 +259,7 @@ subscriptions model =
     Sub.batch (alertSub :: pageBatch)
 
 
-main : Program () Model Msg
+main : Program Json.Decode.Value Model Msg
 main =
     Browser.application
         { init = init
