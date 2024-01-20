@@ -281,70 +281,81 @@ viewWithUser i _ context model =
                         , Css.justifyContent Css.center
                         ]
                     ]
-                    [ Html.img
+                    (Html.img
                         [ HtmlAttributes.src image
                         , HtmlAttributes.css
-                            [ Css.maxWidth <| Css.pct 80
-                            , Css.maxHeight <| Css.pct 80
+                            [ Css.maxWidth <| Css.pct 100
+                            , Css.maxHeight <| Css.pct 85
                             , Css.display Css.block
                             ]
                         ]
                         []
-                    , Html.button
-                        [ HtmlAttributes.css
-                            [ Css.position Css.absolute
-                            , Css.top <| Css.px 0
-                            , Css.bottom <| Css.px 0
-                            , Css.right <| Css.px 0
-                            , Css.width <| Css.pct 10
-                            , Css.border <| Css.px 0
-                            , Css.backgroundColor Css.transparent
-                            , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                            , Css.display Css.flex_
-                            , Css.alignItems Css.center
-                            , Css.justifyContent Css.center
-                            , Css.cursor Css.pointer
-                            , Css.fontSize <| Css.rem 4
-                            ]
-                        , HtmlEvents.onClick (GalleryNav (index + 1))
-                        ]
-                        [ Phosphor.arrowRight Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                    , Html.button
-                        [ HtmlAttributes.css
-                            [ Css.position Css.absolute
-                            , Css.top <| Css.px 0
-                            , Css.bottom <| Css.px 0
-                            , Css.left <| Css.px 0
-                            , Css.width <| Css.pct 10
-                            , Css.border <| Css.px 0
-                            , Css.backgroundColor Css.transparent
-                            , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                            , Css.display Css.flex_
-                            , Css.alignItems Css.center
-                            , Css.justifyContent Css.center
-                            , Css.cursor Css.pointer
-                            , Css.fontSize <| Css.rem 4
-                            ]
-                        , HtmlEvents.onClick (GalleryNav (index - 1))
-                        ]
-                        [ Phosphor.arrowLeft Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                    , Html.button
-                        [ HtmlAttributes.css
-                            [ Css.position Css.absolute
-                            , Css.top <| Css.px 0
-                            , Css.right <| Css.px 0
-                            , Css.border <| Css.px 0
-                            , Css.backgroundColor (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                            , Css.color (context.theme |> View.Theme.backgroundColor |> Color.Extra.toCss)
-                            , Css.fontSize <| Css.rem 3
-                            , Css.cursor Css.pointer
-                            , Css.padding <| Css.rem 1
-                            , Css.paddingBottom <| Css.rem 0
-                            ]
-                        , HtmlEvents.onClick GalleryClose
-                        ]
-                        [ Phosphor.x Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                    ]
+                        :: (if List.length gallery > 1 then
+                                [ Html.button
+                                    [ HtmlAttributes.css
+                                        [ Css.position Css.absolute
+                                        , Css.top <| Css.px 0
+                                        , Css.bottom <| Css.px 0
+                                        , Css.right <| Css.px 0
+                                        , Css.width <| Css.pct 50
+                                        , Css.border <| Css.px 0
+                                        , Css.backgroundColor Css.transparent
+                                        , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
+                                        , Css.display Css.flex_
+                                        , Css.alignItems Css.center
+                                        , Css.justifyContent Css.flexEnd
+                                        , Css.cursor Css.pointer
+                                        , Css.fontSize <| Css.rem 2
+                                        , Css.padding <| Css.px 0
+                                        , Css.paddingRight <| Css.rem 1
+                                        ]
+                                    , HtmlEvents.onClick (GalleryNav (index + 1))
+                                    ]
+                                    [ Phosphor.arrowRight Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                                , Html.button
+                                    [ HtmlAttributes.css
+                                        [ Css.position Css.absolute
+                                        , Css.top <| Css.px 0
+                                        , Css.bottom <| Css.px 0
+                                        , Css.left <| Css.px 0
+                                        , Css.width <| Css.pct 50
+                                        , Css.border <| Css.px 0
+                                        , Css.backgroundColor Css.transparent
+                                        , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
+                                        , Css.display Css.flex_
+                                        , Css.alignItems Css.center
+                                        , Css.justifyContent Css.flexStart
+                                        , Css.cursor Css.pointer
+                                        , Css.fontSize <| Css.rem 2
+                                        , Css.padding <| Css.px 0
+                                        , Css.paddingLeft <| Css.rem 1
+                                        ]
+                                    , HtmlEvents.onClick (GalleryNav (index - 1))
+                                    ]
+                                    [ Phosphor.arrowLeft Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                                ]
+
+                            else
+                                []
+                           )
+                        ++ [ Html.button
+                                [ HtmlAttributes.css
+                                    [ Css.position Css.absolute
+                                    , Css.top <| Css.px 0
+                                    , Css.right <| Css.px 0
+                                    , Css.border <| Css.px 0
+                                    , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
+                                    , Css.backgroundColor Css.transparent
+                                    , Css.fontSize <| Css.rem 2
+                                    , Css.cursor Css.pointer
+                                    , Css.padding <| Css.px 0
+                                    , Css.margin <| Css.rem 1
+                                    ]
+                                , HtmlEvents.onClick GalleryClose
+                                ]
+                                [ Phosphor.x Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                           ]
+                    )
         ]
 
 
