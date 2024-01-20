@@ -151,4 +151,8 @@ export const translations = {
     en: "Are you sure you want to delete this post? This action is final.",
     pt: "Você tem certeza que deseja apagar este post? Esta ação é final.",
   },
+  CLEAR_POST: {
+    en: "Clear post",
+    pt: "Cancelar post",
+  },
 };

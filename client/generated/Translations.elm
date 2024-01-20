@@ -10,6 +10,7 @@ type Language
 
 type Key
     = AllPostsLoaded
+    | ClearPost
     | CredentialsIncorrect
     | DecryptError
     | DeleteConfirm
@@ -81,6 +82,9 @@ keyFromString key =
     case key of
         "ALL_POSTS_LOADED" ->
             AllPostsLoaded
+
+        "CLEAR_POST" ->
+            ClearPost
 
         "CREDENTIALS_INCORRECT" ->
             CredentialsIncorrect
@@ -202,6 +206,9 @@ keyToString key =
     case key of
         AllPostsLoaded ->
             "ALL_POSTS_LOADED"
+
+        ClearPost ->
+            "CLEAR_POST"
 
         CredentialsIncorrect ->
             "CREDENTIALS_INCORRECT"
@@ -337,6 +344,9 @@ phrases =
                 [ ( "en", "All posts loaded" )
                 , ( "pt", "Todos os posts carregados" )
                 ]
+          )
+        , ( "CLEAR_POST"
+          , Dict.fromList [ ( "en", "Clear post" ), ( "pt", "Cancelar post" ) ]
           )
         , ( "CREDENTIALS_INCORRECT"
           , Dict.fromList

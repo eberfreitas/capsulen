@@ -75,6 +75,7 @@ type Msg
     | GalleryOpen (List String) Int
     | GalleryClose
     | GalleryNav Int
+    | ClearPost
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -222,15 +223,34 @@ viewWithUser i _ context model =
                             ]
                         ]
                         [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                    , Html.button
+                    , Html.div
                         [ HtmlAttributes.css
-                            [ View.Style.btn context.theme
-                            , Css.position Css.absolute
+                            [ Css.position Css.absolute
                             , Css.right <| Css.px 0
                             , Css.top <| Css.px 0
+                            , Css.display Css.flex_
+                            , Css.justifyContent Css.flexEnd
                             ]
                         ]
-                        [ Html.text <| i Translations.ToPost ]
+                        [ case buildPostContent model of
+                            Ok _ ->
+                                Html.button
+                                    [ HtmlAttributes.css
+                                        [ View.Style.btn context.theme
+                                        , View.Style.btnInverse context.theme
+                                        , Css.marginRight <| Css.rem 0.5
+                                        ]
+                                    , HtmlEvents.onClick ClearPost
+                                    , HtmlAttributes.type_ "button"
+                                    ]
+                                    [ Html.text <| i Translations.ClearPost ]
+
+                            _ ->
+                                Html.text ""
+                        , Html.button
+                            [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
+                            [ Html.text <| i Translations.ToPost ]
+                        ]
                     ]
                 ]
             ]
@@ -941,6 +961,9 @@ updateWithUser i msg model user =
 
         GalleryClose ->
             ( { model | gallery = ( 0, [] ) }, Effect.none, Cmd.none )
+
+        ClearPost ->
+            ( { model | postImages = [], postInput = Form.newInput }, Effect.none, Cmd.none )
 
 
 buildPostContent : Model -> Result Translations.Key Business.Post.PostContent

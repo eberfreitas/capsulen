@@ -32,14 +32,16 @@ btn : View.Theme.Theme -> Css.Style
 btn theme =
     Css.batch
         [ Css.backgroundColor (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
-        , Css.border <| Css.px 0
+        , Css.border <| Css.px 2
+        , Css.borderStyle Css.solid
+        , Css.borderColor (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
         , Css.borderRadius <| Css.rem 0.5
         , Css.color (theme |> View.Theme.backgroundColor |> Color.Extra.toCss)
         , Css.cursor Css.pointer
         , Css.display Css.block
         , Css.fontVariant Css.allPetiteCaps
         , Css.fontWeight Css.bold
-        , Css.padding <| Css.rem 1
+        , Css.padding <| Css.calc (Css.rem 1) (Css.minus (Css.px 2))
         , Css.textAlign Css.center
         , Css.textDecoration Css.none
         ]
@@ -59,8 +61,6 @@ btnInverse : View.Theme.Theme -> Css.Style
 btnInverse theme =
     Css.batch
         [ Css.backgroundColor Css.transparent
-        , Css.border <| Css.px 2
-        , Css.borderStyle Css.solid
         , Css.borderColor (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
         , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
         ]
