@@ -540,7 +540,7 @@ viewPost language theme post =
                                                         , Css.objectFit Css.cover
                                                         , Css.display Css.block
                                                         , Css.borderRadius <| Css.rem 0.5
-                                                        , Css.cursor Css.pointer
+                                                        , Css.cursor Css.zoomIn
                                                         ]
                                                     ]
                                                     []
