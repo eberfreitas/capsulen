@@ -76,6 +76,7 @@ type Msg
     | GalleryClose
     | GalleryNav Int
     | ClearPost
+    | Paste (List File.File)
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -150,6 +151,14 @@ viewWithUser i _ context model =
                         , Css.resize Css.vertical
                         , Css.width <| Css.pct 100
                         ]
+                     , HtmlEvents.on "paste"
+                        (Json.Decode.map Paste
+                            (Json.Decode.field "clipboardData"
+                                (Json.Decode.field "files"
+                                    (Json.Decode.list File.decoder)
+                                )
+                            )
+                        )
                      ]
                         ++ Form.inputEvents WithPostInput
                     )
@@ -687,6 +696,11 @@ update i context msg model =
         |> Maybe.withDefault ( model, Effect.none, Cmd.none )
 
 
+imageMimes : List String
+imageMimes =
+    [ "image/png", "image/jpg", "image/jpeg" ]
+
+
 updateWithUser : Translations.Helper -> Msg -> Model -> Business.User.User -> ( Model, Effect.Effect, Cmd Msg )
 updateWithUser i msg model user =
     case msg of
@@ -699,7 +713,7 @@ updateWithUser i msg model user =
         RequestImages ->
             ( model
             , Effect.none
-            , File.Select.files [ "image/png", "image/jpg", "image/jpeg" ] GotImages
+            , File.Select.files imageMimes GotImages
             )
 
         GotImages file files ->
@@ -964,6 +978,21 @@ updateWithUser i msg model user =
 
         ClearPost ->
             ( { model | postImages = [], postInput = Form.newInput }, Effect.none, Cmd.none )
+
+        Paste files ->
+            case files of
+                [] ->
+                    ( model, Effect.none, Cmd.none )
+
+                imageFiles ->
+                    let
+                        filteredFiles =
+                            imageFiles |> List.filter (\file -> imageMimes |> List.member (File.mime file))
+                    in
+                    ( model
+                    , Effect.none
+                    , Task.attempt GotImagesUrls (Task.sequence (filteredFiles |> List.map File.toUrl))
+                    )
 
 
 buildPostContent : Model -> Result Translations.Key Business.Post.PostContent
