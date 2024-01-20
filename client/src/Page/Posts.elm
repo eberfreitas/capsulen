@@ -293,99 +293,98 @@ viewWithUser i _ context model =
                 Html.text ""
 
             ( index, gallery ) ->
-                let
-                    image =
-                        List.Extra.getAt index gallery |> Maybe.withDefault ""
-                in
-                Html.div
-                    [ HtmlAttributes.css
-                        [ Css.position Css.fixed
-                        , Css.top <| Css.px 0
-                        , Css.bottom <| Css.px 0
-                        , Css.left <| Css.px 0
-                        , Css.right <| Css.px 0
-                        , Css.backgroundColor (context.theme |> View.Theme.backgroundColor |> Color.Extra.withAlpha 0.9 |> Color.Extra.toCss)
-                        , Css.display Css.flex_
-                        , Css.alignItems Css.center
-                        , Css.justifyContent Css.center
-                        ]
-                    ]
-                    (Html.img
-                        [ HtmlAttributes.src image
-                        , HtmlAttributes.css
-                            [ Css.maxWidth <| Css.pct 100
-                            , Css.maxHeight <| Css.pct 85
-                            , Css.display Css.block
-                            ]
-                        ]
-                        []
-                        :: (if List.length gallery > 1 then
-                                [ Html.button
-                                    [ HtmlAttributes.css
-                                        [ Css.position Css.absolute
-                                        , Css.top <| Css.px 0
-                                        , Css.bottom <| Css.px 0
-                                        , Css.right <| Css.px 0
-                                        , Css.width <| Css.pct 50
-                                        , Css.border <| Css.px 0
-                                        , Css.backgroundColor Css.transparent
-                                        , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                                        , Css.display Css.flex_
-                                        , Css.alignItems Css.center
-                                        , Css.justifyContent Css.flexEnd
-                                        , Css.cursor Css.pointer
-                                        , Css.fontSize <| Css.rem 2
-                                        , Css.padding <| Css.px 0
-                                        , Css.paddingRight <| Css.rem 1
-                                        ]
-                                    , HtmlEvents.onClick (GalleryNav (index + 1))
-                                    ]
-                                    [ Phosphor.arrowRight Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                                , Html.button
-                                    [ HtmlAttributes.css
-                                        [ Css.position Css.absolute
-                                        , Css.top <| Css.px 0
-                                        , Css.bottom <| Css.px 0
-                                        , Css.left <| Css.px 0
-                                        , Css.width <| Css.pct 50
-                                        , Css.border <| Css.px 0
-                                        , Css.backgroundColor Css.transparent
-                                        , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                                        , Css.display Css.flex_
-                                        , Css.alignItems Css.center
-                                        , Css.justifyContent Css.flexStart
-                                        , Css.cursor Css.pointer
-                                        , Css.fontSize <| Css.rem 2
-                                        , Css.padding <| Css.px 0
-                                        , Css.paddingLeft <| Css.rem 1
-                                        ]
-                                    , HtmlEvents.onClick (GalleryNav (index - 1))
-                                    ]
-                                    [ Phosphor.arrowLeft Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                                ]
-
-                            else
-                                []
-                           )
-                        ++ [ Html.button
-                                [ HtmlAttributes.css
-                                    [ Css.position Css.absolute
-                                    , Css.top <| Css.px 0
-                                    , Css.right <| Css.px 0
-                                    , Css.border <| Css.px 0
-                                    , Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                                    , Css.backgroundColor Css.transparent
-                                    , Css.fontSize <| Css.rem 2
-                                    , Css.cursor Css.pointer
-                                    , Css.padding <| Css.px 0
-                                    , Css.margin <| Css.rem 1
-                                    ]
-                                , HtmlEvents.onClick GalleryClose
-                                ]
-                                [ Phosphor.x Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                           ]
-                    )
+                viewGallery context.theme index gallery
         ]
+
+
+viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
+viewGallery theme index gallery =
+    let
+        image =
+            List.Extra.getAt index gallery |> Maybe.withDefault ""
+
+        navStyle =
+            Css.batch
+                [ Css.position Css.absolute
+                , Css.top <| Css.px 0
+                , Css.bottom <| Css.px 0
+                , Css.width <| Css.pct 50
+                , Css.border <| Css.px 0
+                , Css.backgroundColor Css.transparent
+                , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+                , Css.display Css.flex_
+                , Css.alignItems Css.center
+                , Css.cursor Css.pointer
+                , Css.fontSize <| Css.rem 2
+                , Css.padding <| Css.px 0
+                ]
+    in
+    Html.div
+        [ HtmlAttributes.css
+            [ Css.position Css.fixed
+            , Css.top <| Css.px 0
+            , Css.bottom <| Css.px 0
+            , Css.left <| Css.px 0
+            , Css.right <| Css.px 0
+            , Css.backgroundColor (theme |> View.Theme.backgroundColor |> Color.Extra.withAlpha 0.9 |> Color.Extra.toCss)
+            , Css.display Css.flex_
+            , Css.alignItems Css.center
+            , Css.justifyContent Css.center
+            ]
+        ]
+        (Html.img
+            [ HtmlAttributes.src image
+            , HtmlAttributes.css
+                [ Css.maxWidth <| Css.pct 100
+                , Css.maxHeight <| Css.pct 85
+                , Css.display Css.block
+                ]
+            ]
+            []
+            :: (if List.length gallery > 1 then
+                    [ Html.button
+                        [ HtmlAttributes.css
+                            [ navStyle
+                            , Css.right <| Css.px 0
+                            , Css.justifyContent Css.flexEnd
+                            , Css.paddingRight <| Css.rem 1
+                            ]
+                        , HtmlEvents.onClick (GalleryNav (index + 1))
+                        ]
+                        [ Phosphor.arrowRight Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                    , Html.button
+                        [ HtmlAttributes.css
+                            [ navStyle
+                            , Css.left <| Css.px 0
+                            , Css.justifyContent Css.flexStart
+                            , Css.paddingLeft <| Css.rem 1
+                            ]
+                        , HtmlEvents.onClick (GalleryNav (index - 1))
+                        ]
+                        [ Phosphor.arrowLeft Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                    ]
+
+                else
+                    []
+               )
+            ++ [ Html.button
+                    [ HtmlAttributes.css
+                        [ Css.position Css.absolute
+                        , Css.top <| Css.px 0
+                        , Css.right <| Css.px 0
+                        , Css.border <| Css.px 0
+                        , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+                        , Css.backgroundColor Css.transparent
+                        , Css.fontSize <| Css.rem 2
+                        , Css.cursor Css.pointer
+                        , Css.padding <| Css.px 0
+                        , Css.margin <| Css.rem 1
+                        ]
+                    , HtmlEvents.onClick GalleryClose
+                    ]
+                    [ Phosphor.x Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+               ]
+        )
 
 
 loadMoreBtn : Translations.Helper -> View.Theme.Theme -> PostsLoading -> Html.Html Msg
@@ -506,53 +505,58 @@ viewPost language theme post =
                             Html.text ""
 
                         images ->
-                            let
-                                ( repeats, aspectRatio ) =
-                                    case List.length images of
-                                        1 ->
-                                            ( "1", "16/9" )
-
-                                        2 ->
-                                            ( "2", "3/4" )
-
-                                        _ ->
-                                            ( "3", "1/1" )
-                            in
-                            Html.div
-                                [ HtmlAttributes.css
-                                    [ Css.display Css.grid_
-                                    , Css.property "grid-template-columns" ("repeat(" ++ repeats ++ ", 1fr)")
-                                    , Css.columnGap <| Css.rem 1
-                                    , Css.rowGap <| Css.rem 1
-                                    , Css.marginBottom <| Css.rem 1
-                                    ]
-                                ]
-                                (images
-                                    |> List.indexedMap
-                                        (\index image ->
-                                            Html.div []
-                                                [ Html.img
-                                                    [ HtmlAttributes.src image
-                                                    , HtmlEvents.onClick <| GalleryOpen images index
-                                                    , HtmlAttributes.css
-                                                        [ Css.width <| Css.pct 100
-                                                        , Css.property "aspect-ratio" aspectRatio
-                                                        , Css.objectFit Css.cover
-                                                        , Css.display Css.block
-                                                        , Css.borderRadius <| Css.rem 0.5
-                                                        , Css.cursor Css.zoomIn
-                                                        ]
-                                                    ]
-                                                    []
-                                                ]
-                                        )
-                                )
+                            viewPostImages images
                     ]
 
                 Business.Post.Encrypted ->
                     [ Html.text "" ]
             )
         ]
+
+
+viewPostImages : List String -> Html.Html Msg
+viewPostImages images =
+    let
+        ( repeats, aspectRatio ) =
+            case List.length images of
+                1 ->
+                    ( "1", "16/9" )
+
+                2 ->
+                    ( "2", "3/4" )
+
+                _ ->
+                    ( "3", "1/1" )
+    in
+    Html.div
+        [ HtmlAttributes.css
+            [ Css.display Css.grid_
+            , Css.property "grid-template-columns" ("repeat(" ++ repeats ++ ", 1fr)")
+            , Css.columnGap <| Css.rem 1
+            , Css.rowGap <| Css.rem 1
+            , Css.marginBottom <| Css.rem 1
+            ]
+        ]
+        (images
+            |> List.indexedMap
+                (\index image ->
+                    Html.div []
+                        [ Html.img
+                            [ HtmlAttributes.src image
+                            , HtmlEvents.onClick <| GalleryOpen images index
+                            , HtmlAttributes.css
+                                [ Css.width <| Css.pct 100
+                                , Css.property "aspect-ratio" aspectRatio
+                                , Css.objectFit Css.cover
+                                , Css.display Css.block
+                                , Css.borderRadius <| Css.rem 0.5
+                                , Css.cursor Css.zoomIn
+                                ]
+                            ]
+                            []
+                        ]
+                )
+        )
 
 
 formatDate : Translations.Language -> String -> String
