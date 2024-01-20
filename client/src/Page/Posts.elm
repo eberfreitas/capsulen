@@ -1,6 +1,7 @@
 module Page.Posts exposing (Model, Msg, TaskOutput, TaskPool, init, subscriptions, update, view)
 
 import Alert
+import AppUrl
 import Business.Post
 import Business.User
 import Color.Extra
@@ -10,6 +11,7 @@ import Context
 import Css
 import DateFormat
 import DateFormat.Languages
+import Dict
 import Effect
 import File
 import File.Select
@@ -24,9 +26,11 @@ import List.Extra
 import Page
 import Phosphor
 import Port
+import Regex
 import Task
 import Time
 import Translations
+import Url
 import View.Logo
 import View.Style
 import View.Theme
@@ -489,17 +493,7 @@ viewPost language theme post =
                                     , Css.marginBottom <| Css.rem 1
                                     ]
                                 ]
-                                (body
-                                    |> String.lines
-                                    |> List.map
-                                        (\line ->
-                                            if line == "" then
-                                                Html.br [] []
-
-                                            else
-                                                Html.text line
-                                        )
-                                )
+                                (processBody theme body)
                     , case content.images of
                         [] ->
                             Html.text ""
@@ -512,6 +506,166 @@ viewPost language theme post =
                     [ Html.text "" ]
             )
         ]
+
+
+processBody : View.Theme.Theme -> String -> List (Html.Html msg)
+processBody theme body =
+    let
+        urlRegex =
+            Regex.fromString "^(https?:\\/\\/[^\\s]+)$"
+                |> Maybe.withDefault Regex.never
+
+        embedLink url =
+            Html.a
+                [ HtmlAttributes.href url
+                , HtmlAttributes.target "_blank"
+                , HtmlAttributes.rel "noreferrer"
+                , HtmlAttributes.css [ Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss) ]
+                ]
+                [ Html.text url ]
+
+        embedLinks str =
+            let
+                mapperFn word =
+                    if isUrl word then
+                        embedLink word
+
+                    else
+                        Html.text word
+            in
+            str
+                |> String.words
+                |> List.map mapperFn
+                |> List.intersperse (Html.text " ")
+
+        embedYouTube url =
+            let
+                videoId =
+                    url
+                        |> Url.fromString
+                        |> Maybe.map AppUrl.fromUrl
+                        |> Maybe.andThen (.queryParameters >> Dict.get "v")
+                        |> Maybe.andThen (List.Extra.getAt 0)
+            in
+            case videoId of
+                Just videoId_ ->
+                    Html.div []
+                        [ Html.a
+                            [ HtmlAttributes.href url
+                            , HtmlAttributes.target "_blank"
+                            , HtmlAttributes.rel "noreferrer"
+                            , HtmlAttributes.css [ Css.display Css.block, Css.position Css.relative ]
+                            ]
+                            [ Html.img
+                                [ HtmlAttributes.src <| "https://img.youtube.com/vi/" ++ videoId_ ++ "/hqdefault.jpg"
+                                , HtmlAttributes.css
+                                    [ Css.display Css.block
+                                    , Css.width <| Css.pct 100
+                                    , Css.property "aspect-ratio" "16/9"
+                                    , Css.objectFit Css.cover
+                                    , Css.borderRadius <| Css.rem 0.5
+                                    ]
+                                ]
+                                []
+                            , Html.div
+                                [ HtmlAttributes.css
+                                    [ Css.backgroundColor <| Css.hex "#F00"
+                                    , Css.color <| Css.hex "#FFF"
+                                    , Css.position Css.absolute
+                                    , Css.top <| Css.px 0
+                                    , Css.right <| Css.px 0
+                                    , Css.fontSize <| Css.rem 4
+                                    , Css.lineHeight <| Css.num 0
+                                    , Css.padding2 (Css.rem 0.5) (Css.rem 1)
+                                    , Css.borderRadius2 (Css.px 0) (Css.rem 0.5)
+                                    ]
+                                ]
+                                [ Phosphor.youtubeLogo Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                            ]
+                        ]
+
+                Nothing ->
+                    embedLink url
+
+        embedImage url =
+            Html.div
+                [ HtmlAttributes.css
+                    [ Css.display Css.flex_
+                    , Css.justifyContent Css.center
+                    ]
+                ]
+                [ Html.a
+                    [ HtmlAttributes.css [ Css.display Css.block ]
+                    , HtmlAttributes.href url
+                    , HtmlAttributes.target "_blank"
+                    , HtmlAttributes.rel "noreferrer"
+                    ]
+                    [ Html.img
+                        [ HtmlAttributes.src url
+                        , HtmlAttributes.css
+                            [ Css.display Css.block
+                            , Css.maxWidth <| Css.pct 100
+                            , Css.borderRadius <| Css.rem 0.5
+                            ]
+                        ]
+                        []
+                    ]
+                ]
+
+        isYouTube url =
+            let
+                youtubeDomains =
+                    [ "https://www.youtube.com", "https://youtu.be" ]
+            in
+            youtubeDomains
+                |> List.map (\domain -> String.startsWith domain url)
+                |> List.any ((==) True)
+
+        isImage url =
+            let
+                imageExtensions =
+                    [ "png", "jpg", "jpeg", "gif", "webp" ]
+
+                urlPath =
+                    url
+                        |> Url.fromString
+                        |> Maybe.map .path
+                        |> Maybe.withDefault ""
+            in
+            imageExtensions
+                |> List.map (\ext -> String.endsWith ext urlPath)
+                |> List.any ((==) True)
+
+        isUrl str =
+            let
+                schemes =
+                    [ "http://", "https://" ]
+            in
+            schemes
+                |> List.map (\scheme -> String.startsWith scheme str)
+                |> List.any ((==) True)
+    in
+    body
+        |> String.lines
+        |> List.foldr
+            (\line html ->
+                if String.trim line == "" then
+                    Html.br [] [] :: html
+
+                else if Regex.contains urlRegex line then
+                    if isYouTube line then
+                        embedYouTube line :: html
+
+                    else if isImage line then
+                        embedImage line :: html
+
+                    else
+                        embedLink line :: Html.br [] [] :: html
+
+                else
+                    embedLinks line ++ (Html.br [] [] :: html)
+            )
+            []
 
 
 viewPostImages : List String -> Html.Html Msg

@@ -26,7 +26,7 @@ import {
   getPosts,
 } from "./db/queries/posts.queries";
 
-const POSTS_LIMIT = 2;
+const POSTS_LIMIT = 10;
 
 const port = process.env.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
