@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "nodemon index.ts"
+    "watch": "nodemon index.ts",
+    "gen:pasetokey": "ts-node ./scripts/paseto-key.ts"
   },
   "keywords": [],
   "author": "",

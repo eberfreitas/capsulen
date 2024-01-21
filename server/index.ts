@@ -46,15 +46,22 @@ let pasetoKey: KeyObject | undefined;
 async function getPasetoKey(): Promise<KeyObject> {
   if (pasetoKey) return pasetoKey;
 
-  pasetoKey = await paseto.generateKey("public");
+  const existingKey = process.env.PASETO_KEY;
+
+  if (existingKey) {
+    pasetoKey = paseto.bytesToKeyObject(Buffer.from(existingKey, "base64"));
+  } else {
+    pasetoKey = await paseto.generateKey("public");
+
+    console.warn(
+      `Env var PASETO_KEY not set. Starting with a generated key:\n${paseto
+        .keyObjectToBytes(pasetoKey)
+        .toString("base64")}`,
+    );
+  }
 
   return pasetoKey;
 }
-
-// Prints out the key used by paseto for token crypto
-// (async function () {
-//   console.log(paseto.keyObjectToBytes(await getPasetoKey()).toString("base64"));
-// })();
 
 async function getAuthUser(req: Request): Promise<IGetUserResult> {
   const token = (req.headers?.["authorization"] ?? "")
