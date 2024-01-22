@@ -16,6 +16,7 @@ import Business.Username
 import Color.Extra
 import ConcurrentTask
 import ConcurrentTask.Http
+import ConcurrentTask.Http.Extra
 import Context
 import Css
 import Effect
@@ -25,6 +26,7 @@ import Html.Styled.Attributes as HtmlAttributes
 import Json.Decode
 import Json.Encode
 import LocalStorage
+import Logger
 import Page
 import Port
 import Translations
@@ -226,14 +228,13 @@ update i context msg model =
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Page.RequestError _)) ->
-            -- TODO: send error to monitoring tool
+        OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
             ( model
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
                 ]
-            , Cmd.none
+            , Logger.captureMessage <| ConcurrentTask.Http.Extra.errorToString httpError
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->

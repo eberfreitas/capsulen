@@ -33,6 +33,8 @@ export interface App {
         callback: (data: { key: string; value: unknown }) => void,
       ) => void;
     };
+
+    logMessage: { subscribe: (callback: (msg: string) => void) => void };
   };
 }
 

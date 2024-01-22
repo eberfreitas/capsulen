@@ -32,9 +32,9 @@ export async function buildUser(args: {
     return {
       username: args.username,
       privateKey: privateKey,
-      token: args.token
+      token: args.token,
     };
-  } catch(e) {
+  } catch (e) {
     captureException(e);
 
     return { error: "LOGIN_ERROR" };

@@ -8,6 +8,7 @@ import { encryptChallenge } from "./tasks/register";
 import { buildUser, decryptChallenge } from "./tasks/login";
 import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
 import { get, set } from "./local-storage";
+import { captureMessage } from "./logger";
 
 if (process.env.SENTRY_CLIENT_DSN) {
   const targets: (string | RegExp)[] = ["localhost"];
@@ -82,4 +83,6 @@ if (process.env.SENTRY_CLIENT_DSN) {
   app.ports.localStorageSet.subscribe((data) => {
     set(data.key, data.value);
   });
+
+  app.ports.logMessage.subscribe(captureMessage);
 })();
