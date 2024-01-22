@@ -1,4 +1,5 @@
 import { decryptData, encryptData } from "../crypto";
+import { captureException } from "../logger";
 
 export async function encryptPost(args: {
   privateKey: CryptoKey;
@@ -11,8 +12,9 @@ export async function encryptPost(args: {
     );
 
     return content;
-  } catch (_) {
-    //TODO: monitor error
+  } catch (e) {
+    captureException(e);
+
     return { error: "ENCRYPT_ERROR" };
   }
 }
@@ -34,8 +36,9 @@ export async function decryptPosts(args: {
     }
 
     return posts;
-  } catch (_) {
-    //TODO: monitor error
+  } catch (e) {
+    captureException(e);
+
     return { error: "DECRYPT_ERROR" };
   }
 }

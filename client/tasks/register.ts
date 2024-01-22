@@ -1,4 +1,5 @@
 import { encryptData, getPasswordKey } from "../crypto";
+import { captureException } from "../logger";
 
 export async function encryptChallenge(args: {
   username: string;
@@ -15,8 +16,9 @@ export async function encryptChallenge(args: {
       nonce: args.nonce,
       challengeEncrypted,
     };
-  } catch (_) {
-    //TODO: monitor error
+  } catch (e) {
+    captureException(e);
+
     return { error: "UNEXPECTED_REGISTER_ERROR" };
   }
 }

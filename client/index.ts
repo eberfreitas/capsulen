@@ -1,5 +1,6 @@
 import * as ConcurrentTask from "@andrewmacmurray/elm-concurrent-task";
 import topbar from "topbar";
+import * as Sentry from "@sentry/browser";
 
 import { ColorPalette } from "./@types/global";
 
@@ -7,6 +8,25 @@ import { encryptChallenge } from "./tasks/register";
 import { buildUser, decryptChallenge } from "./tasks/login";
 import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
 import { get, set } from "./local-storage";
+
+if (process.env.SENTRY_CLIENT_DSN) {
+  const targets: (string | RegExp)[] = ["localhost"];
+
+  if (process.env.SENTRY_CLIENT_TARGET) {
+    targets.push(new RegExp(process.env.SENTRY_CLIENT_TARGET));
+  }
+
+  Sentry.init({
+    dsn: process.env.SENTRY_CLIENT_DSN,
+    integrations: [
+      new Sentry.BrowserTracing({
+        tracePropagationTargets: targets,
+      }),
+    ],
+    tracesSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
+  });
+}
 
 (function() {
   const username = get("username");

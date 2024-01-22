@@ -2,13 +2,13 @@ import express, { Request } from "express";
 import bodyParser from "body-parser";
 import { Client } from "pg";
 import randomstring from "randomstring";
-import "dotenv/config";
 import { V4 as paseto } from "paseto";
 import { KeyObject } from "crypto";
 import path from "path";
 import Hashids from "hashids";
 import * as Sentry from "@sentry/node";
 import { ProfilingIntegration } from "@sentry/profiling-node";
+import dotenv from "dotenv";
 
 import {
   IGetUserResult,
@@ -28,9 +28,11 @@ import {
   getPosts,
 } from "./db/queries/posts.queries";
 
+dotenv.config({ path: "../.env" });
+
 const POSTS_LIMIT = 10;
 
-const port = process.env.BACKEND_PORT
+const port = process.env?.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
   : 3000;
 
@@ -41,14 +43,14 @@ const db = new Client({
   database: "capsulen",
 });
 
-const hashids = new Hashids(process.env.PRIVATE_KEY || "", 16);
+const hashids = new Hashids(process.env?.PRIVATE_KEY || "", 16);
 
 let pasetoKey: KeyObject | undefined;
 
 async function getPasetoKey(): Promise<KeyObject> {
   if (pasetoKey) return pasetoKey;
 
-  const existingKey = process.env.PASETO_KEY;
+  const existingKey = process.env?.PASETO_KEY;
 
   if (existingKey) {
     pasetoKey = paseto.bytesToKeyObject(Buffer.from(existingKey, "base64"));
@@ -89,7 +91,7 @@ const server = express();
 
 let captureException = console.error;
 
-if (process.env.SENTRY_SERVER_DSN) {
+if (process.env?.SENTRY_SERVER_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_SERVER_DSN,
     integrations: [
@@ -308,7 +310,7 @@ server.get("*", (_req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html")),
 );
 
-if (process.env.SENTRY_SERVER_DSN) {
+if (process.env?.SENTRY_SERVER_DSN) {
   server.use(Sentry.Handlers.errorHandler());
 }
 

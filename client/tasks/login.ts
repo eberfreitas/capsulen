@@ -1,4 +1,5 @@
 import { decryptData, getPasswordKey } from "../crypto";
+import { captureException } from "../logger";
 
 export async function decryptChallenge(args: {
   username: string;
@@ -13,8 +14,9 @@ export async function decryptChallenge(args: {
       username: args.username,
       challenge,
     };
-  } catch (_) {
-    // TODO: monitor error
+  } catch (e) {
+    captureException(e);
+
     return { error: "CREDENTIALS_INCORRECT" };
   }
 }
@@ -32,8 +34,9 @@ export async function buildUser(args: {
       privateKey: privateKey,
       token: args.token
     };
-  } catch(_) {
-    // TODO: monitor error
+  } catch(e) {
+    captureException(e);
+
     return { error: "LOGIN_ERROR" };
   }
 }
