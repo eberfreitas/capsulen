@@ -247,15 +247,16 @@ view i context model =
             [ View.Logo.logo 60 <| View.Theme.foregroundColor context.theme ]
         , View.Access.Form.form i
             context.theme
-            model.showPrivateKey
             Translations.Register
-            { submit = Submit
-            , username = WithUsername
-            , privateKey = WithPrivateKey
-            , togglePrivateKey = ToggleShowPrivateKey
-            }
-            model.usernameInput
-            model.privateKeyInput
+            Submit
+            [ View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
+            , View.Access.Form.privateKeyField i
+                context.theme
+                WithPrivateKey
+                ToggleShowPrivateKey
+                model.showPrivateKey
+                model.privateKeyInput
+            ]
         , Html.a
             [ HtmlAttributes.href "/"
             , HtmlAttributes.css

@@ -7,7 +7,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
-            "andrewMacmurray/elm-concurrent-task": "1.1.0",
+            "andrewMacmurray/elm-concurrent-task": "1.0.0",
             "avh4/elm-color": "1.0.0",
             "dzuk-mutant/elm-css": "3.0.0",
             "elm/browser": "1.0.2",

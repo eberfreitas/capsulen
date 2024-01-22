@@ -1,4 +1,4 @@
-module View.Access.Form exposing (Msgs, form)
+module View.Access.Form exposing (Msgs, form, privateKeyField, usernameField)
 
 import Business.PrivateKey
 import Business.Username
@@ -22,16 +22,69 @@ type alias Msgs msg =
     }
 
 
-form :
+inputWrapperStyle : Css.Style
+inputWrapperStyle =
+    Css.batch
+        [ Css.marginBottom <| Css.rem 1.5
+        , Css.position Css.relative
+        ]
+
+
+inputLabelStyle : Css.Style
+inputLabelStyle =
+    Css.batch
+        [ Css.display Css.block
+        , Css.fontVariant Css.allPetiteCaps
+        , Css.marginBottom <| Css.rem 0.5
+        ]
+
+
+inputStyle : Css.Style
+inputStyle =
+    Css.batch
+        [ Css.border <| Css.px 0
+        , Css.borderRadius <| Css.rem 0.5
+        , Css.padding <| Css.rem 1
+        , Css.width <| Css.pct 100
+        ]
+
+
+usernameField :
     Translations.Helper
     -> View.Theme.Theme
-    -> Bool
-    -> Translations.Key
-    -> Msgs msg
+    -> (Form.InputEvent -> msg)
     -> Form.Input Business.Username.Username
+    -> Html.Html msg
+usernameField i theme msg input =
+    Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
+        [ Html.label
+            [ HtmlAttributes.for "username"
+            , HtmlAttributes.css [ inputLabelStyle ]
+            ]
+            [ Html.text <| i Translations.Username ]
+        , Html.input
+            ([ HtmlAttributes.css [ inputStyle ]
+             , HtmlAttributes.type_ "text"
+             , HtmlAttributes.name "username"
+             , HtmlAttributes.id "username"
+             , HtmlAttributes.value input.raw
+             ]
+                ++ Form.inputEvents msg
+            )
+            []
+        , Form.viewInputError i theme input
+        ]
+
+
+privateKeyField :
+    Translations.Helper
+    -> View.Theme.Theme
+    -> (Form.InputEvent -> msg)
+    -> msg
+    -> Bool
     -> Form.Input Business.PrivateKey.PrivateKey
     -> Html.Html msg
-form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
+privateKeyField i theme msg toggleMsg showPrivateKey input =
     let
         ( privateKeyInputType, togglePrivateKeyIcon ) =
             if showPrivateKey then
@@ -39,33 +92,49 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
 
             else
                 ( "password", Phosphor.eye Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled )
-
-        inputWrapperStyle : Css.Style
-        inputWrapperStyle =
-            Css.batch
-                [ Css.marginBottom <| Css.rem 1.5
-                , Css.position Css.relative
-                ]
-
-        inputLabelStyle : Css.Style
-        inputLabelStyle =
-            Css.batch
-                [ Css.display Css.block
-                , Css.fontVariant Css.allPetiteCaps
-                , Css.marginBottom <| Css.rem 0.5
-                ]
-
-        inputStyle : Css.Style
-        inputStyle =
-            Css.batch
-                [ Css.border <| Css.px 0
-                , Css.borderRadius <| Css.rem 0.5
-                , Css.padding <| Css.rem 1
-                , Css.width <| Css.pct 100
-                ]
     in
+    Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
+        [ Html.label
+            [ HtmlAttributes.for "privateKey"
+            , HtmlAttributes.css [ inputLabelStyle ]
+            ]
+            [ Html.text <| i Translations.PrivateKey ]
+        , Html.input
+            ([ HtmlAttributes.css [ inputStyle ]
+             , HtmlAttributes.type_ privateKeyInputType
+             , HtmlAttributes.name "privateKey"
+             , HtmlAttributes.id "privateKey"
+             , HtmlAttributes.value input.raw
+             ]
+                ++ Form.inputEvents msg
+            )
+            []
+        , Html.button
+            [ HtmlAttributes.type_ "button"
+            , HtmlEvents.onClick toggleMsg
+            , HtmlAttributes.css
+                [ View.Style.btn theme
+                , Css.borderRadius4 (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5) (Css.rem 0)
+                , Css.position Css.absolute
+                , Css.right <| Css.px 0
+                , Css.top <| Css.rem 1.65
+                ]
+            ]
+            [ togglePrivateKeyIcon ]
+        , Form.viewInputError i theme input
+        ]
+
+
+form :
+    Translations.Helper
+    -> View.Theme.Theme
+    -> Translations.Key
+    -> msg
+    -> List (Html.Html msg)
+    -> Html.Html msg
+form i theme actionKey msg fields =
     Html.form
-        [ HtmlEvents.onSubmit msgs.submit
+        [ HtmlEvents.onSubmit msg
         , HtmlAttributes.css
             [ Css.marginBottom <| Css.rem 1.5
             , Css.position Css.relative
@@ -90,54 +159,7 @@ form i theme showPrivateKey actionKey msgs usernameInput privateKeyInput =
                     ]
                 ]
                 [ Html.text <| i actionKey ]
-            , Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
-                [ Html.label
-                    [ HtmlAttributes.for "username"
-                    , HtmlAttributes.css [ inputLabelStyle ]
-                    ]
-                    [ Html.text <| i Translations.Username ]
-                , Html.input
-                    ([ HtmlAttributes.css [ inputStyle ]
-                     , HtmlAttributes.type_ "text"
-                     , HtmlAttributes.name "username"
-                     , HtmlAttributes.id "username"
-                     , HtmlAttributes.value usernameInput.raw
-                     ]
-                        ++ Form.inputEvents msgs.username
-                    )
-                    []
-                , Form.viewInputError i theme usernameInput
-                ]
-            , Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
-                [ Html.label
-                    [ HtmlAttributes.for "privateKey"
-                    , HtmlAttributes.css [ inputLabelStyle ]
-                    ]
-                    [ Html.text <| i Translations.PrivateKey ]
-                , Html.input
-                    ([ HtmlAttributes.css [ inputStyle ]
-                     , HtmlAttributes.type_ privateKeyInputType
-                     , HtmlAttributes.name "privateKey"
-                     , HtmlAttributes.id "privateKey"
-                     , HtmlAttributes.value privateKeyInput.raw
-                     ]
-                        ++ Form.inputEvents msgs.privateKey
-                    )
-                    []
-                , Html.button
-                    [ HtmlAttributes.type_ "button"
-                    , HtmlEvents.onClick msgs.togglePrivateKey
-                    , HtmlAttributes.css
-                        [ View.Style.btn theme
-                        , Css.borderRadius4 (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5) (Css.rem 0)
-                        , Css.position Css.absolute
-                        , Css.right <| Css.px 0
-                        , Css.top <| Css.rem 1.65
-                        ]
-                    ]
-                    [ togglePrivateKeyIcon ]
-                , Form.viewInputError i theme privateKeyInput
-                ]
+            , Html.div [] fields
             , Html.div
                 [ HtmlAttributes.css
                     [ Css.marginBottom <| Css.rem 1.5

@@ -263,15 +263,16 @@ view i context model =
             [ Html.text <| i Translations.Tagline ]
         , View.Access.Form.form i
             context.theme
-            model.showPrivateKey
             Translations.Login
-            { submit = Submit
-            , username = WithUsername
-            , privateKey = WithPrivateKey
-            , togglePrivateKey = ToggleShowPrivateKey
-            }
-            model.usernameInput
-            model.privateKeyInput
+            Submit
+            [ View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
+            , View.Access.Form.privateKeyField i
+                context.theme
+                WithPrivateKey
+                ToggleShowPrivateKey
+                model.showPrivateKey
+                model.privateKeyInput
+            ]
         , Html.a
             [ HtmlAttributes.href "/register"
             , HtmlAttributes.css
