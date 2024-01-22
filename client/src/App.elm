@@ -20,6 +20,7 @@ import Url
 import View.Alerts
 import View.Style
 import View.Theme
+import Page.NotFound
 
 
 type alias Model =
@@ -65,8 +66,7 @@ view model =
                     subModel |> Page.Posts.view i model.context |> Html.map PostsMsg
 
                 NotFound ->
-                    -- TODO: create a proper error page
-                    Html.text "404 Not found"
+                    Page.NotFound.view model.context.theme
     in
     { title = "Capsulen"
     , body =

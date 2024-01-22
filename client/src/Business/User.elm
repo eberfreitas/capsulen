@@ -9,7 +9,7 @@ import Translations
 
 
 type alias User =
-    { username : String -- TODO: Make this an actual Business.Username
+    { username : String
     , privateKey : Json.Encode.Value
     , token : String
     }
