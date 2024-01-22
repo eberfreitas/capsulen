@@ -7,6 +7,8 @@ import { V4 as paseto } from "paseto";
 import { KeyObject } from "crypto";
 import path from "path";
 import Hashids from "hashids";
+import * as Sentry from "@sentry/node";
+import { ProfilingIntegration } from "@sentry/profiling-node";
 
 import {
   IGetUserResult,
@@ -85,14 +87,29 @@ async function getAuthUser(req: Request): Promise<IGetUserResult> {
 
 const server = express();
 
+let captureException = console.error;
+
+if (process.env.SENTRY_SERVER_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_SERVER_DSN,
+    integrations: [
+      new Sentry.Integrations.Http({ tracing: true }),
+      new Sentry.Integrations.Express({ app: server }),
+      new ProfilingIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+  });
+
+  server.use(Sentry.Handlers.requestHandler());
+  server.use(Sentry.Handlers.tracingHandler());
+
+  captureException = Sentry.captureException;
+}
+
 server.use(express.static(path.join(__dirname, "public")));
 server.use(bodyParser.json({ limit: "10mb" }));
 server.use(bodyParser.text({ limit: "10mb" }));
-
-server.listen(port, async () => {
-  await db.connect();
-  console.log(`Capsulen listening on port ${port}`);
-});
 
 server.post("/api/users/request_access", async (req, res) => {
   const user = {
@@ -115,7 +132,8 @@ server.post("/api/users/request_access", async (req, res) => {
       challenge: user.challenge,
     });
   } catch (e) {
-    // TODO: monitor error here...
+    captureException(e);
+
     return res.status(500).send("REGISTER_ERROR");
   }
 });
@@ -147,8 +165,9 @@ server.post("/api/users/create_user", async (req, res) => {
     );
 
     return res.send(true);
-  } catch (_) {
-    // TODO: monitor error here
+  } catch (e) {
+    captureException(e);
+
     return res.status(500).send(defaultError);
   }
 });
@@ -164,8 +183,9 @@ server.post("/api/users/request_login", async (req, res) => {
     const user = possibleUser[0];
 
     res.send(user.challenge_encrypted);
-  } catch (_) {
-    //TODO: monitor error here
+  } catch (e) {
+    captureException(e);
+
     return res.status(500).send("LOGIN_ERROR");
   }
 });
@@ -191,8 +211,9 @@ server.post("/api/users/login", async (req, res) => {
     const token = await paseto.sign({ sub: user.username }, key);
 
     res.send(token);
-  } catch (_) {
-    //TODO: monitor error here
+  } catch (e) {
+    captureException(e);
+
     return res.status(500).send("LOGIN_ERROR");
   }
 });
@@ -219,8 +240,9 @@ server.post("/api/posts", async (req, res) => {
       content: post.content,
       created_at: post.created_at,
     });
-  } catch (_) {
-    //TODO: monitor error here
+  } catch (e) {
+    captureException(e);
+
     return res.status(500).send("POST_ERROR");
   }
 });
@@ -261,8 +283,9 @@ server.get("/api/posts", async (req, res) => {
     });
 
     res.send(posts);
-  } catch (_) {
-    //TODO: monitor error here
+  } catch (e) {
+    captureException(e);
+
     return res.status(500).send("POST_FETCH_ERROR");
   }
 });
@@ -284,3 +307,12 @@ server.post("/api/posts/:id", async (req, res) => {
 server.get("*", (_req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html")),
 );
+
+if (process.env.SENTRY_SERVER_DSN) {
+  server.use(Sentry.Handlers.errorHandler());
+}
+
+server.listen(port, async () => {
+  await db.connect();
+  console.log(`Capsulen listening on port ${port}`);
+});
