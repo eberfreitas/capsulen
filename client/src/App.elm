@@ -139,7 +139,7 @@ update msg model =
         ( LoginMsg subMsg, Login subModel ) ->
             let
                 ( nextSubModel, effects, nextCmd ) =
-                    Page.Login.update i subMsg subModel
+                    Page.Login.update i model.context subMsg subModel
 
                 ( nextContext, effectsCmds ) =
                     Effect.run model.context effects
@@ -167,21 +167,28 @@ update msg model =
 init : Json.Decode.Value -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        (theme, language) =
+        parsedFlags =
             flags
                 |> Json.Decode.decodeValue
-                    (Json.Decode.map2
-                        (\color lang -> ( color, lang ))
+                    (Json.Decode.map3
+                        (\color lang username -> { colorScheme = color, language = lang, username = username })
                         (Json.Decode.field "colorScheme" Json.Decode.string)
                         (Json.Decode.field "language" Json.Decode.string)
+                        (Json.Decode.field "username" <| Json.Decode.nullable Json.Decode.string)
                     )
                 |> Result.toMaybe
-                |> Maybe.map(\(color, lang) -> (View.Theme.fromString color, Translations.languageFromString lang))
-                |> Maybe.withDefault (View.Theme.Light, Translations.En)
+                |> Maybe.map
+                    (\parsed ->
+                        { colorScheme = View.Theme.fromString parsed.colorScheme
+                        , language = Translations.languageFromString parsed.language
+                        , username = parsed.username
+                        }
+                    )
+                |> Maybe.withDefault { colorScheme = View.Theme.Light, language = Translations.En, username = Nothing }
 
         initContext : Context.Context
         initContext =
-            Context.new key language theme
+            Context.new key parsedFlags.language parsedFlags.colorScheme parsedFlags.username
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url
@@ -205,7 +212,7 @@ router : Context.Context -> AppUrl.AppUrl -> ( Page, Effect.Effect, Cmd Msg )
 router context url =
     case url.path of
         [] ->
-            Page.Login.init
+            Page.Login.init context
                 |> Tuple.Extra.mapTrio
                     Login
                     identity

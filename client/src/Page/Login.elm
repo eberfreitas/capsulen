@@ -24,6 +24,7 @@ import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Json.Decode
 import Json.Encode
+import LocalStorage
 import Page
 import Port
 import Translations
@@ -67,16 +68,44 @@ initModel =
     }
 
 
-init : ( Model, Effect.Effect, Cmd Msg )
-init =
-    ( initModel, Effect.none, Cmd.none )
+init : Context.Context -> ( Model, Effect.Effect, Cmd Msg )
+init context =
+    let
+        model =
+            case context.username of
+                Nothing ->
+                    initModel
+
+                Just username ->
+                    let
+                        usernameInput =
+                            initModel.usernameInput
+
+                        nextUsernameInput =
+                            { usernameInput | raw = username } |> Form.parseInput Business.Username.fromString
+                    in
+                    { initModel | usernameInput = nextUsernameInput }
+    in
+    ( model, Effect.none, Cmd.none )
 
 
-update : Translations.Helper -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update i msg model =
+update : Translations.Helper -> Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i context msg model =
     case msg of
         WithUsername event ->
-            Page.done { model | usernameInput = Form.updateInput event Business.Username.fromString model.usernameInput }
+            let
+                ( cmd, rawUsername ) =
+                    case event of
+                        Form.OnInput input ->
+                            ( input |> LocalStorage.str |> LocalStorage.set "username", Just input )
+
+                        _ ->
+                            ( Cmd.none, context.username )
+
+                nextModel =
+                    { model | usernameInput = Form.updateInput event Business.Username.fromString model.usernameInput }
+            in
+            ( nextModel, Effect.username rawUsername, cmd )
 
         WithPrivateKey event ->
             Page.done { model | privateKeyInput = Form.updateInput event Business.PrivateKey.fromString model.privateKeyInput }

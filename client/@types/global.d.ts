@@ -27,12 +27,20 @@ export interface App {
     toggleLoader: {
       subscribe: (callback: () => void) => void;
     };
+
+    localStorageSet: {
+      subscribe: (
+        callback: (data: { key: string; value: unknown }) => void,
+      ) => void;
+    };
   };
 }
 
 interface Elm {
   App: {
-    init: (args: { flags: { colorScheme: string; language: string } }) => App;
+    init: (args: {
+      flags: { colorScheme: string; language: string; username: unknown };
+    }) => App;
   };
 }
 

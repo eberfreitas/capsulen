@@ -10,6 +10,7 @@ module Effect exposing
     , removeAlert
     , run
     , toggleLoader
+    , username
     )
 
 import Alert
@@ -30,6 +31,7 @@ type Effect
     | Login Business.User.User
     | Logout
     | ToggleLoader
+    | Username (Maybe String)
 
 
 none : Effect
@@ -75,6 +77,11 @@ toggleLoader =
 logout : Effect
 logout =
     Logout
+
+
+username : Maybe String -> Effect
+username =
+    Username
 
 
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
@@ -125,3 +132,6 @@ run context effect =
 
         ToggleLoader ->
             ( context, Port.toggleLoader () )
+
+        Username username_ ->
+            ( { context | username = username_ }, Cmd.none )
