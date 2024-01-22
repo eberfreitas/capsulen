@@ -10,8 +10,8 @@ module Page.Register exposing
     )
 
 import Alert
+import Business.InviteCode
 import Business.PrivateKey
-import Business.User
 import Business.Username
 import ConcurrentTask
 import ConcurrentTask.Http
@@ -45,6 +45,7 @@ type alias TaskPool =
 type Msg
     = WithUsername Form.InputEvent
     | WithPrivateKey Form.InputEvent
+    | WithInviteCode Form.InputEvent
     | ToggleShowPrivateKey
     | Submit
     | OnTaskProgress ( TaskPool, Cmd Msg )
@@ -55,6 +56,7 @@ type alias Model =
     { tasks : TaskPool
     , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
+    , inviteCodeInput : Form.Input Business.InviteCode.InviteCode
     , showPrivateKey : Bool
     }
 
@@ -65,11 +67,33 @@ type alias Challenge =
     }
 
 
+type alias RegisterData =
+    { username : Business.Username.Username
+    , privateKey : Business.PrivateKey.PrivateKey
+    , inviteCode : Business.InviteCode.InviteCode
+    }
+
+
+buildRegisterData :
+    Form.Input Business.Username.Username
+    -> Form.Input Business.PrivateKey.PrivateKey
+    -> Form.Input Business.InviteCode.InviteCode
+    -> Result Translations.Key RegisterData
+buildRegisterData usernameInput privateKeyInput inviteCodeInput =
+    case ( usernameInput.valid, privateKeyInput.valid, inviteCodeInput.valid ) of
+        ( Form.Valid username, Form.Valid privateKey, Form.Valid inviteCode ) ->
+            Ok { username = username, privateKey = privateKey, inviteCode = inviteCode }
+
+        _ ->
+            Err Translations.InvalidInputs
+
+
 initModel : Model
 initModel =
     { tasks = ConcurrentTask.pool
     , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
+    , inviteCodeInput = Form.newInput
     , showPrivateKey = False
     }
 
@@ -106,6 +130,18 @@ update i msg model =
             , Cmd.none
             )
 
+        WithInviteCode event ->
+            ( { model
+                | inviteCodeInput =
+                    Form.updateInput
+                        event
+                        Business.InviteCode.fromString
+                        model.inviteCodeInput
+              }
+            , Effect.none
+            , Cmd.none
+            )
+
         ToggleShowPrivateKey ->
             ( { model | showPrivateKey = not model.showPrivateKey }, Effect.none, Cmd.none )
 
@@ -116,9 +152,10 @@ update i msg model =
                     { model
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
+                        , inviteCodeInput = Form.parseInput Business.InviteCode.fromString model.inviteCodeInput
                     }
             in
-            case Business.User.buildUserData newModel.usernameInput newModel.privateKeyInput of
+            case buildRegisterData newModel.usernameInput newModel.privateKeyInput newModel.inviteCodeInput of
                 Ok userData ->
                     let
                         requestAccess : ConcurrentTask.ConcurrentTask Page.TaskError Challenge
@@ -127,8 +164,11 @@ update i msg model =
                                 { url = "/api/users/request_access"
                                 , headers = []
                                 , body =
-                                    ConcurrentTask.Http.stringBody "text/plain" <|
-                                        Business.Username.toString userData.username
+                                    ConcurrentTask.Http.jsonBody <|
+                                        Json.Encode.object
+                                            [ ( "inviteCode", Business.InviteCode.encode userData.inviteCode )
+                                            , ( "username", Business.Username.encode userData.username )
+                                            ]
                                 , expect =
                                     ConcurrentTask.Http.expectJson
                                         (Json.Decode.map2 Challenge
@@ -249,7 +289,8 @@ view i context model =
             context.theme
             Translations.Register
             Submit
-            [ View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
+            [ View.Access.Form.inviteCodeField i context.theme WithInviteCode model.inviteCodeInput
+            , View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
             , View.Access.Form.privateKeyField i
                 context.theme
                 WithPrivateKey

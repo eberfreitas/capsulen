@@ -27,6 +27,7 @@ import {
   getInitialPosts,
   getPosts,
 } from "./db/queries/posts.queries";
+import { useInvite, validInvite } from "./db/queries/invites.queries";
 
 dotenv.config({ path: "../.env" });
 
@@ -114,20 +115,31 @@ server.use(bodyParser.json({ limit: "10mb" }));
 server.use(bodyParser.text({ limit: "10mb" }));
 
 server.post("/api/users/request_access", async (req, res) => {
-  const user = {
-    username: req.body,
-    nonce: `${Math.floor(Math.random() * 999999999)}`,
-    challenge: randomstring.generate(),
-  };
-
   try {
-    const exists = await existingUser.run({ username: user.username }, db);
+    const inviteCode = req.body.inviteCode;
+    const invite = await validInvite.run({ code: inviteCode }, db);
+
+    if (invite.length === 0) {
+      return res.status(400).send("INVITE_CODE_INVALID");
+    }
+
+    const username = req.body.username;
+    const exists = await existingUser.run({ username: username }, db);
 
     if (exists.length > 0) {
       return res.status(400).send("USERNAME_IN_USE");
     }
 
+    const inviteId = invite[0].id;
+    const user = {
+      invite_id: inviteId,
+      username,
+      nonce: `${Math.floor(Math.random() * 999999999)}`,
+      challenge: randomstring.generate(),
+    }
+
     await createUserRequest.run({ user }, db);
+    await useInvite.run({ id: inviteId }, db);
 
     return res.send({
       nonce: user.nonce,
@@ -135,6 +147,8 @@ server.post("/api/users/request_access", async (req, res) => {
     });
   } catch (e) {
     captureException(e);
+
+    console.log(e);
 
     return res.status(500).send("REGISTER_ERROR");
   }

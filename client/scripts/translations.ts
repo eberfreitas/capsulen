@@ -155,4 +155,12 @@ export const translations = {
     en: "Clear post",
     pt: "Cancelar post",
   },
+  INVITE_CODE_INVALID: {
+    en: "This invite code looks invalid.",
+    pt: "Este código de convite parece incorreto.",
+  },
+  INVITE_CODE: {
+    en: "Invite code",
+    pt: "Código de convite",
+  },
 };

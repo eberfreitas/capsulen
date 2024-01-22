@@ -18,6 +18,8 @@ type Key
     | ForbiddenArea
     | InputEmpty
     | InvalidInputs
+    | InviteCode
+    | InviteCodeInvalid
     | Loading
     | LoadMorePosts
     | Login
@@ -106,6 +108,12 @@ keyFromString key =
 
         "INVALID_INPUTS" ->
             InvalidInputs
+
+        "INVITE_CODE" ->
+            InviteCode
+
+        "INVITE_CODE_INVALID" ->
+            InviteCodeInvalid
 
         "LOADING" ->
             Loading
@@ -230,6 +238,12 @@ keyToString key =
 
         InvalidInputs ->
             "INVALID_INPUTS"
+
+        InviteCode ->
+            "INVITE_CODE"
+
+        InviteCodeInvalid ->
+            "INVITE_CODE_INVALID"
 
         Loading ->
             "LOADING"
@@ -402,6 +416,16 @@ phrases =
                 , ( "pt"
                   , "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"
                   )
+                ]
+          )
+        , ( "INVITE_CODE"
+          , Dict.fromList
+                [ ( "en", "Invite code" ), ( "pt", "Código de convite" ) ]
+          )
+        , ( "INVITE_CODE_INVALID"
+          , Dict.fromList
+                [ ( "en", "This invite code looks invalid." )
+                , ( "pt", "Este código de convite parece incorreto." )
                 ]
           )
         , ( "LOADING"

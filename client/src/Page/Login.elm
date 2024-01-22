@@ -61,6 +61,25 @@ type Msg
     | OnTaskComplete (ConcurrentTask.Response Page.TaskError TaskOutput)
 
 
+type alias LoginData =
+    { username : Business.Username.Username
+    , privateKey : Business.PrivateKey.PrivateKey
+    }
+
+
+buildLoginData :
+    Form.Input Business.Username.Username
+    -> Form.Input Business.PrivateKey.PrivateKey
+    -> Result Translations.Key LoginData
+buildLoginData usernameInput privateKeyInput =
+    case ( usernameInput.valid, privateKeyInput.valid ) of
+        ( Form.Valid username, Form.Valid privateKey ) ->
+            Ok { username = username, privateKey = privateKey }
+
+        _ ->
+            Err Translations.InvalidInputs
+
+
 initModel : Model
 initModel =
     { tasks = ConcurrentTask.pool
@@ -127,7 +146,7 @@ update i context msg model =
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
                     }
             in
-            case Business.User.buildUserData newModel.usernameInput newModel.privateKeyInput of
+            case buildLoginData newModel.usernameInput newModel.privateKeyInput of
                 Ok userData ->
                     let
                         requestChallengeEncrypted : ConcurrentTask.ConcurrentTask Page.TaskError String

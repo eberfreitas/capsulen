@@ -37,6 +37,7 @@ export const existingUser = new PreparedQuery<IExistingUserParams,IExistingUserR
 /** 'CreateUserRequest' parameters type */
 export interface ICreateUserRequestParams {
   user: {
+    invite_id: number | null | void,
     username: string | null | void,
     nonce: string | null | void,
     challenge: string | null | void
@@ -52,13 +53,13 @@ export interface ICreateUserRequestQuery {
   result: ICreateUserRequestResult;
 }
 
-const createUserRequestIR: any = {"usedParamSet":{"user":true},"params":[{"name":"user","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"username","required":false},{"name":"nonce","required":false},{"name":"challenge","required":false}]},"locs":[{"a":62,"b":66}]}],"statement":"INSERT INTO\n    users (username, nonce, challenge)\nVALUES\n    :user"};
+const createUserRequestIR: any = {"usedParamSet":{"user":true},"params":[{"name":"user","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"invite_id","required":false},{"name":"username","required":false},{"name":"nonce","required":false},{"name":"challenge","required":false}]},"locs":[{"a":73,"b":77}]}],"statement":"INSERT INTO\n    users (invite_id, username, nonce, challenge)\nVALUES\n    :user"};
 
 /**
  * Query generated from SQL:
  * ```
  * INSERT INTO
- *     users (username, nonce, challenge)
+ *     users (invite_id, username, nonce, challenge)
  * VALUES
  *     :user
  * ```

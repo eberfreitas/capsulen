@@ -1,4 +1,4 @@
-module View.Access.Form exposing (Msgs, form, privateKeyField, usernameField)
+module View.Access.Form exposing (Msgs, form, privateKeyField, usernameField, inviteCodeField)
 
 import Business.PrivateKey
 import Business.Username
@@ -12,6 +12,7 @@ import Phosphor
 import Translations
 import View.Style
 import View.Theme
+import Business.InviteCode
 
 
 type alias Msgs msg =
@@ -46,6 +47,33 @@ inputStyle =
         , Css.borderRadius <| Css.rem 0.5
         , Css.padding <| Css.rem 1
         , Css.width <| Css.pct 100
+        ]
+
+
+inviteCodeField :
+    Translations.Helper
+    -> View.Theme.Theme
+    -> (Form.InputEvent -> msg)
+    -> Form.Input Business.InviteCode.InviteCode
+    -> Html.Html msg
+inviteCodeField i theme msg input =
+    Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
+        [ Html.label
+            [ HtmlAttributes.for "inviteCode"
+            , HtmlAttributes.css [ inputLabelStyle ]
+            ]
+            [ Html.text <| i Translations.InviteCode ]
+        , Html.input
+            ([ HtmlAttributes.css [ inputStyle ]
+             , HtmlAttributes.type_ "text"
+             , HtmlAttributes.name "inviteCode"
+             , HtmlAttributes.id "inviteCode"
+             , HtmlAttributes.value input.raw
+             ]
+                ++ Form.inputEvents msg
+            )
+            []
+        , Form.viewInputError i theme input
         ]
 
 

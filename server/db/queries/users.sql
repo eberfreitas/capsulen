@@ -9,10 +9,10 @@ LIMIT 1;
 
 /*
   @name createUserRequest
-  @param user -> (username, nonce, challenge)
+  @param user -> (invite_id, username, nonce, challenge)
 */
 INSERT INTO
-    users (username, nonce, challenge)
+    users (invite_id, username, nonce, challenge)
 VALUES
     :user;
 
