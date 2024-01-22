@@ -81,27 +81,31 @@ update : Translations.Helper -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg 
 update i msg model =
     case msg of
         WithUsername event ->
-            Page.done
-                { model
-                    | usernameInput =
-                        Form.updateInput
-                            event
-                            Business.Username.fromString
-                            model.usernameInput
-                }
+            ( { model
+                | usernameInput =
+                    Form.updateInput
+                        event
+                        Business.Username.fromString
+                        model.usernameInput
+              }
+            , Effect.none
+            , Cmd.none
+            )
 
         WithPrivateKey event ->
-            Page.done
-                { model
-                    | privateKeyInput =
-                        Form.updateInput
-                            event
-                            Business.PrivateKey.fromString
-                            model.privateKeyInput
-                }
+            ( { model
+                | privateKeyInput =
+                    Form.updateInput
+                        event
+                        Business.PrivateKey.fromString
+                        model.privateKeyInput
+              }
+            , Effect.none
+            , Cmd.none
+            )
 
         ToggleShowPrivateKey ->
-            Page.done { model | showPrivateKey = not model.showPrivateKey }
+            ( { model | showPrivateKey = not model.showPrivateKey }, Effect.none, Cmd.none )
 
         Submit ->
             let

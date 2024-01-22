@@ -108,10 +108,13 @@ update i context msg model =
             ( nextModel, Effect.username rawUsername, cmd )
 
         WithPrivateKey event ->
-            Page.done { model | privateKeyInput = Form.updateInput event Business.PrivateKey.fromString model.privateKeyInput }
+            ( { model | privateKeyInput = Form.updateInput event Business.PrivateKey.fromString model.privateKeyInput }
+            , Effect.none
+            , Cmd.none
+            )
 
         ToggleShowPrivateKey ->
-            Page.done { model | showPrivateKey = not model.showPrivateKey }
+            ( { model | showPrivateKey = not model.showPrivateKey }, Effect.none, Cmd.none )
 
         Submit ->
             let

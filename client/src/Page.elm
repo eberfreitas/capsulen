@@ -1,7 +1,6 @@
-module Page exposing (TaskError(..), done, httpErrorMapper, nonEmptyInputParser)
+module Page exposing (TaskError(..), httpErrorMapper, nonEmptyInputParser)
 
 import ConcurrentTask.Http
-import Effect
 import Json.Decode
 import Translations
 
@@ -28,11 +27,6 @@ httpErrorMapper error =
 
         _ ->
             RequestError error
-
-
-done : model -> ( model, Effect.Effect, Cmd msg )
-done model =
-    ( model, Effect.none, Cmd.none )
 
 
 nonEmptyInputParser : String -> Result Translations.Key String
