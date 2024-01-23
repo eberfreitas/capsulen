@@ -163,4 +163,12 @@ export const translations = {
     en: "Invite code",
     pt: "Código de convite",
   },
+  INVITE_HELP: {
+    en: "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time. Share your codes responsibly.",
+    pt: "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo. Compartilhe seus convites com responsabilidade.",
+  },
+  INVITE_GENERATE: {
+    en: "Generate invite code",
+    pt: "Gerar convite",
+  },
 };

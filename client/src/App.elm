@@ -10,7 +10,9 @@ import Effect
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Json.Decode
+import Page.Invites
 import Page.Login
+import Page.NotFound
 import Page.Posts
 import Page.Register
 import Port
@@ -20,7 +22,6 @@ import Url
 import View.Alerts
 import View.Style
 import View.Theme
-import Page.NotFound
 
 
 type alias Model =
@@ -34,6 +35,7 @@ type Page
     = Register Page.Register.Model
     | Login Page.Login.Model
     | Posts Page.Posts.Model
+    | Invites Page.Invites.Model
     | NotFound
 
 
@@ -43,6 +45,7 @@ type Msg
     | RegisterMsg Page.Register.Msg
     | LoginMsg Page.Login.Msg
     | PostsMsg Page.Posts.Msg
+    | InvitesMsg Page.Invites.Msg
     | AlertsMsg View.Alerts.Msg
 
 
@@ -64,6 +67,9 @@ view model =
 
                 Posts subModel ->
                     subModel |> Page.Posts.view i model.context |> Html.map PostsMsg
+
+                Invites subModel ->
+                    subModel |> Page.Invites.view i model.context |> Html.map InvitesMsg
 
                 NotFound ->
                     Page.NotFound.view model.context.theme
@@ -93,6 +99,26 @@ update msg model =
         i : Translations.Helper
         i =
             Translations.translate model.context.language
+
+        pageUpdate :
+            (Translations.Helper -> Context.Context -> subMsg -> subModel -> ( subModel, Effect.Effect, Cmd subMsg ))
+            -> (subMsg -> Msg)
+            -> subMsg
+            -> (subModel -> Page)
+            -> subModel
+            -> Context.Context
+            -> ( Model, Cmd Msg )
+        pageUpdate updateFn pageMsg subMsg page subModel context =
+            let
+                ( nextSubModel, effects, nextCmd ) =
+                    updateFn i context subMsg subModel
+
+                ( nextContext, effectsCmds ) =
+                    Effect.run model.context effects
+            in
+            ( { model | page = page nextSubModel, context = nextContext }
+            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map pageMsg ]
+            )
     in
     case ( msg, model.page ) of
         ( UrlRequest request, _ ) ->
@@ -125,40 +151,16 @@ update msg model =
             ( { model | context = nextContext }, cmds )
 
         ( RegisterMsg subMsg, Register subModel ) ->
-            let
-                ( nextSubModel, effects, nextCmd ) =
-                    Page.Register.update i subMsg subModel
-
-                ( nextContext, effectsCmds ) =
-                    Effect.run model.context effects
-            in
-            ( { model | page = Register nextSubModel, context = nextContext }
-            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map RegisterMsg ]
-            )
+            pageUpdate Page.Register.update RegisterMsg subMsg Register subModel model.context
 
         ( LoginMsg subMsg, Login subModel ) ->
-            let
-                ( nextSubModel, effects, nextCmd ) =
-                    Page.Login.update i model.context subMsg subModel
-
-                ( nextContext, effectsCmds ) =
-                    Effect.run model.context effects
-            in
-            ( { model | page = Login nextSubModel, context = nextContext }
-            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map LoginMsg ]
-            )
+            pageUpdate Page.Login.update LoginMsg subMsg Login subModel model.context
 
         ( PostsMsg subMsg, Posts subModel ) ->
-            let
-                ( nextSubModel, effects, nextCmd ) =
-                    Page.Posts.update i model.context subMsg subModel
+            pageUpdate Page.Posts.update PostsMsg subMsg Posts subModel model.context
 
-                ( nextContext, effectsCmds ) =
-                    Effect.run model.context effects
-            in
-            ( { model | page = Posts nextSubModel, context = nextContext }
-            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map PostsMsg ]
-            )
+        ( InvitesMsg subMsg, Invites subModel ) ->
+            pageUpdate Page.Invites.update InvitesMsg subMsg Invites subModel model.context
 
         _ ->
             ( model, Cmd.none )
@@ -231,6 +233,13 @@ router context url =
                     Posts
                     identity
                     (Cmd.map PostsMsg)
+
+        [ "invites" ] ->
+            Page.Invites.init (Translations.translate context.language) context
+                |> Tuple.Extra.mapTrio
+                    Invites
+                    identity
+                    (Cmd.map InvitesMsg)
 
         _ ->
             ( NotFound, Effect.none, Cmd.none )

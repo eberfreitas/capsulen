@@ -103,8 +103,8 @@ init =
     ( initModel, Effect.none, Cmd.none )
 
 
-update : Translations.Helper -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
-update i msg model =
+update : Translations.Helper -> Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
+update i _ msg model =
     case msg of
         WithUsername event ->
             ( { model

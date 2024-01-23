@@ -20,6 +20,7 @@ import Form
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
+import Internal
 import Iso8601
 import Json.Decode
 import Json.Encode
@@ -33,7 +34,6 @@ import Task
 import Time
 import Translations
 import Url
-import View.Logo
 import View.Style
 import View.Theme
 
@@ -87,220 +87,196 @@ type Msg
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
 view i context model =
-    context.user
-        |> Maybe.map (\user -> viewWithUser i user context model)
-        |> Maybe.withDefault (Html.text "")
+    Internal.view i context model viewWithUser
 
 
 viewWithUser :
     Translations.Helper
-    -> Business.User.User
     -> Context.Context
     -> Model
+    -> Business.User.User
     -> Html.Html Msg
-viewWithUser i _ context model =
-    Html.div
-        [ HtmlAttributes.css
-            [ Css.maxWidth <| Css.px 600
-            , Css.width <| Css.pct 100
-            ]
-        ]
-        [ Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2, Css.position Css.relative ] ]
-            [ Html.div []
-                [ View.Logo.logo 40 <| View.Theme.foregroundColor context.theme ]
-            , Html.div
-                [ HtmlAttributes.css
-                    [ Css.position Css.absolute
-                    , Css.right <| Css.px 0
-                    , Css.top <| Css.px 0
-                    ]
+viewWithUser i context model _ =
+    Internal.template i context.theme Logout <|
+        Html.div []
+            [ Html.form
+                [ HtmlEvents.onSubmit Submit
+                , HtmlAttributes.css [ Css.marginBottom <| Css.rem 1.5 ]
                 ]
-                [ Html.button
-                    [ HtmlEvents.onClick Logout
-                    , HtmlAttributes.css
-                        [ View.Style.btn context.theme
-                        , View.Style.btnInverse context.theme
-                        , View.Style.btnShort
-                        ]
-                    ]
-                    [ Html.text <| i Translations.Logout ]
-                ]
-            ]
-        , Html.form
-            [ HtmlEvents.onSubmit Submit
-            , HtmlAttributes.css [ Css.marginBottom <| Css.rem 1.5 ]
-            ]
-            [ Html.fieldset
-                [ HtmlAttributes.css
-                    [ Css.border <| Css.px 0
-                    , Css.margin <| Css.px 0
-                    , Css.padding <| Css.px 0
-                    ]
-                ]
-                [ Html.legend
+                [ Html.fieldset
                     [ HtmlAttributes.css
-                        [ Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
-                        , Css.display Css.block
-                        , Css.fontVariant Css.allPetiteCaps
-                        , Css.marginBottom <| Css.rem 0.5
-                        , Css.width <| Css.pct 100
+                        [ Css.border <| Css.px 0
+                        , Css.margin <| Css.px 0
+                        , Css.padding <| Css.px 0
                         ]
                     ]
-                    [ Html.text <| i Translations.PostAbout ]
-                , Html.textarea
-                    ([ HtmlAttributes.value model.postInput.raw
-                     , HtmlAttributes.css
-                        [ Css.border <| Css.px 0
-                        , Css.borderRadius <| Css.rem 0.5
-                        , Css.marginBottom <| Css.rem 1.5
-                        , Css.padding <| Css.rem 1
-                        , Css.resize Css.vertical
-                        , Css.width <| Css.pct 100
+                    [ Html.legend
+                        [ HtmlAttributes.css
+                            [ Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                            , Css.display Css.block
+                            , Css.fontVariant Css.allPetiteCaps
+                            , Css.marginBottom <| Css.rem 0.5
+                            , Css.width <| Css.pct 100
+                            ]
                         ]
-                     , HtmlEvents.on "paste"
-                        (Json.Decode.map Paste
-                            (Json.Decode.field "clipboardData"
-                                (Json.Decode.field "files"
-                                    (Json.Decode.list File.decoder)
+                        [ Html.text <| i Translations.PostAbout ]
+                    , Html.textarea
+                        ([ HtmlAttributes.value model.postInput.raw
+                         , HtmlAttributes.css
+                            [ Css.border <| Css.px 0
+                            , Css.borderRadius <| Css.rem 0.5
+                            , Css.marginBottom <| Css.rem 1.5
+                            , Css.padding <| Css.rem 1
+                            , Css.resize Css.vertical
+                            , Css.width <| Css.pct 100
+                            ]
+                         , HtmlEvents.on "paste"
+                            (Json.Decode.map Paste
+                                (Json.Decode.field "clipboardData"
+                                    (Json.Decode.field "files"
+                                        (Json.Decode.list File.decoder)
+                                    )
                                 )
                             )
+                         ]
+                            ++ Form.inputEvents WithPostInput
                         )
-                     ]
-                        ++ Form.inputEvents WithPostInput
-                    )
-                    []
-                , case model.postImages of
-                    [] ->
-                        Html.text ""
+                        []
+                    , case model.postImages of
+                        [] ->
+                            Html.text ""
 
-                    _ ->
-                        Html.div
-                            [ HtmlAttributes.css
-                                [ Css.display Css.grid_
-                                , Css.property "grid-template-columns" "repeat(4, 1fr)"
-                                , Css.columnGap <| Css.rem 0.5
-                                , Css.rowGap <| Css.rem 0.5
-                                , Css.marginBottom <| Css.rem 0.95
+                        _ ->
+                            Html.div
+                                [ HtmlAttributes.css
+                                    [ Css.display Css.grid_
+                                    , Css.property "grid-template-columns" "repeat(4, 1fr)"
+                                    , Css.columnGap <| Css.rem 0.5
+                                    , Css.rowGap <| Css.rem 0.5
+                                    , Css.marginBottom <| Css.rem 0.95
+                                    ]
+                                ]
+                                (model.postImages
+                                    |> List.indexedMap
+                                        (\index image ->
+                                            Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
+                                                [ Html.img
+                                                    [ HtmlAttributes.src image
+                                                    , HtmlAttributes.css
+                                                        [ Css.width <| Css.pct 100
+                                                        , Css.property "aspect-ratio" "1/1"
+                                                        , Css.objectFit Css.cover
+                                                        , Css.display Css.block
+                                                        , Css.borderRadius <| Css.rem 0.5
+                                                        ]
+                                                    ]
+                                                    []
+                                                , Html.button
+                                                    [ HtmlAttributes.type_ "button"
+                                                    , HtmlAttributes.css
+                                                        [ Css.border <| Css.px 0
+                                                        , Css.backgroundColor (context.theme |> View.Theme.errorColor |> Color.Extra.toCss)
+                                                        , Css.position Css.absolute
+                                                        , Css.top <| Css.px 0
+                                                        , Css.right <| Css.px 0
+                                                        , Css.color (context.theme |> View.Theme.errorColor |> Color.Extra.toContrast 0.5 |> Color.Extra.toCss)
+                                                        , Css.fontSize <| Css.rem 1.5
+                                                        , Css.padding <| Css.rem 0.5
+                                                        , Css.paddingBottom <| Css.rem 0.25
+                                                        , Css.borderRadius2 (Css.rem 0) (Css.rem 0.5)
+                                                        , Css.cursor Css.pointer
+                                                        ]
+                                                    , HtmlEvents.onClick (RemoveImage index)
+                                                    ]
+                                                    [ Phosphor.x Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                                                ]
+                                        )
+                                )
+                    , Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
+                        [ Html.button
+                            [ HtmlEvents.onClick RequestImages
+                            , HtmlAttributes.type_ "button"
+                            , HtmlAttributes.css
+                                [ Css.border <| Css.px 0
+                                , Css.backgroundColor Css.transparent
+                                , Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                                , Css.fontSize <| Css.rem 2.5
+                                , Css.margin <| Css.px 0
+                                , Css.padding <| Css.px 0
+                                , Css.display Css.flex_
+                                , Css.alignItems Css.center
+                                , Css.justifyItems Css.center
+                                , Css.height <| Css.rem 3.2
+                                , Css.cursor Css.pointer
                                 ]
                             ]
-                            (model.postImages
-                                |> List.indexedMap
-                                    (\index image ->
-                                        Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
-                                            [ Html.img
-                                                [ HtmlAttributes.src image
-                                                , HtmlAttributes.css
-                                                    [ Css.width <| Css.pct 100
-                                                    , Css.property "aspect-ratio" "1/1"
-                                                    , Css.objectFit Css.cover
-                                                    , Css.display Css.block
-                                                    , Css.borderRadius <| Css.rem 0.5
-                                                    ]
-                                                ]
-                                                []
-                                            , Html.button
-                                                [ HtmlAttributes.type_ "button"
-                                                , HtmlAttributes.css
-                                                    [ Css.border <| Css.px 0
-                                                    , Css.backgroundColor (context.theme |> View.Theme.errorColor |> Color.Extra.toCss)
-                                                    , Css.position Css.absolute
-                                                    , Css.top <| Css.px 0
-                                                    , Css.right <| Css.px 0
-                                                    , Css.color (context.theme |> View.Theme.errorColor |> Color.Extra.toContrast 0.5 |> Color.Extra.toCss)
-                                                    , Css.fontSize <| Css.rem 1.5
-                                                    , Css.padding <| Css.rem 0.5
-                                                    , Css.paddingBottom <| Css.rem 0.25
-                                                    , Css.borderRadius2 (Css.rem 0) (Css.rem 0.5)
-                                                    , Css.cursor Css.pointer
-                                                    ]
-                                                , HtmlEvents.onClick (RemoveImage index)
-                                                ]
-                                                [ Phosphor.x Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                            [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
+                        , Html.div
+                            [ HtmlAttributes.css
+                                [ Css.position Css.absolute
+                                , Css.right <| Css.px 0
+                                , Css.top <| Css.px 0
+                                , Css.display Css.flex_
+                                , Css.justifyContent Css.flexEnd
+                                ]
+                            ]
+                            [ case buildPostContent model of
+                                Ok _ ->
+                                    Html.button
+                                        [ HtmlAttributes.css
+                                            [ View.Style.btn context.theme
+                                            , View.Style.btnInverse context.theme
+                                            , Css.marginRight <| Css.rem 0.5
                                             ]
-                                    )
-                            )
-                , Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
-                    [ Html.button
-                        [ HtmlEvents.onClick RequestImages
-                        , HtmlAttributes.type_ "button"
-                        , HtmlAttributes.css
-                            [ Css.border <| Css.px 0
-                            , Css.backgroundColor Css.transparent
-                            , Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
-                            , Css.fontSize <| Css.rem 2.5
-                            , Css.margin <| Css.px 0
-                            , Css.padding <| Css.px 0
-                            , Css.display Css.flex_
-                            , Css.alignItems Css.center
-                            , Css.justifyItems Css.center
-                            , Css.height <| Css.rem 3.2
-                            , Css.cursor Css.pointer
-                            ]
-                        ]
-                        [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
-                    , Html.div
-                        [ HtmlAttributes.css
-                            [ Css.position Css.absolute
-                            , Css.right <| Css.px 0
-                            , Css.top <| Css.px 0
-                            , Css.display Css.flex_
-                            , Css.justifyContent Css.flexEnd
-                            ]
-                        ]
-                        [ case buildPostContent model of
-                            Ok _ ->
-                                Html.button
-                                    [ HtmlAttributes.css
-                                        [ View.Style.btn context.theme
-                                        , View.Style.btnInverse context.theme
-                                        , Css.marginRight <| Css.rem 0.5
+                                        , HtmlEvents.onClick ClearPost
+                                        , HtmlAttributes.type_ "button"
                                         ]
-                                    , HtmlEvents.onClick ClearPost
-                                    , HtmlAttributes.type_ "button"
-                                    ]
-                                    [ Html.text <| i Translations.ClearPost ]
+                                        [ Html.text <| i Translations.ClearPost ]
 
-                            _ ->
-                                Html.text ""
-                        , Html.button
-                            [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
-                            [ Html.text <| i Translations.ToPost ]
+                                _ ->
+                                    Html.text ""
+                            , Html.button
+                                [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
+                                [ Html.text <| i Translations.ToPost ]
+                            ]
                         ]
                     ]
                 ]
-            ]
-        , Html.div []
-            (case model.posts of
-                [] ->
-                    [ Html.div
-                        [ HtmlAttributes.css
-                            [ Css.fontSize <| Css.rem 2
-                            , Css.textAlign Css.center
-                            , Css.fontWeight Css.bold
-                            , Css.color
-                                (context.theme
-                                    |> View.Theme.textColor
-                                    |> Color.Extra.withAlpha 0.5
-                                    |> Color.Extra.toCss
-                                )
+            , Html.div []
+                (case model.posts of
+                    [] ->
+                        [ Html.div
+                            [ HtmlAttributes.css
+                                [ Css.fontSize <| Css.rem 2
+                                , Css.textAlign Css.center
+                                , Css.fontWeight Css.bold
+                                , Css.color
+                                    (context.theme
+                                        |> View.Theme.textColor
+                                        |> Color.Extra.withAlpha 0.5
+                                        |> Color.Extra.toCss
+                                    )
+                                ]
                             ]
+                            [ Html.text "No posts" ]
                         ]
-                        [ Html.text "No posts" ]
-                    ]
 
-                posts ->
-                    [ Html.div [] (posts |> List.map (viewPost context.language context.theme))
-                    , Html.div []
-                        [ loadMoreBtn i context.theme model.loadingState ]
-                    ]
-            )
-        , case model.gallery of
-            ( _, [] ) ->
-                Html.text ""
+                    posts ->
+                        [ Html.div [] (posts |> List.map (viewPost context.language context.theme))
+                        , Html.div []
+                            [ loadMoreBtn i context.theme model.loadingState ]
+                        ]
+                )
+            , case model.gallery of
+                ( _, [] ) ->
+                    Html.text ""
 
-            ( index, gallery ) ->
-                viewGallery context.theme index gallery
-        ]
+                ( index, gallery ) ->
+                    viewGallery context.theme index gallery
+
+            -- TODO: remove this ugly thingy
+            , Html.a [ HtmlAttributes.href "/invites" ] [ Html.text "Invites!!!" ]
+            ]
 
 
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
@@ -811,14 +787,7 @@ init i context =
     let
         effect : Effect.Effect
         effect =
-            context.user
-                |> Maybe.map (always Effect.none)
-                |> Maybe.withDefault
-                    (Effect.batch
-                        [ Effect.addAlert (Alert.new Alert.Error <| i Translations.ForbiddenArea)
-                        , Effect.redirect "/"
-                        ]
-                    )
+            Internal.initEffect i context.user
 
         tasks : TaskPool
         tasks =
@@ -851,9 +820,7 @@ init i context =
 
 update : Translations.Helper -> Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
 update i context msg model =
-    context.user
-        |> Maybe.map (updateWithUser i msg model)
-        |> Maybe.withDefault ( model, Effect.none, Cmd.none )
+    Internal.update i context msg model updateWithUser
 
 
 imageMimes : List String
@@ -998,14 +965,7 @@ updateWithUser i msg model user =
             ( { model | tasks = tasks, loadingState = Loading }, Effect.toggleLoader, cmd )
 
         Logout ->
-            ( model
-            , Effect.batch
-                [ Effect.logout
-                , Effect.redirect "/"
-                , Effect.addAlert (Alert.new Alert.Success <| i Translations.LogoutSuccess)
-                ]
-            , Cmd.none
-            )
+            Internal.logout i model
 
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )

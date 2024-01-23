@@ -20,6 +20,8 @@ type Key
     | InvalidInputs
     | InviteCode
     | InviteCodeInvalid
+    | InviteGenerate
+    | InviteHelp
     | Loading
     | LoadMorePosts
     | Login
@@ -114,6 +116,12 @@ keyFromString key =
 
         "INVITE_CODE_INVALID" ->
             InviteCodeInvalid
+
+        "INVITE_GENERATE" ->
+            InviteGenerate
+
+        "INVITE_HELP" ->
+            InviteHelp
 
         "LOADING" ->
             Loading
@@ -244,6 +252,12 @@ keyToString key =
 
         InviteCodeInvalid ->
             "INVITE_CODE_INVALID"
+
+        InviteGenerate ->
+            "INVITE_GENERATE"
+
+        InviteHelp ->
+            "INVITE_HELP"
 
         Loading ->
             "LOADING"
@@ -426,6 +440,20 @@ phrases =
           , Dict.fromList
                 [ ( "en", "This invite code looks invalid." )
                 , ( "pt", "Este código de convite parece incorreto." )
+                ]
+          )
+        , ( "INVITE_GENERATE"
+          , Dict.fromList
+                [ ( "en", "Generate invite code" ), ( "pt", "Gerar convite" ) ]
+          )
+        , ( "INVITE_HELP"
+          , Dict.fromList
+                [ ( "en"
+                  , "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time. Share your codes responsibly."
+                  )
+                , ( "pt"
+                  , "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo. Compartilhe seus convites com responsabilidade."
+                  )
                 ]
           )
         , ( "LOADING"
