@@ -1,3 +1,4 @@
+import '@github/clipboard-copy-element'
 import * as ConcurrentTask from "@andrewmacmurray/elm-concurrent-task";
 import topbar from "topbar";
 import * as Sentry from "@sentry/browser";

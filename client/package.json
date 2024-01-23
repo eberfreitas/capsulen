@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@andrewmacmurray/elm-concurrent-task": "^1.0.0",
+    "@github/clipboard-copy-element": "^1.3.0",
     "@sentry/browser": "^7.94.1",
     "topbar": "^2.0.1"
   }

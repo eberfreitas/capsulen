@@ -28,6 +28,8 @@ import {
   getPosts,
 } from "./db/queries/posts.queries";
 import {
+  countInvites,
+  fetchInvites,
   useInvite,
   userInvite,
   validInvite,
@@ -324,6 +326,19 @@ server.post("/api/posts/:id", async (req, res) => {
   res.send(true);
 });
 
+server.get("/api/invites", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    const invites = await fetchInvites.run({ user_id: user.id }, db);
+
+    return res.send(invites);
+  } catch (e) {
+    captureException(e);
+
+    return res.status(500).send("INVITE_FETCH_ERROR");
+  }
+});
+
 server.post("/api/invites", async (req, res) => {
   try {
     const user = await getAuthUser(req);
@@ -331,6 +346,12 @@ server.post("/api/invites", async (req, res) => {
       length: 8,
       capitalization: "uppercase",
     });
+
+    const count = await countInvites.run({ user_id: user.id }, db);
+
+    if (count[0] && parseInt(count[0]?.count || "", 10) > 2) {
+      return res.status(400).send("INVITE_COUNT_ERROR");
+    }
 
     const invite = await userInvite.run({ user_id: user.id, code }, db);
 

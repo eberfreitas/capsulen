@@ -174,5 +174,21 @@ export const translations = {
   INVITE_ERROR: {
     en: "There was an error while creating your invite. Please, try again.",
     pt: "Ocorreu um erro ao criar seu convite. Por favor, tente novamente.",
+  },
+  INVITE_FETCH_ERROR: {
+    en: "There was an error while fetching your invites. Please, try again.",
+    pt: "Ocorreu um erro ao resgatar seus convites. Por favor, tente novamente.",
+  },
+  INVITE_PENDING: {
+    en: "Pending",
+    pt: "Pendente",
+  },
+  INVITE_USED: {
+    en: "Used",
+    pt: "Usado",
+  },
+  INVITE_COUNT_ERROR: {
+    en: "You have already created the maximum of pending invites.",
+    pt: "Você já criou o máximo de convites pendentes.",
   }
 };

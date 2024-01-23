@@ -142,3 +142,72 @@ const userInviteIR: any = {"usedParamSet":{"user_id":true,"code":true},"params":
 export const userInvite = new PreparedQuery<IUserInviteParams,IUserInviteResult>(userInviteIR);
 
 
+/** 'FetchInvites' parameters type */
+export interface IFetchInvitesParams {
+  user_id?: number | null | void;
+}
+
+/** 'FetchInvites' return type */
+export interface IFetchInvitesResult {
+  code: string;
+  status: invite_status | null;
+}
+
+/** 'FetchInvites' query type */
+export interface IFetchInvitesQuery {
+  params: IFetchInvitesParams;
+  result: IFetchInvitesResult;
+}
+
+const fetchInvitesIR: any = {"usedParamSet":{"user_id":true},"params":[{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":61,"b":68}]}],"statement":"SELECT\n    code, status\nFROM\n    invites\nWHERE\n    user_id = :user_id\nORDER BY id DESC\nLIMIT 50"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     code, status
+ * FROM
+ *     invites
+ * WHERE
+ *     user_id = :user_id
+ * ORDER BY id DESC
+ * LIMIT 50
+ * ```
+ */
+export const fetchInvites = new PreparedQuery<IFetchInvitesParams,IFetchInvitesResult>(fetchInvitesIR);
+
+
+/** 'CountInvites' parameters type */
+export interface ICountInvitesParams {
+  user_id?: number | null | void;
+}
+
+/** 'CountInvites' return type */
+export interface ICountInvitesResult {
+  count: string | null;
+}
+
+/** 'CountInvites' query type */
+export interface ICountInvitesQuery {
+  params: ICountInvitesParams;
+  result: ICountInvitesResult;
+}
+
+const countInvitesIR: any = {"usedParamSet":{"user_id":true},"params":[{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":66,"b":73}]}],"statement":"SELECT\n    COUNT(*) AS count\nFROM\n    invites\nWHERE\n    user_id = :user_id\nAND\n    status = 'pending'"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     COUNT(*) AS count
+ * FROM
+ *     invites
+ * WHERE
+ *     user_id = :user_id
+ * AND
+ *     status = 'pending'
+ * ```
+ */
+export const countInvites = new PreparedQuery<ICountInvitesParams,ICountInvitesResult>(countInvitesIR);
+
+

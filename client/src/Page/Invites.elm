@@ -14,24 +14,26 @@ import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
 import Internal
+import Json.Decode
 import Logger
 import Page
+import Phosphor
 import Port
-import RemoteData
 import Translations
 import View.Style
 import View.Theme
 
 
+type Generating
+    = Idle
+    | Running
+
+
 type alias Model =
-    { invites : RemoteData.RemoteData Page.TaskError (List Business.InviteCode.Invite)
+    { invites : List Business.InviteCode.Invite
     , tasks : TaskPool
+    , generating : Generating
     }
-
-
-initModel : Model
-initModel =
-    { invites = RemoteData.NotAsked, tasks = ConcurrentTask.pool }
 
 
 type Msg
@@ -43,6 +45,7 @@ type Msg
 
 type TaskOutput
     = Generated Business.InviteCode.Invite
+    | Invites (List Business.InviteCode.Invite)
 
 
 type alias TaskPool =
@@ -55,8 +58,39 @@ init i context =
         effect : Effect.Effect
         effect =
             Internal.initEffect i context.user
+
+        tasks : TaskPool
+        tasks =
+            ConcurrentTask.pool
+
+        fetchInvites : Business.User.User -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
+        fetchInvites user =
+            ConcurrentTask.Http.get
+                { url = "/api/invites"
+                , headers = [ ConcurrentTask.Http.header "authorization" ("Bearer " ++ user.token) ]
+                , expect = ConcurrentTask.Http.expectJson <| Json.Decode.list Business.InviteCode.decodeInvite
+                , timeout = Nothing
+                }
+                |> ConcurrentTask.mapError Page.httpErrorMapper
+                |> ConcurrentTask.map Invites
+
+        ( newTasks, cmd ) =
+            context.user
+                |> Maybe.map
+                    (\user ->
+                        ConcurrentTask.attempt
+                            { pool = tasks
+                            , send = Port.taskSend
+                            , onComplete = OnTaskComplete
+                            }
+                            (fetchInvites user)
+                    )
+                |> Maybe.withDefault ( tasks, Cmd.none )
     in
-    ( initModel, effect, Cmd.none )
+    ( { invites = [], tasks = newTasks, generating = Idle }
+    , effect
+    , cmd
+    )
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -70,7 +104,16 @@ viewWithUser :
     -> Model
     -> Business.User.User
     -> Html.Html Msg
-viewWithUser i context _ _ =
+viewWithUser i context model _ =
+    let
+        ( btnStyles, btnAttrs ) =
+            case model.generating of
+                Idle ->
+                    ( [], [] )
+
+                Running ->
+                    ( [ View.Style.btnDisabled ], [ HtmlAttributes.disabled True ] )
+    in
     Internal.template i context.theme Logout <|
         Html.div
             [ HtmlAttributes.css
@@ -79,16 +122,96 @@ viewWithUser i context _ _ =
                 ]
             ]
             [ Html.div
-                [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]
+                [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 1 ] ]
                 [ Html.text <| i Translations.InviteHelp ]
-            , Html.div []
+            , Html.div
+                [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]
                 [ Html.button
-                    [ HtmlAttributes.css [ View.Style.btn context.theme ]
-                    , HtmlEvents.onClick Generate
-                    ]
+                    ([ HtmlAttributes.css <| View.Style.btn context.theme :: btnStyles
+                     , HtmlEvents.onClick Generate
+                     ]
+                        ++ btnAttrs
+                    )
                     [ Html.text <| i Translations.InviteGenerate ]
                 ]
+            , Html.ul
+                [ HtmlAttributes.css
+                    [ Css.margin <| Css.px 0
+                    , Css.padding <| Css.px 0
+                    , Css.listStyle Css.none
+                    ]
+                ]
+                (model.invites |> List.map (viewInvite i context.theme))
             ]
+
+
+viewInvite : Translations.Helper -> View.Theme.Theme -> Business.InviteCode.Invite -> Html.Html msg
+viewInvite i theme invite =
+    let
+        ( color, statusLabel ) =
+            case invite.status of
+                Business.InviteCode.Pending ->
+                    ( View.Theme.successColor theme, Translations.InvitePending )
+
+                Business.InviteCode.Used ->
+                    ( View.Theme.errorColor theme, Translations.InviteUsed )
+
+        textColor =
+            color |> Color.Extra.toContrast 0.5
+    in
+    Html.li
+        [ HtmlAttributes.css
+            [ Css.padding <| Css.rem 1
+            , Css.backgroundColor <| Color.Extra.toCss color
+            , Css.color <| Color.Extra.toCss textColor
+            , Css.borderRadius <| Css.rem 0.5
+            , Css.marginBottom <| Css.rem 1
+            , Css.position Css.relative
+            ]
+        ]
+        [ Html.div
+            [ HtmlAttributes.css
+                [ Css.fontSize <| Css.rem 1.5
+                , Css.fontFamily Css.monospace
+                , Css.display Css.flex_
+                , Css.alignItems Css.center
+                ]
+            ]
+            [ Html.node "clipboard-copy"
+                [ HtmlAttributes.attribute "value" invite.code ]
+                [ Html.button
+                    [ HtmlAttributes.css
+                        [ Css.border <| Css.px 0
+                        , Css.backgroundColor Css.transparent
+                        , Css.color <| Color.Extra.toCss textColor
+                        , Css.cursor Css.pointer
+                        , Css.display Css.block
+                        , Css.margin <| Css.px 0
+                        , Css.marginRight <| Css.rem 0.5
+                        , Css.padding <| Css.px 0
+                        , Css.lineHeight <| Css.num 0
+                        ]
+                    ]
+                    [ Phosphor.clipboardText Phosphor.Regular
+                        |> Phosphor.toHtml []
+                        |> Html.fromUnstyled
+                    ]
+                ]
+            , Html.div [] [ Html.text invite.code ]
+            ]
+        , Html.div
+            [ HtmlAttributes.css
+                [ Css.position Css.absolute
+                , Css.top <| Css.rem 1
+                , Css.right <| Css.rem 1
+                , Css.backgroundColor (theme |> View.Theme.backgroundColor |> Color.Extra.toCss)
+                , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+                , Css.borderRadius <| Css.rem 0.3
+                , Css.padding2 (Css.rem 0.4) (Css.rem 1)
+                ]
+            ]
+            [ Html.text <| i statusLabel ]
+        ]
 
 
 update : Translations.Helper -> Context.Context -> Msg -> Model -> ( Model, Effect.Effect, Cmd Msg )
@@ -124,20 +247,25 @@ updateWithUser i msg model user =
                         }
                         generateInvite
             in
-            ( { model | tasks = tasks }, Effect.none, cmd )
+            ( { model | tasks = tasks, generating = Running }, Effect.toggleLoader, cmd )
 
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )
 
         OnTaskComplete (ConcurrentTask.Success (Generated invite)) ->
-            let
-                _ =
-                    Debug.log "invite" invite
-            in
-            ( model, Effect.none, Cmd.none )
+            ( { model | invites = invite :: model.invites, generating = Idle }
+            , Effect.toggleLoader
+            , Cmd.none
+            )
+
+        OnTaskComplete (ConcurrentTask.Success (Invites invites)) ->
+            ( { model | invites = invites ++ model.invites }
+            , Effect.none
+            , Cmd.none
+            )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( model
+            ( { model | generating = Idle }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
@@ -146,7 +274,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
-            ( model
+            ( { model | generating = Idle }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -155,7 +283,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model
+            ( { model | generating = Idle }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader

@@ -20,9 +20,13 @@ type Key
     | InvalidInputs
     | InviteCode
     | InviteCodeInvalid
+    | InviteCountError
     | InviteError
+    | InviteFetchError
     | InviteGenerate
     | InviteHelp
+    | InvitePending
+    | InviteUsed
     | Loading
     | LoadMorePosts
     | Login
@@ -118,14 +122,26 @@ keyFromString key =
         "INVITE_CODE_INVALID" ->
             InviteCodeInvalid
 
+        "INVITE_COUNT_ERROR" ->
+            InviteCountError
+
         "INVITE_ERROR" ->
             InviteError
+
+        "INVITE_FETCH_ERROR" ->
+            InviteFetchError
 
         "INVITE_GENERATE" ->
             InviteGenerate
 
         "INVITE_HELP" ->
             InviteHelp
+
+        "INVITE_PENDING" ->
+            InvitePending
+
+        "INVITE_USED" ->
+            InviteUsed
 
         "LOADING" ->
             Loading
@@ -257,14 +273,26 @@ keyToString key =
         InviteCodeInvalid ->
             "INVITE_CODE_INVALID"
 
+        InviteCountError ->
+            "INVITE_COUNT_ERROR"
+
         InviteError ->
             "INVITE_ERROR"
+
+        InviteFetchError ->
+            "INVITE_FETCH_ERROR"
 
         InviteGenerate ->
             "INVITE_GENERATE"
 
         InviteHelp ->
             "INVITE_HELP"
+
+        InvitePending ->
+            "INVITE_PENDING"
+
+        InviteUsed ->
+            "INVITE_USED"
 
         Loading ->
             "LOADING"
@@ -449,6 +477,14 @@ phrases =
                 , ( "pt", "Este código de convite parece incorreto." )
                 ]
           )
+        , ( "INVITE_COUNT_ERROR"
+          , Dict.fromList
+                [ ( "en"
+                  , "You have already created the maximum of pending invites."
+                  )
+                , ( "pt", "Você já criou o máximo de convites pendentes." )
+                ]
+          )
         , ( "INVITE_ERROR"
           , Dict.fromList
                 [ ( "en"
@@ -456,6 +492,16 @@ phrases =
                   )
                 , ( "pt"
                   , "Ocorreu um erro ao criar seu convite. Por favor, tente novamente."
+                  )
+                ]
+          )
+        , ( "INVITE_FETCH_ERROR"
+          , Dict.fromList
+                [ ( "en"
+                  , "There was an error while fetching your invites. Please, try again."
+                  )
+                , ( "pt"
+                  , "Ocorreu um erro ao resgatar seus convites. Por favor, tente novamente."
                   )
                 ]
           )
@@ -472,6 +518,12 @@ phrases =
                   , "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo. Compartilhe seus convites com responsabilidade."
                   )
                 ]
+          )
+        , ( "INVITE_PENDING"
+          , Dict.fromList [ ( "en", "Pending" ), ( "pt", "Pendente" ) ]
+          )
+        , ( "INVITE_USED"
+          , Dict.fromList [ ( "en", "Used" ), ( "pt", "Usado" ) ]
           )
         , ( "LOADING"
           , Dict.fromList [ ( "en", "Loading" ), ( "pt", "Carregando" ) ]

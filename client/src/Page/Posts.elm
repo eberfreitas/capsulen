@@ -273,9 +273,6 @@ viewWithUser i context model _ =
 
                 ( index, gallery ) ->
                     viewGallery context.theme index gallery
-
-            -- TODO: remove this ugly thingy
-            , Html.a [ HtmlAttributes.href "/invites" ] [ Html.text "Invites!!!" ]
             ]
 
 
