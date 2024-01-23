@@ -24,3 +24,10 @@ SET
     updated_at = NOW()
 WHERE
     id = :id;
+
+/* @name userInvite */
+INSERT INTO
+    invites (user_id, code)
+VALUES
+    (:user_id, :code)
+RETURNING *;

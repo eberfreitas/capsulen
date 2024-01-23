@@ -27,7 +27,11 @@ import {
   getInitialPosts,
   getPosts,
 } from "./db/queries/posts.queries";
-import { useInvite, validInvite } from "./db/queries/invites.queries";
+import {
+  useInvite,
+  userInvite,
+  validInvite,
+} from "./db/queries/invites.queries";
 
 dotenv.config({ path: "../.env" });
 
@@ -136,7 +140,7 @@ server.post("/api/users/request_access", async (req, res) => {
       username,
       nonce: `${Math.floor(Math.random() * 999999999)}`,
       challenge: randomstring.generate(),
-    }
+    };
 
     await createUserRequest.run({ user }, db);
     await useInvite.run({ id: inviteId }, db);
@@ -318,6 +322,28 @@ server.post("/api/posts/:id", async (req, res) => {
   }
 
   res.send(true);
+});
+
+server.post("/api/invites", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    const code = randomstring.generate({
+      length: 8,
+      capitalization: "uppercase",
+    });
+
+    const invite = await userInvite.run({ user_id: user.id, code }, db);
+
+    if (!invite[0]) {
+      throw new Error("Error while persisting invite.");
+    }
+
+    res.send(invite[0]);
+  } catch (e) {
+    captureException(e);
+
+    return res.status(500).send("INVITE_ERROR");
+  }
 });
 
 server.get("*", (_req, res) =>

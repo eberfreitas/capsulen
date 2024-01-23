@@ -1,4 +1,11 @@
-module Business.InviteCode exposing (Invite, InviteCode, InviteStatus(..), encode, fromString)
+module Business.InviteCode exposing
+    ( Invite
+    , InviteCode
+    , InviteStatus(..)
+    , decodeInvite
+    , encode
+    , fromString
+    )
 
 import Json.Decode
 import Json.Encode

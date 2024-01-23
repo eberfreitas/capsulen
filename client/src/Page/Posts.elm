@@ -1040,7 +1040,7 @@ updateWithUser i msg model user =
             ( model, Effect.none, Cmd.none )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( model
+            ( { model | loadingState = Loaded }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader

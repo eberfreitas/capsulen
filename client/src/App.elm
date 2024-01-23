@@ -260,6 +260,9 @@ subscriptions model =
                 Posts subModel ->
                     [ Page.Posts.subscriptions subModel.tasks |> Sub.map PostsMsg ]
 
+                Invites subModel ->
+                    [ Page.Invites.subscriptions subModel.tasks |> Sub.map InvitesMsg ]
+
                 _ ->
                     []
 

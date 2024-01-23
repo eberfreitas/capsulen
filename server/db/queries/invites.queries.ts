@@ -105,3 +105,40 @@ const useInviteIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","req
 export const useInvite = new PreparedQuery<IUseInviteParams,IUseInviteResult>(useInviteIR);
 
 
+/** 'UserInvite' parameters type */
+export interface IUserInviteParams {
+  code?: string | null | void;
+  user_id?: number | null | void;
+}
+
+/** 'UserInvite' return type */
+export interface IUserInviteResult {
+  code: string;
+  created_at: Date | null;
+  id: number;
+  status: invite_status | null;
+  updated_at: Date | null;
+  user_id: number | null;
+}
+
+/** 'UserInvite' query type */
+export interface IUserInviteQuery {
+  params: IUserInviteParams;
+  result: IUserInviteResult;
+}
+
+const userInviteIR: any = {"usedParamSet":{"user_id":true,"code":true},"params":[{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":52,"b":59}]},{"name":"code","required":false,"transform":{"type":"scalar"},"locs":[{"a":62,"b":66}]}],"statement":"INSERT INTO\n    invites (user_id, code)\nVALUES\n    (:user_id, :code)\nRETURNING *"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * INSERT INTO
+ *     invites (user_id, code)
+ * VALUES
+ *     (:user_id, :code)
+ * RETURNING *
+ * ```
+ */
+export const userInvite = new PreparedQuery<IUserInviteParams,IUserInviteResult>(userInviteIR);
+
+

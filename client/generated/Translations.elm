@@ -20,6 +20,7 @@ type Key
     | InvalidInputs
     | InviteCode
     | InviteCodeInvalid
+    | InviteError
     | InviteGenerate
     | InviteHelp
     | Loading
@@ -116,6 +117,9 @@ keyFromString key =
 
         "INVITE_CODE_INVALID" ->
             InviteCodeInvalid
+
+        "INVITE_ERROR" ->
+            InviteError
 
         "INVITE_GENERATE" ->
             InviteGenerate
@@ -252,6 +256,9 @@ keyToString key =
 
         InviteCodeInvalid ->
             "INVITE_CODE_INVALID"
+
+        InviteError ->
+            "INVITE_ERROR"
 
         InviteGenerate ->
             "INVITE_GENERATE"
@@ -440,6 +447,16 @@ phrases =
           , Dict.fromList
                 [ ( "en", "This invite code looks invalid." )
                 , ( "pt", "Este código de convite parece incorreto." )
+                ]
+          )
+        , ( "INVITE_ERROR"
+          , Dict.fromList
+                [ ( "en"
+                  , "There was an error while creating your invite. Please, try again."
+                  )
+                , ( "pt"
+                  , "Ocorreu um erro ao criar seu convite. Por favor, tente novamente."
+                  )
                 ]
           )
         , ( "INVITE_GENERATE"

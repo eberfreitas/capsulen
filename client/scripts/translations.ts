@@ -171,4 +171,8 @@ export const translations = {
     en: "Generate invite code",
     pt: "Gerar convite",
   },
+  INVITE_ERROR: {
+    en: "There was an error while creating your invite. Please, try again.",
+    pt: "Ocorreu um erro ao criar seu convite. Por favor, tente novamente.",
+  }
 };
