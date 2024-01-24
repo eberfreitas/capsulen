@@ -23,12 +23,14 @@ view theme alerts =
     Html.div
         [ HtmlAttributes.css
             [ Css.bottom <| Css.px 0
-            , Css.left <| Css.pct 50
-            , Css.maxWidth <| Css.px 700
+            , Css.left <| Css.px 0
+            , Css.right <| Css.px 0
             , Css.position Css.fixed
-            , Css.transform <| Css.translate (Css.pct -50)
-            , Css.width <| Css.pct 100
-            , Css.margin2 (Css.px 0) Css.auto
+            , Css.padding <| Css.rem 2
+            , Css.paddingBottom <| Css.px 1
+            , Css.display Css.flex_
+            , Css.flexDirection Css.column
+            , Css.alignItems Css.center
             ]
         ]
         (alerts |> List.indexedMap (\index alert -> Alert.toHtml theme CloseAlert index alert))

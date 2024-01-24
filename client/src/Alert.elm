@@ -74,10 +74,13 @@ toHtml theme closeFn index (Message message) =
             , Css.color (textColor |> Color.Extra.toCss)
             , Css.fontWeight Css.bold
             , Css.padding <| Css.rem 1
+            , Css.paddingRight <| Css.rem 3
             , Css.marginBottom <| Css.rem 1
             , Css.borderRadius <| Css.rem 1
             , Css.border3 (Css.rem 0.5) Css.solid (theme |> View.Theme.backgroundColor |> Color.Extra.toCss)
             , Css.position Css.relative
+            , Css.maxWidth (Css.calc (Css.px 600) (Css.plus <| Css.rem 1))
+            , Css.width <| Css.calc (Css.pct 100) (Css.plus <| Css.rem 1)
             ]
         ]
         [ Html.div [] [ Html.text <| message.body ]
