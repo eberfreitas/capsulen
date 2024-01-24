@@ -15,6 +15,7 @@ type Key
     | Credits
     | DecryptError
     | DeleteConfirm
+    | Description
     | EncryptError
     | English
     | ForbiddenArea
@@ -117,6 +118,9 @@ keyFromString key =
 
         "DELETE_CONFIRM" ->
             DeleteConfirm
+
+        "DESCRIPTION" ->
+            Description
 
         "ENCRYPT_ERROR" ->
             EncryptError
@@ -301,6 +305,9 @@ keyToString key =
 
         DeleteConfirm ->
             "DELETE_CONFIRM"
+
+        Description ->
+            "DESCRIPTION"
 
         EncryptError ->
             "ENCRYPT_ERROR"
@@ -517,6 +524,16 @@ phrases =
                   )
                 , ( "pt"
                   , "Você tem certeza que deseja apagar este post? Esta ação é final."
+                  )
+                ]
+          )
+        , ( "DESCRIPTION"
+          , Dict.fromList
+                [ ( "en"
+                  , "Capsulen is a compact journaling application inspired by microblogs. It encrypts all your data in the browser before persisting it on the server, ensuring that only the individual with the private key can access the contents of the journal."
+                  )
+                , ( "pt"
+                  , "Capsulen é um aplicativo de diário compacto inspirado em microblogs. Ele criptografa todos os seus dados no navegador antes de persisti-los no servidor, garantindo que apenas a pessoa com a chave privada possa acessar o conteúdo do diário."
                   )
                 ]
           )

@@ -296,15 +296,18 @@ view i context model =
                 model.showPrivateKey
                 model.privateKeyInput
             ]
-        , Html.a
-            [ HtmlAttributes.href "/register"
-            , HtmlAttributes.css
-                [ View.Style.btn context.theme
-                , View.Style.btnFull
-                , View.Style.btnInverse context.theme
+        , Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]
+            [ Html.a
+                [ HtmlAttributes.href "/register"
+                , HtmlAttributes.css
+                    [ View.Style.btn context.theme
+                    , View.Style.btnFull
+                    , View.Style.btnInverse context.theme
+                    ]
                 ]
+                [ Html.text <| i Translations.RegisterNew ]
             ]
-            [ Html.text <| i Translations.RegisterNew ]
+        , Html.div [ HtmlAttributes.css [ Css.lineHeight <| Css.num 1.5 ] ] [ Html.text <| i Translations.Description ]
         ]
 
 

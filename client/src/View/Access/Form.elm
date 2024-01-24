@@ -145,7 +145,9 @@ privateKeyField i theme msg toggleMsg showPrivateKey input =
                 , Css.borderRadius4 (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5) (Css.rem 0)
                 , Css.position Css.absolute
                 , Css.right <| Css.px 0
-                , Css.top <| Css.rem 1.65
+                , Css.bottom <| Css.px 0
+                , Css.lineHeight <| Css.num 0
+                , Css.padding <| Css.rem 0.9
                 ]
             ]
             [ togglePrivateKeyIcon ]
