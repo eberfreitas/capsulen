@@ -230,5 +230,9 @@ export const translations = {
   THEME_TATTY: {
     en: "Tatty",
     pt: "Tatty",
-  }
+  },
+  CREDITS: {
+    en: "created with ❤️ by",
+    pt: "criado com amor ❤️ por",
+  },
 };

@@ -12,6 +12,7 @@ type Key
     = AllPostsLoaded
     | ClearPost
     | CredentialsIncorrect
+    | Credits
     | DecryptError
     | DeleteConfirm
     | EncryptError
@@ -107,6 +108,9 @@ keyFromString key =
 
         "CREDENTIALS_INCORRECT" ->
             CredentialsIncorrect
+
+        "CREDITS" ->
+            Credits
 
         "DECRYPT_ERROR" ->
             DecryptError
@@ -288,6 +292,9 @@ keyToString key =
 
         CredentialsIncorrect ->
             "CREDENTIALS_INCORRECT"
+
+        Credits ->
+            "CREDITS"
 
         DecryptError ->
             "DECRYPT_ERROR"
@@ -489,6 +496,12 @@ phrases =
                 , ( "pt"
                   , "Nome de usuário ou chave privada incorretos. Por favor, tente novamente"
                   )
+                ]
+          )
+        , ( "CREDITS"
+          , Dict.fromList
+                [ ( "en", "created with ❤️ by" )
+                , ( "pt", "criado com amor ❤️ por" )
                 ]
           )
         , ( "DECRYPT_ERROR"

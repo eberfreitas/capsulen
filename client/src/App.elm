@@ -4,6 +4,7 @@ import AppUrl
 import Browser
 import Browser.Events
 import Browser.Navigation
+import Color.Extra
 import Context
 import Css
 import Effect
@@ -87,12 +88,45 @@ view model =
             [ HtmlAttributes.css
                 [ Css.display Css.flex_
                 , Css.justifyContent Css.center
-                , Css.minHeight <| Css.vh 100
+                , Css.minHeight (Css.calc (Css.vh 100) (Css.minus <| Css.rem 2))
                 , Css.padding <| Css.rem 2
                 , Css.width <| Css.pct 100
                 ]
             ]
             [ pageHtml ]
+        , Html.div
+            [ HtmlAttributes.css
+                [ Css.textAlign Css.center
+                , Css.fontSize <| Css.rem 0.85
+                , Css.marginBottom <| Css.rem 1
+                ]
+            ]
+            [ Html.text <| i Translations.Credits
+            , Html.text " "
+            , Html.a
+                [ HtmlAttributes.href "https://www.eberfdias.com"
+                , HtmlAttributes.target "_blank"
+                , HtmlAttributes.css
+                    [ Css.fontWeight Css.bold
+                    , Css.textDecoration Css.none
+                    , Css.color (model.context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                    , Css.cursor Css.pointer
+                    ]
+                ]
+                [ Html.text "éber f. dias" ]
+            , Html.text " • "
+            , Html.a
+                [ HtmlAttributes.href "https://www.buymeacoffee.com/eberfre"
+                , HtmlAttributes.target "_blank"
+                , HtmlAttributes.css
+                    [ Css.fontWeight Css.bold
+                    , Css.textDecoration Css.none
+                    , Css.color (model.context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                    , Css.cursor Css.pointer
+                    ]
+                ]
+                [ Html.text "buy me a pizza 🍕" ]
+            ]
         , View.Alerts.view model.context.theme model.context.alerts |> Html.map AlertsMsg
         ]
             |> List.map Html.toUnstyled
