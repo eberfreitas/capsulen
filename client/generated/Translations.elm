@@ -15,6 +15,7 @@ type Key
     | DecryptError
     | DeleteConfirm
     | EncryptError
+    | English
     | ForbiddenArea
     | InputEmpty
     | InvalidInputs
@@ -27,6 +28,7 @@ type Key
     | InviteHelp
     | InvitePending
     | InviteUsed
+    | Language
     | Loading
     | LoadMorePosts
     | Login
@@ -34,6 +36,7 @@ type Key
     | Logout
     | LogoutSuccess
     | NoPost
+    | Portuguese
     | PostsNoMore
     | PostAbout
     | PostEncrypted
@@ -49,7 +52,12 @@ type Key
     | RegisterNew
     | RegisterSuccess
     | RequestError
+    | Settings
+    | SettingsNotice
     | Tagline
+    | Theme
+    | ThemeDark
+    | ThemeLight
     | ToPost
     | UnexpectedRegisterError
     | UnknownError
@@ -108,6 +116,9 @@ keyFromString key =
         "ENCRYPT_ERROR" ->
             EncryptError
 
+        "ENGLISH" ->
+            English
+
         "FORBIDDEN_AREA" ->
             ForbiddenArea
 
@@ -144,6 +155,9 @@ keyFromString key =
         "INVITE_USED" ->
             InviteUsed
 
+        "LANGUAGE" ->
+            Language
+
         "LOADING" ->
             Loading
 
@@ -164,6 +178,9 @@ keyFromString key =
 
         "NO_POST" ->
             NoPost
+
+        "PORTUGUESE" ->
+            Portuguese
 
         "POSTS_NO_MORE" ->
             PostsNoMore
@@ -210,8 +227,23 @@ keyFromString key =
         "REQUEST_ERROR" ->
             RequestError
 
+        "SETTINGS" ->
+            Settings
+
+        "SETTINGS_NOTICE" ->
+            SettingsNotice
+
         "TAGLINE" ->
             Tagline
+
+        "THEME" ->
+            Theme
+
+        "THEME_DARK" ->
+            ThemeDark
+
+        "THEME_LIGHT" ->
+            ThemeLight
 
         "TO_POST" ->
             ToPost
@@ -262,6 +294,9 @@ keyToString key =
         EncryptError ->
             "ENCRYPT_ERROR"
 
+        English ->
+            "ENGLISH"
+
         ForbiddenArea ->
             "FORBIDDEN_AREA"
 
@@ -298,6 +333,9 @@ keyToString key =
         InviteUsed ->
             "INVITE_USED"
 
+        Language ->
+            "LANGUAGE"
+
         Loading ->
             "LOADING"
 
@@ -318,6 +356,9 @@ keyToString key =
 
         NoPost ->
             "NO_POST"
+
+        Portuguese ->
+            "PORTUGUESE"
 
         PostsNoMore ->
             "POSTS_NO_MORE"
@@ -364,8 +405,23 @@ keyToString key =
         RequestError ->
             "REQUEST_ERROR"
 
+        Settings ->
+            "SETTINGS"
+
+        SettingsNotice ->
+            "SETTINGS_NOTICE"
+
         Tagline ->
             "TAGLINE"
+
+        Theme ->
+            "THEME"
+
+        ThemeDark ->
+            "THEME_DARK"
+
+        ThemeLight ->
+            "THEME_LIGHT"
 
         ToPost ->
             "TO_POST"
@@ -450,6 +506,9 @@ phrases =
                 , ( "pt", "Ocorreu um error no processo de criptografia" )
                 ]
           )
+        , ( "ENGLISH"
+          , Dict.fromList [ ( "en", "English" ), ( "pt", "Inglês" ) ]
+          )
         , ( "FORBIDDEN_AREA"
           , Dict.fromList
                 [ ( "en", "You need to be logged in to see this page. Please" )
@@ -532,6 +591,9 @@ phrases =
         , ( "INVITE_USED"
           , Dict.fromList [ ( "en", "Used" ), ( "pt", "Usado" ) ]
           )
+        , ( "LANGUAGE"
+          , Dict.fromList [ ( "en", "Language" ), ( "pt", "Idioma" ) ]
+          )
         , ( "LOADING"
           , Dict.fromList [ ( "en", "Loading" ), ( "pt", "Carregando" ) ]
           )
@@ -558,6 +620,9 @@ phrases =
           )
         , ( "NO_POST"
           , Dict.fromList [ ( "en", "No posts" ), ( "pt", "Sem posts" ) ]
+          )
+        , ( "PORTUGUESE"
+          , Dict.fromList [ ( "en", "Portuguese" ), ( "pt", "Português" ) ]
           )
         , ( "POSTS_NO_MORE"
           , Dict.fromList
@@ -665,11 +730,32 @@ phrases =
                   )
                 ]
           )
+        , ( "SETTINGS"
+          , Dict.fromList [ ( "en", "Settings" ), ( "pt", "Configurações" ) ]
+          )
+        , ( "SETTINGS_NOTICE"
+          , Dict.fromList
+                [ ( "en"
+                  , "All settings are stored in browser. This means your changes won't be carried to other browsers or computers."
+                  )
+                , ( "pt"
+                  , "Todas as configurações são guardadas no seu navegador. Isto significa que as alterações não serão replicadas em outros navegadores ou computadores."
+                  )
+                ]
+          )
         , ( "TAGLINE"
           , Dict.fromList
                 [ ( "en", "“Journaling made safe and simple”" )
                 , ( "pt", "“Um diário seguro e simples”" )
                 ]
+          )
+        , ( "THEME"
+          , Dict.fromList
+                [ ( "en", "Color theme" ), ( "pt", "Esquema de cores" ) ]
+          )
+        , ( "THEME_DARK", Dict.fromList [ ( "en", "Dark" ), ( "pt", "Dark" ) ] )
+        , ( "THEME_LIGHT"
+          , Dict.fromList [ ( "en", "Light" ), ( "pt", "Light" ) ]
           )
         , ( "TO_POST", Dict.fromList [ ( "en", "Post" ), ( "pt", "Postar" ) ] )
         , ( "UNEXPECTED_REGISTER_ERROR"

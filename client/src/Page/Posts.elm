@@ -93,6 +93,7 @@ type Msg
     | GalleryNav Int
     | ClearPost
     | Paste (List File.File)
+    | NoOp
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -190,13 +191,14 @@ viewWithUser i context model _ =
                                                     , HtmlAttributes.css
                                                         [ Css.border <| Css.px 0
                                                         , Css.backgroundColor (context.theme |> View.Theme.errorColor |> Color.Extra.toCss)
+                                                        , Css.display Css.block
+                                                        , Css.lineHeight <| Css.num 0
                                                         , Css.position Css.absolute
                                                         , Css.top <| Css.px 0
                                                         , Css.right <| Css.px 0
                                                         , Css.color (context.theme |> View.Theme.errorColor |> Color.Extra.toContrast 0.5 |> Color.Extra.toCss)
                                                         , Css.fontSize <| Css.rem 1.5
                                                         , Css.padding <| Css.rem 0.5
-                                                        , Css.paddingBottom <| Css.rem 0.25
                                                         , Css.borderRadius2 (Css.rem 0) (Css.rem 0.5)
                                                         , Css.cursor Css.pointer
                                                         ]
@@ -206,7 +208,12 @@ viewWithUser i context model _ =
                                                 ]
                                         )
                                 )
-                    , Html.div [ HtmlAttributes.css [ Css.position Css.relative ] ]
+                    , Html.div
+                        [ HtmlAttributes.css
+                            [ Css.display Css.flex_
+                            , Css.justifyContent Css.spaceBetween
+                            ]
+                        ]
                         [ Html.button
                             [ HtmlEvents.onClick RequestImages
                             , HtmlAttributes.type_ "button"
@@ -217,23 +224,14 @@ viewWithUser i context model _ =
                                 , Css.fontSize <| Css.rem 2.5
                                 , Css.margin <| Css.px 0
                                 , Css.padding <| Css.px 0
-                                , Css.display Css.flex_
-                                , Css.alignItems Css.center
-                                , Css.justifyItems Css.center
-                                , Css.height <| Css.rem 3.2
                                 , Css.cursor Css.pointer
+                                , Css.display Css.block
+                                , Css.lineHeight <| Css.num 0
                                 ]
                             ]
                             [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                         , Html.div
-                            [ HtmlAttributes.css
-                                [ Css.position Css.absolute
-                                , Css.right <| Css.px 0
-                                , Css.top <| Css.px 0
-                                , Css.display Css.flex_
-                                , Css.justifyContent Css.flexEnd
-                                ]
-                            ]
+                            [ HtmlAttributes.css [ Css.display Css.flex_ ] ]
                             [ case buildPostContent model of
                                 Ok _ ->
                                     Html.button
@@ -301,7 +299,6 @@ viewGallery theme index gallery =
                 [ Css.position Css.absolute
                 , Css.top <| Css.px 0
                 , Css.bottom <| Css.px 0
-                , Css.width <| Css.pct 50
                 , Css.border <| Css.px 0
                 , Css.backgroundColor Css.transparent
                 , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
@@ -309,8 +306,11 @@ viewGallery theme index gallery =
                 , Css.alignItems Css.center
                 , Css.cursor Css.pointer
                 , Css.fontSize <| Css.rem 2
-                , Css.padding <| Css.px 0
+                , Css.padding <| Css.rem 1
                 ]
+
+        onClickNoPropagation msg =
+            HtmlEvents.stopPropagationOn "click" (Json.Decode.succeed ( msg, True ))
     in
     Html.div
         [ HtmlAttributes.css
@@ -324,6 +324,7 @@ viewGallery theme index gallery =
             , Css.alignItems Css.center
             , Css.justifyContent Css.center
             ]
+        , HtmlEvents.onClick GalleryClose
         ]
         (Html.img
             [ HtmlAttributes.src image
@@ -332,6 +333,7 @@ viewGallery theme index gallery =
                 , Css.maxHeight <| Css.pct 85
                 , Css.display Css.block
                 ]
+            , onClickNoPropagation NoOp
             ]
             []
             :: (if List.length gallery > 1 then
@@ -340,9 +342,8 @@ viewGallery theme index gallery =
                             [ navStyle
                             , Css.right <| Css.px 0
                             , Css.justifyContent Css.flexEnd
-                            , Css.paddingRight <| Css.rem 1
                             ]
-                        , HtmlEvents.onClick (GalleryNav (index + 1))
+                        , onClickNoPropagation (GalleryNav (index + 1))
                         ]
                         [ Phosphor.arrowRight Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                     , Html.button
@@ -350,9 +351,8 @@ viewGallery theme index gallery =
                             [ navStyle
                             , Css.left <| Css.px 0
                             , Css.justifyContent Css.flexStart
-                            , Css.paddingLeft <| Css.rem 1
                             ]
-                        , HtmlEvents.onClick (GalleryNav (index - 1))
+                        , onClickNoPropagation (GalleryNav (index - 1))
                         ]
                         [ Phosphor.arrowLeft Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                     ]
@@ -370,8 +370,9 @@ viewGallery theme index gallery =
                         , Css.backgroundColor Css.transparent
                         , Css.fontSize <| Css.rem 2
                         , Css.cursor Css.pointer
-                        , Css.padding <| Css.px 0
-                        , Css.margin <| Css.rem 1
+                        , Css.padding <| Css.rem 1
+                        , Css.margin <| Css.rem 0
+                        , Css.lineHeight <| Css.num 0
                         ]
                     , HtmlEvents.onClick GalleryClose
                     ]
@@ -843,6 +844,9 @@ imageMimes =
 updateWithUser : Translations.Helper -> Msg -> Model -> Business.User.User -> ( Model, Effect.Effect, Cmd Msg )
 updateWithUser i msg model user =
     case msg of
+        NoOp ->
+            ( model, Effect.none, Cmd.none )
+
         WithPostInput event ->
             ( { model | postInput = Form.updateInput event Page.nonEmptyInputParser model.postInput }
             , Effect.none

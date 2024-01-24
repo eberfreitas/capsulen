@@ -7,6 +7,7 @@ module View.Theme exposing
     , fromString
     , successColor
     , textColor
+    , toString
     , warningColor
     )
 
@@ -33,6 +34,16 @@ fromString theme =
 
         _ ->
             Light
+
+
+toString : Theme -> String
+toString theme =
+    case theme of
+        Light ->
+            "light"
+
+        Dark ->
+            "dark"
 
 
 themePalette : Theme -> View.Theme.Palette.Palette

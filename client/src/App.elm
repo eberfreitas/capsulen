@@ -15,6 +15,7 @@ import Page.Login
 import Page.NotFound
 import Page.Posts
 import Page.Register
+import Page.Settings
 import Port
 import Translations
 import Tuple.Extra
@@ -36,6 +37,7 @@ type Page
     | Login Page.Login.Model
     | Posts Page.Posts.Model
     | Invites Page.Invites.Model
+    | Settings Page.Settings.Model
     | NotFound
 
 
@@ -46,6 +48,7 @@ type Msg
     | LoginMsg Page.Login.Msg
     | PostsMsg Page.Posts.Msg
     | InvitesMsg Page.Invites.Msg
+    | SettingsMsg Page.Settings.Msg
     | AlertsMsg View.Alerts.Msg
 
 
@@ -70,6 +73,9 @@ view model =
 
                 Invites subModel ->
                     subModel |> Page.Invites.view i model.context |> Html.map InvitesMsg
+
+                Settings subModel ->
+                    subModel |> Page.Settings.view i model.context |> Html.map SettingsMsg
 
                 NotFound ->
                     Page.NotFound.view model.context.theme
@@ -162,6 +168,9 @@ update msg model =
         ( InvitesMsg subMsg, Invites subModel ) ->
             pageUpdate Page.Invites.update InvitesMsg subMsg Invites subModel model.context
 
+        ( SettingsMsg subMsg, Settings subModel ) ->
+            pageUpdate Page.Settings.update SettingsMsg subMsg Settings subModel model.context
+
         _ ->
             ( model, Cmd.none )
 
@@ -240,6 +249,13 @@ router context url =
                     Invites
                     identity
                     (Cmd.map InvitesMsg)
+
+        [ "settings" ] ->
+            Page.Settings.init (Translations.translate context.language) context
+                |> Tuple.Extra.mapTrio
+                    Settings
+                    identity
+                    (Cmd.map SettingsMsg)
 
         _ ->
             ( NotFound, Effect.none, Cmd.none )

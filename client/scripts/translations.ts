@@ -194,5 +194,37 @@ export const translations = {
   NO_POST: {
     en: "No posts",
     pt: "Sem posts",
-  }
+  },
+  SETTINGS: {
+    en: "Settings",
+    pt: "Configurações",
+  },
+  SETTINGS_NOTICE: {
+    en: "All settings are stored in browser. This means your changes won't be carried to other browsers or computers.",
+    pt: "Todas as configurações são guardadas no seu navegador. Isto significa que as alterações não serão replicadas em outros navegadores ou computadores.",
+  },
+  LANGUAGE: {
+    en: "Language",
+    pt: "Idioma",
+  },
+  ENGLISH: {
+    en: "English",
+    pt: "Inglês",
+  },
+  PORTUGUESE: {
+    en: "Portuguese",
+    pt: "Português",
+  },
+  THEME: {
+    en: "Color theme",
+    pt: "Esquema de cores",
+  },
+  THEME_LIGHT: {
+    en: "Light",
+    pt: "Light",
+  },
+  THEME_DARK: {
+    en: "Dark",
+    pt: "Dark",
+  },
 };

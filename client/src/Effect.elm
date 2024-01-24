@@ -3,12 +3,14 @@ module Effect exposing
     , addAlert
     , batch
     , decayAlerts
+    , language
     , login
     , logout
     , none
     , redirect
     , removeAlert
     , run
+    , theme
     , toggleLoader
     , username
     )
@@ -19,6 +21,8 @@ import Business.User
 import Context
 import List.Extra
 import Port
+import Translations
+import View.Theme
 
 
 type Effect
@@ -32,6 +36,8 @@ type Effect
     | Logout
     | ToggleLoader
     | Username (Maybe String)
+    | Language Translations.Language
+    | Theme View.Theme.Theme
 
 
 none : Effect
@@ -82,6 +88,16 @@ logout =
 username : Maybe String -> Effect
 username =
     Username
+
+
+language : Translations.Language -> Effect
+language =
+    Language
+
+
+theme : View.Theme.Theme -> Effect
+theme =
+    Theme
 
 
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
@@ -135,3 +151,9 @@ run context effect =
 
         Username username_ ->
             ( { context | username = username_ }, Cmd.none )
+
+        Language language_ ->
+            ( { context | language = language_ }, Cmd.none )
+
+        Theme theme_ ->
+            ( { context | theme = theme_ }, Cmd.none )

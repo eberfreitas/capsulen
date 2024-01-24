@@ -25,11 +25,6 @@ import View.Style
 import View.Theme
 
 
-type Generating
-    = Idle
-    | Running
-
-
 type alias Model =
     { invites : List Business.InviteCode.Invite
     , tasks : TaskPool
@@ -111,33 +106,46 @@ viewWithUser i context model _ =
             Form.submitBtnByState model.genFormState
     in
     Internal.template i context.theme Logout <|
-        Html.div
-            [ HtmlAttributes.css
-                [ Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
-                , Css.lineHeight <| Css.num 1.5
-                ]
-            ]
-            [ Html.div
-                [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 1 ] ]
-                [ Html.text <| i Translations.InviteHelp ]
-            , Html.div
-                [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]
-                [ Html.button
-                    ([ HtmlAttributes.css <| View.Style.btn context.theme :: btnStyles
-                     , HtmlEvents.onClick Generate
-                     ]
-                        ++ btnAttrs
-                    )
-                    [ Html.text <| i Translations.InviteGenerate ]
-                ]
-            , Html.ul
+        Html.div []
+            [ Html.h1
                 [ HtmlAttributes.css
-                    [ Css.margin <| Css.px 0
-                    , Css.padding <| Css.px 0
-                    , Css.listStyle Css.none
+                    [ Css.color (context.theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                    , Css.textAlign Css.center
+                    , Css.fontSize <| Css.rem 2
+                    , Css.fontWeight Css.bold
+                    , Css.marginBottom <| Css.rem 2
+                    , Css.width <| Css.pct 100
                     ]
                 ]
-                (model.invites |> List.map (viewInvite i context.theme))
+                [ Html.text <| i Translations.InviteCode ]
+            , Html.div
+                [ HtmlAttributes.css
+                    [ Css.color (context.theme |> View.Theme.textColor |> Color.Extra.toCss)
+                    , Css.lineHeight <| Css.num 1.5
+                    ]
+                ]
+                [ Html.div
+                    [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 1 ] ]
+                    [ Html.text <| i Translations.InviteHelp ]
+                , Html.div
+                    [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]
+                    [ Html.button
+                        ([ HtmlAttributes.css <| View.Style.btn context.theme :: btnStyles
+                         , HtmlEvents.onClick Generate
+                         ]
+                            ++ btnAttrs
+                        )
+                        [ Html.text <| i Translations.InviteGenerate ]
+                    ]
+                , Html.ul
+                    [ HtmlAttributes.css
+                        [ Css.margin <| Css.px 0
+                        , Css.padding <| Css.px 0
+                        , Css.listStyle Css.none
+                        ]
+                    ]
+                    (model.invites |> List.map (viewInvite i context.theme))
+                ]
             ]
 
 

@@ -8,10 +8,12 @@ import Effect
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
+import Phosphor
 import Translations
 import View.Logo
 import View.Style
 import View.Theme
+import Color.Extra
 
 
 template :
@@ -27,25 +29,46 @@ template i theme logoutMsg content =
             , Css.width <| Css.pct 100
             ]
         ]
-        [ Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2, Css.position Css.relative ] ]
+        [ Html.div
+            [ HtmlAttributes.css
+                [ Css.marginBottom <| Css.rem 2
+                , Css.display Css.flex_
+                , Css.justifyContent Css.spaceBetween
+                , Css.alignItems Css.center
+                ]
+            ]
             [ Html.div []
                 [ Html.a [ HtmlAttributes.href "/posts" ] [ View.Logo.logo 40 <| View.Theme.foregroundColor theme ] ]
             , Html.div
-                [ HtmlAttributes.css
-                    [ Css.position Css.absolute
-                    , Css.right <| Css.px 0
-                    , Css.top <| Css.px 0
-                    ]
-                ]
-                [ Html.button
-                    [ HtmlEvents.onClick logoutMsg
-                    , HtmlAttributes.css
-                        [ View.Style.btn theme
-                        , View.Style.btnInverse theme
-                        , View.Style.btnShort
+                [ HtmlAttributes.css [ Css.display Css.flex_, Css.alignItems Css.center ] ]
+                [ Html.div [ HtmlAttributes.css [ Css.marginRight <| Css.rem 1 ] ]
+                    [ Html.a
+                        [ HtmlAttributes.css
+                            [ Css.backgroundColor Css.transparent
+                            , Css.lineHeight <| Css.num 0
+                            , Css.color (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
+                            , Css.margin <| Css.px 0
+                            , Css.padding <| Css.px 0
+                            , Css.border <| Css.px 0
+                            , Css.fontSize <| Css.rem 2
+                            , Css.cursor Css.pointer
+                            , Css.display Css.block
+                            ]
+                        , HtmlAttributes.href "/settings"
                         ]
+                        [ Phosphor.gear Phosphor.Regular |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                     ]
-                    [ Html.text <| i Translations.Logout ]
+                , Html.div []
+                    [ Html.button
+                        [ HtmlEvents.onClick logoutMsg
+                        , HtmlAttributes.css
+                            [ View.Style.btn theme
+                            , View.Style.btnInverse theme
+                            , View.Style.btnShort
+                            ]
+                        ]
+                        [ Html.text <| i Translations.Logout ]
+                    ]
                 ]
             ]
         , content

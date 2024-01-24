@@ -1,4 +1,4 @@
-import '@github/clipboard-copy-element'
+import "@github/clipboard-copy-element";
 import * as ConcurrentTask from "@andrewmacmurray/elm-concurrent-task";
 import topbar from "topbar";
 import * as Sentry from "@sentry/browser";
@@ -32,10 +32,15 @@ if (process.env.SENTRY_CLIENT_DSN) {
 
 (function() {
   const username = get("username");
-  const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-  const language = navigator.language.split("-")[0] ?? "en";
+
+  const colorScheme =
+    (get("theme") as string) ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light");
+
+  const language =
+    (get("language") as string) ?? navigator.language.split("-")[0] ?? "en";
 
   const app = window.Elm.App.init({
     flags: { colorScheme, language, username },
