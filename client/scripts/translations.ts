@@ -190,5 +190,9 @@ export const translations = {
   INVITE_COUNT_ERROR: {
     en: "You have already created the maximum of pending invites.",
     pt: "Você já criou o máximo de convites pendentes.",
+  },
+  NO_POST: {
+    en: "No posts",
+    pt: "Sem posts",
   }
 };

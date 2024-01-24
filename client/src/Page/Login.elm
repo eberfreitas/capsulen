@@ -48,6 +48,7 @@ type alias Model =
     { tasks : TaskPool
     , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
+    , loginFormState : Form.FormState
     , showPrivateKey : Bool
     }
 
@@ -85,6 +86,7 @@ initModel =
     { tasks = ConcurrentTask.pool
     , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
+    , loginFormState = Form.Editing
     , showPrivateKey = False
     }
 
@@ -144,6 +146,7 @@ update i context msg model =
                     { model
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
+                        , loginFormState = Form.Submitting
                     }
             in
             case buildLoginData newModel.usernameInput newModel.privateKeyInput of
@@ -220,7 +223,7 @@ update i context msg model =
                     ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
-                    ( newModel
+                    ( { newModel | loginFormState = Form.Editing }
                     , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                     , Cmd.none
                     )
@@ -239,7 +242,7 @@ update i context msg model =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( model
+            ( { model | loginFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
@@ -248,7 +251,7 @@ update i context msg model =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
-            ( model
+            ( { model | loginFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -257,7 +260,7 @@ update i context msg model =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model
+            ( { model | loginFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -284,6 +287,7 @@ view i context model =
             context.theme
             Translations.Login
             Submit
+            model.loginFormState
             [ View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
             , View.Access.Form.privateKeyField i
                 context.theme

@@ -1,4 +1,13 @@
-module Page.Posts exposing (Model, Msg, TaskOutput, TaskPool, init, subscriptions, update, view)
+module Page.Posts exposing
+    ( Model
+    , Msg
+    , TaskOutput
+    , TaskPool
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Alert
 import AppUrl
@@ -60,6 +69,7 @@ type alias Model =
     { tasks : TaskPool
     , postInput : Form.Input String
     , postImages : List String
+    , postFormState : Form.FormState
     , posts : List Business.Post.Post
     , loadingState : PostsLoading
     , gallery : ( Int, List String )
@@ -97,6 +107,10 @@ viewWithUser :
     -> Business.User.User
     -> Html.Html Msg
 viewWithUser i context model _ =
+    let
+        ( btnStyles, btnAttrs ) =
+            Form.submitBtnByState model.postFormState
+    in
     Internal.template i context.theme Logout <|
         Html.div []
             [ Html.form
@@ -236,15 +250,15 @@ viewWithUser i context model _ =
                                 _ ->
                                     Html.text ""
                             , Html.button
-                                [ HtmlAttributes.css [ View.Style.btn context.theme ] ]
+                                (HtmlAttributes.css (View.Style.btn context.theme :: btnStyles) :: btnAttrs)
                                 [ Html.text <| i Translations.ToPost ]
                             ]
                         ]
                     ]
                 ]
             , Html.div []
-                (case model.posts of
-                    [] ->
+                (case ( model.posts, model.loadingState ) of
+                    ( [], Loaded ) ->
                         [ Html.div
                             [ HtmlAttributes.css
                                 [ Css.fontSize <| Css.rem 2
@@ -258,10 +272,10 @@ viewWithUser i context model _ =
                                     )
                                 ]
                             ]
-                            [ Html.text "No posts" ]
+                            [ Html.text <| i Translations.NoPost ]
                         ]
 
-                    posts ->
+                    ( posts, _ ) ->
                         [ Html.div [] (posts |> List.map (viewPost context.language context.theme))
                         , Html.div []
                             [ loadMoreBtn i context.theme model.loadingState ]
@@ -806,6 +820,7 @@ init i context =
     ( { tasks = newTasks
       , postInput = Form.newInput
       , postImages = []
+      , postFormState = Form.Editing
       , posts = []
       , loadingState = Loading
       , gallery = ( 0, [] )
@@ -864,7 +879,10 @@ updateWithUser i msg model user =
             let
                 newModel : Model
                 newModel =
-                    { model | postInput = Form.parseInput Page.nonEmptyInputParser model.postInput }
+                    { model
+                        | postInput = Form.parseInput Page.nonEmptyInputParser model.postInput
+                        , postFormState = Form.Submitting
+                    }
             in
             case buildPostContent newModel of
                 Ok postContent ->
@@ -910,7 +928,7 @@ updateWithUser i msg model user =
                     ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
-                    ( newModel
+                    ( { newModel | postFormState = Form.Editing }
                     , Effect.addAlert (Alert.new Alert.Error (i errorKey))
                     , Cmd.none
                     )
@@ -972,6 +990,7 @@ updateWithUser i msg model user =
                 | posts = post :: model.posts
                 , postImages = []
                 , postInput = Form.newInput
+                , postFormState = Form.Editing
               }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Success <| i Translations.PostNew)
@@ -1037,7 +1056,7 @@ updateWithUser i msg model user =
             ( model, Effect.none, Cmd.none )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( { model | loadingState = Loaded }
+            ( { model | loadingState = Loaded, postFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
@@ -1046,7 +1065,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
-            ( { model | loadingState = Loaded }
+            ( { model | loadingState = Loaded, postFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -1055,7 +1074,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( { model | loadingState = Loaded }
+            ( { model | loadingState = Loaded, postFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader

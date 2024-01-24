@@ -1,11 +1,13 @@
 module Form exposing
-    ( Input
+    ( FormState(..)
+    , Input
     , InputEvent(..)
     , InputState(..)
     , Validity(..)
     , inputEvents
     , newInput
     , parseInput
+    , submitBtnByState
     , updateInput
     , viewInputError
     )
@@ -16,7 +18,13 @@ import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
 import Translations
+import View.Style
 import View.Theme
+
+
+type FormState
+    = Editing
+    | Submitting
 
 
 type alias Input a =
@@ -107,3 +115,13 @@ viewInputError i theme input =
 
         _ ->
             Html.text ""
+
+
+submitBtnByState : FormState -> ( List Css.Style, List (Html.Attribute msg) )
+submitBtnByState state =
+    case state of
+        Editing ->
+            ( [], [] )
+
+        Submitting ->
+            ( [ View.Style.btnDisabled ], [ HtmlAttributes.disabled True ] )

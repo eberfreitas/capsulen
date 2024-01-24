@@ -57,6 +57,7 @@ type alias Model =
     , usernameInput : Form.Input Business.Username.Username
     , privateKeyInput : Form.Input Business.PrivateKey.PrivateKey
     , inviteCodeInput : Form.Input Business.InviteCode.InviteCode
+    , registerFormState : Form.FormState
     , showPrivateKey : Bool
     }
 
@@ -94,6 +95,7 @@ initModel =
     , usernameInput = Form.newInput
     , privateKeyInput = Form.newInput
     , inviteCodeInput = Form.newInput
+    , registerFormState = Form.Editing
     , showPrivateKey = False
     }
 
@@ -153,6 +155,7 @@ update i _ msg model =
                         | usernameInput = Form.parseInput Business.Username.fromString model.usernameInput
                         , privateKeyInput = Form.parseInput Business.PrivateKey.fromString model.privateKeyInput
                         , inviteCodeInput = Form.parseInput Business.InviteCode.fromString model.inviteCodeInput
+                        , registerFormState = Form.Submitting
                     }
             in
             case buildRegisterData newModel.usernameInput newModel.privateKeyInput newModel.inviteCodeInput of
@@ -224,7 +227,7 @@ update i _ msg model =
                     ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
                 Err errorKey ->
-                    ( newModel
+                    ( { newModel | registerFormState = Form.Editing }
                     , Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                     , Cmd.none
                     )
@@ -243,7 +246,7 @@ update i _ msg model =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( model
+            ( { model | registerFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
@@ -252,7 +255,7 @@ update i _ msg model =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
-            ( model
+            ( { model | registerFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -261,7 +264,7 @@ update i _ msg model =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( model
+            ( { model | registerFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -289,6 +292,7 @@ view i context model =
             context.theme
             Translations.Register
             Submit
+            model.registerFormState
             [ View.Access.Form.inviteCodeField i context.theme WithInviteCode model.inviteCodeInput
             , View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
             , View.Access.Form.privateKeyField i

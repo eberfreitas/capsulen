@@ -1,5 +1,6 @@
-module View.Access.Form exposing (Msgs, form, privateKeyField, usernameField, inviteCodeField)
+module View.Access.Form exposing (Msgs, form, inviteCodeField, privateKeyField, usernameField)
 
+import Business.InviteCode
 import Business.PrivateKey
 import Business.Username
 import Color.Extra
@@ -12,7 +13,6 @@ import Phosphor
 import Translations
 import View.Style
 import View.Theme
-import Business.InviteCode
 
 
 type alias Msgs msg =
@@ -158,9 +158,14 @@ form :
     -> View.Theme.Theme
     -> Translations.Key
     -> msg
+    -> Form.FormState
     -> List (Html.Html msg)
     -> Html.Html msg
-form i theme actionKey msg fields =
+form i theme actionKey msg state fields =
+    let
+        ( btnStyles, btnAttrs ) =
+            Form.submitBtnByState state
+    in
     Html.form
         [ HtmlEvents.onSubmit msg
         , HtmlAttributes.css
@@ -196,7 +201,14 @@ form i theme actionKey msg fields =
                 ]
                 [ Html.text <| i Translations.PrivateKeyNotice ]
             , Html.button
-                [ HtmlAttributes.css [ View.Style.btn theme, View.Style.btnFull ] ]
+                (HtmlAttributes.css
+                    ([ View.Style.btn theme
+                     , View.Style.btnFull
+                     ]
+                        ++ btnStyles
+                    )
+                    :: btnAttrs
+                )
                 [ Html.text <| i actionKey ]
             ]
         ]

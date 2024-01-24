@@ -10,6 +10,7 @@ import ConcurrentTask.Http.Extra
 import Context
 import Css
 import Effect
+import Form
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Html.Styled.Events as HtmlEvents
@@ -32,7 +33,7 @@ type Generating
 type alias Model =
     { invites : List Business.InviteCode.Invite
     , tasks : TaskPool
-    , generating : Generating
+    , genFormState : Form.FormState
     }
 
 
@@ -87,7 +88,7 @@ init i context =
                     )
                 |> Maybe.withDefault ( tasks, Cmd.none )
     in
-    ( { invites = [], tasks = newTasks, generating = Idle }
+    ( { invites = [], tasks = newTasks, genFormState = Form.Editing }
     , effect
     , cmd
     )
@@ -107,12 +108,7 @@ viewWithUser :
 viewWithUser i context model _ =
     let
         ( btnStyles, btnAttrs ) =
-            case model.generating of
-                Idle ->
-                    ( [], [] )
-
-                Running ->
-                    ( [ View.Style.btnDisabled ], [ HtmlAttributes.disabled True ] )
+            Form.submitBtnByState model.genFormState
     in
     Internal.template i context.theme Logout <|
         Html.div
@@ -247,13 +243,13 @@ updateWithUser i msg model user =
                         }
                         generateInvite
             in
-            ( { model | tasks = tasks, generating = Running }, Effect.toggleLoader, cmd )
+            ( { model | tasks = tasks, genFormState = Form.Submitting }, Effect.toggleLoader, cmd )
 
         OnTaskProgress ( tasks, cmd ) ->
             ( { model | tasks = tasks }, Effect.none, cmd )
 
         OnTaskComplete (ConcurrentTask.Success (Generated invite)) ->
-            ( { model | invites = invite :: model.invites, generating = Idle }
+            ( { model | invites = invite :: model.invites, genFormState = Form.Editing }
             , Effect.toggleLoader
             , Cmd.none
             )
@@ -265,7 +261,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.Generic errorKey)) ->
-            ( { model | generating = Idle }
+            ( { model | genFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i errorKey)
                 , Effect.toggleLoader
@@ -274,7 +270,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
-            ( { model | generating = Idle }
+            ( { model | genFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader
@@ -283,7 +279,7 @@ updateWithUser i msg model user =
             )
 
         OnTaskComplete (ConcurrentTask.UnexpectedError _) ->
-            ( { model | generating = Idle }
+            ( { model | genFormState = Form.Editing }
             , Effect.batch
                 [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
                 , Effect.toggleLoader

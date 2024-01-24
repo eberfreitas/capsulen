@@ -33,6 +33,7 @@ type Key
     | LoginError
     | Logout
     | LogoutSuccess
+    | NoPost
     | PostsNoMore
     | PostAbout
     | PostEncrypted
@@ -160,6 +161,9 @@ keyFromString key =
 
         "LOGOUT_SUCCESS" ->
             LogoutSuccess
+
+        "NO_POST" ->
+            NoPost
 
         "POSTS_NO_MORE" ->
             PostsNoMore
@@ -311,6 +315,9 @@ keyToString key =
 
         LogoutSuccess ->
             "LOGOUT_SUCCESS"
+
+        NoPost ->
+            "NO_POST"
 
         PostsNoMore ->
             "POSTS_NO_MORE"
@@ -548,6 +555,9 @@ phrases =
         , ( "LOGOUT", Dict.fromList [ ( "en", "Logout" ), ( "pt", "Sair" ) ] )
         , ( "LOGOUT_SUCCESS"
           , Dict.fromList [ ( "en", "See you soon!" ), ( "pt", "Até breve!" ) ]
+          )
+        , ( "NO_POST"
+          , Dict.fromList [ ( "en", "No posts" ), ( "pt", "Sem posts" ) ]
           )
         , ( "POSTS_NO_MORE"
           , Dict.fromList
