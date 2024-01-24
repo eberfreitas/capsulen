@@ -292,13 +292,15 @@ view i context model =
             Translations.Register
             Submit
             model.registerFormState
-            [ View.Access.Form.inviteCodeField i context.theme WithInviteCode model.inviteCodeInput
-            , View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
+            5
+            [ View.Access.Form.inviteCodeField i context.theme WithInviteCode 1 model.inviteCodeInput
+            , View.Access.Form.usernameField i context.theme WithUsername 2 model.usernameInput
             , View.Access.Form.privateKeyField i
                 context.theme
                 WithPrivateKey
                 ToggleShowPrivateKey
                 model.showPrivateKey
+                3
                 model.privateKeyInput
             ]
         , Html.a

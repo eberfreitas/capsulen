@@ -288,12 +288,14 @@ view i context model =
             Translations.Login
             Submit
             model.loginFormState
-            [ View.Access.Form.usernameField i context.theme WithUsername model.usernameInput
+            4
+            [ View.Access.Form.usernameField i context.theme WithUsername 1 model.usernameInput
             , View.Access.Form.privateKeyField i
                 context.theme
                 WithPrivateKey
                 ToggleShowPrivateKey
                 model.showPrivateKey
+                2
                 model.privateKeyInput
             ]
         , Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 2 ] ]

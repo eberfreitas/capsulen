@@ -54,9 +54,10 @@ inviteCodeField :
     Translations.Helper
     -> View.Theme.Theme
     -> (Form.InputEvent -> msg)
+    -> Int
     -> Form.Input Business.InviteCode.InviteCode
     -> Html.Html msg
-inviteCodeField i theme msg input =
+inviteCodeField i theme msg index input =
     Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
         [ Html.label
             [ HtmlAttributes.for "inviteCode"
@@ -69,6 +70,7 @@ inviteCodeField i theme msg input =
              , HtmlAttributes.name "inviteCode"
              , HtmlAttributes.id "inviteCode"
              , HtmlAttributes.value input.raw
+             , HtmlAttributes.tabindex index
              ]
                 ++ Form.inputEvents msg
             )
@@ -81,9 +83,10 @@ usernameField :
     Translations.Helper
     -> View.Theme.Theme
     -> (Form.InputEvent -> msg)
+    -> Int
     -> Form.Input Business.Username.Username
     -> Html.Html msg
-usernameField i theme msg input =
+usernameField i theme msg index input =
     Html.div [ HtmlAttributes.css [ inputWrapperStyle ] ]
         [ Html.label
             [ HtmlAttributes.for "username"
@@ -96,6 +99,7 @@ usernameField i theme msg input =
              , HtmlAttributes.name "username"
              , HtmlAttributes.id "username"
              , HtmlAttributes.value input.raw
+             , HtmlAttributes.tabindex index
              ]
                 ++ Form.inputEvents msg
             )
@@ -110,9 +114,10 @@ privateKeyField :
     -> (Form.InputEvent -> msg)
     -> msg
     -> Bool
+    -> Int
     -> Form.Input Business.PrivateKey.PrivateKey
     -> Html.Html msg
-privateKeyField i theme msg toggleMsg showPrivateKey input =
+privateKeyField i theme msg toggleMsg showPrivateKey index input =
     let
         ( privateKeyInputType, togglePrivateKeyIcon ) =
             if showPrivateKey then
@@ -133,6 +138,7 @@ privateKeyField i theme msg toggleMsg showPrivateKey input =
              , HtmlAttributes.name "privateKey"
              , HtmlAttributes.id "privateKey"
              , HtmlAttributes.value input.raw
+             , HtmlAttributes.tabindex index
              ]
                 ++ Form.inputEvents msg
             )
@@ -140,6 +146,7 @@ privateKeyField i theme msg toggleMsg showPrivateKey input =
         , Html.button
             [ HtmlAttributes.type_ "button"
             , HtmlEvents.onClick toggleMsg
+            , HtmlAttributes.tabindex <| index + 1
             , HtmlAttributes.css
                 [ View.Style.btn theme
                 , Css.borderRadius4 (Css.rem 0) (Css.rem 0.5) (Css.rem 0.5) (Css.rem 0)
@@ -161,9 +168,10 @@ form :
     -> Translations.Key
     -> msg
     -> Form.FormState
+    -> Int
     -> List (Html.Html msg)
     -> Html.Html msg
-form i theme actionKey msg state fields =
+form i theme actionKey msg state submitBtnIndex fields =
     let
         ( btnStyles, btnAttrs ) =
             Form.submitBtnByState state
@@ -203,13 +211,15 @@ form i theme actionKey msg state fields =
                 ]
                 [ Html.text <| i Translations.PrivateKeyNotice ]
             , Html.button
-                (HtmlAttributes.css
+                ([ HtmlAttributes.css
                     ([ View.Style.btn theme
                      , View.Style.btnFull
                      ]
                         ++ btnStyles
                     )
-                    :: btnAttrs
+                 , HtmlAttributes.tabindex submitBtnIndex
+                 ]
+                    ++ btnAttrs
                 )
                 [ Html.text <| i actionKey ]
             ]
