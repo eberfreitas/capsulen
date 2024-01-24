@@ -238,8 +238,7 @@ update i _ msg model =
         OnTaskComplete (ConcurrentTask.Success (Register ())) ->
             ( model
             , Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Success <| i Translations.RegisterSuccess)
-                , Effect.redirect "/"
+                [ Effect.redirectWithAlert "/" (Alert.new Alert.Success <| i Translations.RegisterSuccess)
                 , Effect.toggleLoader
                 ]
             , Cmd.none

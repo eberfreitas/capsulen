@@ -2,6 +2,7 @@ module Internal exposing (initEffect, logout, template, update, view)
 
 import Alert
 import Business.User
+import Color.Extra
 import Context
 import Css
 import Effect
@@ -13,7 +14,6 @@ import Translations
 import View.Logo
 import View.Style
 import View.Theme
-import Color.Extra
 
 
 template :
@@ -91,12 +91,7 @@ initEffect : Translations.Helper -> Maybe Business.User.User -> Effect.Effect
 initEffect i user =
     user
         |> Maybe.map (always Effect.none)
-        |> Maybe.withDefault
-            (Effect.batch
-                [ Effect.addAlert (Alert.new Alert.Error <| i Translations.ForbiddenArea)
-                , Effect.redirect "/"
-                ]
-            )
+        |> Maybe.withDefault (Effect.redirectWithAlert "/" (Alert.new Alert.Error <| i Translations.ForbiddenArea))
 
 
 update :
@@ -117,8 +112,7 @@ logout i model =
     ( model
     , Effect.batch
         [ Effect.logout
-        , Effect.redirect "/"
-        , Effect.addAlert (Alert.new Alert.Success <| i Translations.LogoutSuccess)
+        , Effect.redirectWithAlert "/" (Alert.new Alert.Success <| i Translations.LogoutSuccess)
         ]
     , Cmd.none
     )

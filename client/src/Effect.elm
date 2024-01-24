@@ -8,6 +8,7 @@ module Effect exposing
     , logout
     , none
     , redirect
+    , redirectWithAlert
     , removeAlert
     , run
     , theme
@@ -38,6 +39,7 @@ type Effect
     | Username (Maybe String)
     | Language Translations.Language
     | Theme View.Theme.Theme
+    | RedirectWithAlert String Alert.Message
 
 
 none : Effect
@@ -100,6 +102,11 @@ theme =
     Theme
 
 
+redirectWithAlert : String -> Alert.Message -> Effect
+redirectWithAlert =
+    RedirectWithAlert
+
+
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
 run context effect =
     case effect of
@@ -138,7 +145,10 @@ run context effect =
             ( { context | alerts = alerts }, Cmd.none )
 
         Redirect path ->
-            ( context, Browser.Navigation.pushUrl context.key path )
+            ( { context | alerts = [] }, Browser.Navigation.pushUrl context.key path )
+
+        RedirectWithAlert path msg ->
+            ( { context | alerts = [ msg ] }, Browser.Navigation.pushUrl context.key path )
 
         Login user ->
             ( { context | user = Just user }, Cmd.none )

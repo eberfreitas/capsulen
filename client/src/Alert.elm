@@ -22,7 +22,7 @@ type Message
 
 new : Severity -> String -> Message
 new severity body =
-    Message { severity = severity, body = body, decay = 10 * 1000 }
+    Message { severity = severity, body = body, decay = 7.5 * 1000 }
 
 
 applyDecay : Float -> Message -> Maybe Message
