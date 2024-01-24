@@ -10,6 +10,7 @@ type Language
 
 type Key
     = AllPostsLoaded
+    | BuyMePizza
     | ClearPost
     | CredentialsIncorrect
     | Credits
@@ -103,6 +104,9 @@ keyFromString key =
     case key of
         "ALL_POSTS_LOADED" ->
             AllPostsLoaded
+
+        "BUY_ME_PIZZA" ->
+            BuyMePizza
 
         "CLEAR_POST" ->
             ClearPost
@@ -290,6 +294,9 @@ keyToString key =
     case key of
         AllPostsLoaded ->
             "ALL_POSTS_LOADED"
+
+        BuyMePizza ->
+            "BUY_ME_PIZZA"
 
         ClearPost ->
             "CLEAR_POST"
@@ -490,6 +497,12 @@ phrases =
           , Dict.fromList
                 [ ( "en", "All posts loaded" )
                 , ( "pt", "Todos os posts carregados" )
+                ]
+          )
+        , ( "BUY_ME_PIZZA"
+          , Dict.fromList
+                [ ( "en", "buy me a pizza 🍕" )
+                , ( "pt", "me compre uma pizza 🍕" )
                 ]
           )
         , ( "CLEAR_POST"

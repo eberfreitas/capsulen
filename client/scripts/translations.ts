@@ -239,4 +239,8 @@ export const translations = {
     en: "Capsulen is a compact journaling application inspired by microblogs. It encrypts all your data in the browser before persisting it on the server, ensuring that only the individual with the private key can access the contents of the journal.",
     pt: "Capsulen é um aplicativo de diário compacto inspirado em microblogs. Ele criptografa todos os seus dados no navegador antes de persisti-los no servidor, garantindo que apenas a pessoa com a chave privada possa acessar o conteúdo do diário.",
   },
+  BUY_ME_PIZZA: {
+    en: "buy me a pizza 🍕",
+    pt: "me compre uma pizza 🍕",
+  },
 };

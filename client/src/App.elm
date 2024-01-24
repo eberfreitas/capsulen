@@ -125,7 +125,7 @@ view model =
                     , Css.cursor Css.pointer
                     ]
                 ]
-                [ Html.text "buy me a pizza 🍕" ]
+                [ Html.text <| i Translations.BuyMePizza ]
             ]
         , View.Alerts.view model.context.theme model.context.alerts |> Html.map AlertsMsg
         ]
