@@ -1,6 +1,7 @@
 module Effect exposing
     ( Effect
     , addAlert
+    , autoLogout
     , batch
     , decayAlerts
     , language
@@ -40,6 +41,7 @@ type Effect
     | Language Translations.Language
     | Theme View.Theme.Theme
     | RedirectWithAlert String Alert.Message
+    | AutoLogout Bool
 
 
 none : Effect
@@ -107,6 +109,11 @@ redirectWithAlert =
     RedirectWithAlert
 
 
+autoLogout : Bool -> Effect
+autoLogout =
+    AutoLogout
+
+
 run : Context.Context -> Effect -> ( Context.Context, Cmd msg )
 run context effect =
     case effect of
@@ -167,3 +174,6 @@ run context effect =
 
         Theme theme_ ->
             ( { context | theme = theme_ }, Cmd.none )
+
+        AutoLogout bool ->
+            ( { context | autoLogout = bool }, Cmd.none )

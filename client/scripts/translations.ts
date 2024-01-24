@@ -243,4 +243,20 @@ export const translations = {
     en: "buy me a pizza 🍕",
     pt: "me compre uma pizza 🍕",
   },
+  AUTO_LOGOUT: {
+    en: "Auto logout",
+    pt: "Logout automático",
+  },
+  AUTO_LOGOUT_HINT: {
+    en: "Activating this setting will log you out anytime you change tabs in your browser.",
+    pt: "Ao ativar esta configuração você fará logout sempre que mudar de aba no seu navegador.",
+  },
+  YES: {
+    en: "Yes",
+    pt: "Sim",
+  },
+  NO: {
+    en: "No",
+    pt: "Não",
+  },
 };

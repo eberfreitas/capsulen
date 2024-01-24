@@ -42,8 +42,10 @@ if (process.env.SENTRY_CLIENT_DSN) {
   const language =
     (get("language") as string) ?? navigator.language.split("-")[0] ?? "en";
 
+  const autoLogout = (get("autoLogout") as boolean) ?? false;
+
   const app = window.Elm.App.init({
-    flags: { colorScheme, language, username },
+    flags: { colorScheme, language, username, autoLogout },
   });
 
   ConcurrentTask.register({

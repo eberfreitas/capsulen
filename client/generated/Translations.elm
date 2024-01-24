@@ -10,6 +10,8 @@ type Language
 
 type Key
     = AllPostsLoaded
+    | AutoLogout
+    | AutoLogoutHint
     | BuyMePizza
     | ClearPost
     | CredentialsIncorrect
@@ -38,6 +40,7 @@ type Key
     | LoginError
     | Logout
     | LogoutSuccess
+    | No
     | NoPost
     | Portuguese
     | PostsNoMore
@@ -70,6 +73,7 @@ type Key
     | UsernameInvalid
     | UsernameInUse
     | UserNotFound
+    | Yes
 
 
 type alias Helper =
@@ -104,6 +108,12 @@ keyFromString key =
     case key of
         "ALL_POSTS_LOADED" ->
             AllPostsLoaded
+
+        "AUTO_LOGOUT" ->
+            AutoLogout
+
+        "AUTO_LOGOUT_HINT" ->
+            AutoLogoutHint
 
         "BUY_ME_PIZZA" ->
             BuyMePizza
@@ -188,6 +198,9 @@ keyFromString key =
 
         "LOGOUT_SUCCESS" ->
             LogoutSuccess
+
+        "NO" ->
+            No
 
         "NO_POST" ->
             NoPost
@@ -285,6 +298,9 @@ keyFromString key =
         "USER_NOT_FOUND" ->
             UserNotFound
 
+        "YES" ->
+            Yes
+
         _ ->
             UnknownError
 
@@ -294,6 +310,12 @@ keyToString key =
     case key of
         AllPostsLoaded ->
             "ALL_POSTS_LOADED"
+
+        AutoLogout ->
+            "AUTO_LOGOUT"
+
+        AutoLogoutHint ->
+            "AUTO_LOGOUT_HINT"
 
         BuyMePizza ->
             "BUY_ME_PIZZA"
@@ -378,6 +400,9 @@ keyToString key =
 
         LogoutSuccess ->
             "LOGOUT_SUCCESS"
+
+        No ->
+            "NO"
 
         NoPost ->
             "NO_POST"
@@ -475,6 +500,9 @@ keyToString key =
         UserNotFound ->
             "USER_NOT_FOUND"
 
+        Yes ->
+            "YES"
+
 
 translate : Language -> Key -> String
 translate lang key =
@@ -497,6 +525,20 @@ phrases =
           , Dict.fromList
                 [ ( "en", "All posts loaded" )
                 , ( "pt", "Todos os posts carregados" )
+                ]
+          )
+        , ( "AUTO_LOGOUT"
+          , Dict.fromList
+                [ ( "en", "Auto logout" ), ( "pt", "Logout automático" ) ]
+          )
+        , ( "AUTO_LOGOUT_HINT"
+          , Dict.fromList
+                [ ( "en"
+                  , "Activating this setting will log you out anytime you change tabs in your browser."
+                  )
+                , ( "pt"
+                  , "Ao ativar esta configuração você fará logout sempre que mudar de aba no seu navegador."
+                  )
                 ]
           )
         , ( "BUY_ME_PIZZA"
@@ -668,6 +710,7 @@ phrases =
         , ( "LOGOUT_SUCCESS"
           , Dict.fromList [ ( "en", "See you soon!" ), ( "pt", "Até breve!" ) ]
           )
+        , ( "NO", Dict.fromList [ ( "en", "No" ), ( "pt", "Não" ) ] )
         , ( "NO_POST"
           , Dict.fromList [ ( "en", "No posts" ), ( "pt", "Sem posts" ) ]
           )
@@ -860,4 +903,5 @@ phrases =
                 , ( "pt", "Usuário não encontrado" )
                 ]
           )
+        , ( "YES", Dict.fromList [ ( "en", "Yes" ), ( "pt", "Sim" ) ] )
         ]

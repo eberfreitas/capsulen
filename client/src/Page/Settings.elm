@@ -19,6 +19,7 @@ type Msg
     = Logout
     | Language Translations.Language
     | Theme View.Theme.Theme
+    | AutoLogout Bool
 
 
 type alias Model =
@@ -72,6 +73,10 @@ viewWithUser i context _ _ =
                 , languageOptions i context.theme context.language
                 , settingsTitle i context.theme Translations.Theme
                 , themeOptions i context.theme
+                , settingsTitle i context.theme Translations.AutoLogout
+                , Html.div [ HtmlAttributes.css [ Css.marginBottom <| Css.rem 1, Css.lineHeight <| Css.num 1.5 ] ]
+                    [ Html.text <| i Translations.AutoLogoutHint ]
+                , autoLogoutOptions i context.theme context.autoLogout
                 ]
             ]
 
@@ -142,6 +147,17 @@ themeOptions i theme =
     viewOptions i theme options theme Theme
 
 
+autoLogoutOptions : Translations.Helper -> View.Theme.Theme -> Bool -> Html.Html Msg
+autoLogoutOptions i theme selected =
+    let
+        options =
+            [ ( False, Translations.No )
+            , ( True, Translations.Yes )
+            ]
+    in
+    viewOptions i theme options selected AutoLogout
+
+
 init : Translations.Helper -> Context.Context -> ( Model, Effect.Effect, Cmd Msg )
 init i context =
     let
@@ -173,4 +189,10 @@ updateWithUser i msg model _ =
             ( model
             , Effect.theme theme
             , LocalStorage.set "theme" (theme |> View.Theme.toString |> LocalStorage.str)
+            )
+
+        AutoLogout bool ->
+            ( model
+            , Effect.autoLogout bool
+            , LocalStorage.set "autoLogout" (bool |> LocalStorage.bool)
             )

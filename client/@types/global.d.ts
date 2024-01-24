@@ -41,7 +41,12 @@ export interface App {
 interface Elm {
   App: {
     init: (args: {
-      flags: { colorScheme: string; language: string; username: unknown };
+      flags: {
+        colorScheme: string;
+        language: string;
+        username: unknown;
+        autoLogout: boolean;
+      };
     }) => App;
   };
 }

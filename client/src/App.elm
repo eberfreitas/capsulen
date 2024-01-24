@@ -51,6 +51,7 @@ type Msg
     | InvitesMsg Page.Invites.Msg
     | SettingsMsg Page.Settings.Msg
     | AlertsMsg View.Alerts.Msg
+    | Logout Browser.Events.Visibility
 
 
 view : Model -> Browser.Document Msg
@@ -153,11 +154,11 @@ update msg model =
                 ( nextSubModel, effects, nextCmd ) =
                     updateFn i context subMsg subModel
 
-                ( nextContext, effectsCmds ) =
+                ( nextContext, effectsCmd ) =
                     Effect.run model.context effects
             in
             ( { model | page = page nextSubModel, context = nextContext }
-            , Cmd.batch [ effectsCmds, nextCmd |> Cmd.map pageMsg ]
+            , Cmd.batch [ effectsCmd, nextCmd |> Cmd.map pageMsg ]
             )
     in
     case ( msg, model.page ) of
@@ -185,10 +186,10 @@ update msg model =
                 effect =
                     View.Alerts.update subMsg
 
-                ( nextContext, cmds ) =
+                ( nextContext, cmd ) =
                     Effect.run model.context effect
             in
-            ( { model | context = nextContext }, cmds )
+            ( { model | context = nextContext }, cmd )
 
         ( RegisterMsg subMsg, Register subModel ) ->
             pageUpdate Page.Register.update RegisterMsg subMsg Register subModel model.context
@@ -205,6 +206,22 @@ update msg model =
         ( SettingsMsg subMsg, Settings subModel ) ->
             pageUpdate Page.Settings.update SettingsMsg subMsg Settings subModel model.context
 
+        ( Logout visibility, _ ) ->
+            case visibility of
+                Browser.Events.Hidden ->
+                    let
+                        effects : Effect.Effect
+                        effects =
+                            Effect.batch [ Effect.logout, Effect.redirect "/" ]
+
+                        ( nextContext, cmd ) =
+                            Effect.run model.context effects
+                    in
+                    ( { model | context = nextContext }, cmd )
+
+                Browser.Events.Visible ->
+                    ( model, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
@@ -212,28 +229,9 @@ update msg model =
 init : Json.Decode.Value -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        parsedFlags =
-            flags
-                |> Json.Decode.decodeValue
-                    (Json.Decode.map3
-                        (\color lang username -> { colorScheme = color, language = lang, username = username })
-                        (Json.Decode.field "colorScheme" Json.Decode.string)
-                        (Json.Decode.field "language" Json.Decode.string)
-                        (Json.Decode.field "username" <| Json.Decode.nullable Json.Decode.string)
-                    )
-                |> Result.toMaybe
-                |> Maybe.map
-                    (\parsed ->
-                        { colorScheme = View.Theme.fromString parsed.colorScheme
-                        , language = Translations.languageFromString parsed.language
-                        , username = parsed.username
-                        }
-                    )
-                |> Maybe.withDefault { colorScheme = View.Theme.Light, language = Translations.En, username = Nothing }
-
         initContext : Context.Context
         initContext =
-            Context.new key parsedFlags.language parsedFlags.colorScheme parsedFlags.username
+            Context.fromFlags key flags
 
         ( page, effect, pageCmd ) =
             router initContext <| AppUrl.fromUrl url
@@ -298,23 +296,23 @@ router context url =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        pageBatch : List (Sub Msg)
-        pageBatch =
+        pageSub : Sub Msg
+        pageSub =
             case model.page of
                 Register subModel ->
-                    [ Page.Register.subscriptions subModel.tasks |> Sub.map RegisterMsg ]
+                    Page.Register.subscriptions subModel.tasks |> Sub.map RegisterMsg
 
                 Login subModel ->
-                    [ Page.Login.subscriptions subModel.tasks |> Sub.map LoginMsg ]
+                    Page.Login.subscriptions subModel.tasks |> Sub.map LoginMsg
 
                 Posts subModel ->
-                    [ Page.Posts.subscriptions subModel.tasks |> Sub.map PostsMsg ]
+                    Page.Posts.subscriptions subModel.tasks |> Sub.map PostsMsg
 
                 Invites subModel ->
-                    [ Page.Invites.subscriptions subModel.tasks |> Sub.map InvitesMsg ]
+                    Page.Invites.subscriptions subModel.tasks |> Sub.map InvitesMsg
 
                 _ ->
-                    []
+                    Sub.none
 
         alertSub : Sub Msg
         alertSub =
@@ -324,8 +322,17 @@ subscriptions model =
 
                 _ ->
                     Browser.Events.onAnimationFrameDelta View.Alerts.decay |> Sub.map AlertsMsg
+
+        logoutSub : Sub Msg
+        logoutSub =
+            case ( model.context.user, model.context.autoLogout ) of
+                ( Just _, True ) ->
+                    Browser.Events.onVisibilityChange Logout
+
+                _ ->
+                    Sub.none
     in
-    Sub.batch (alertSub :: pageBatch)
+    Sub.batch [ alertSub, pageSub, logoutSub ]
 
 
 main : Program Json.Decode.Value Model Msg
