@@ -136,6 +136,7 @@ themeOptions i theme =
         options =
             [ ( View.Theme.Light, Translations.ThemeLight )
             , ( View.Theme.Dark, Translations.ThemeDark )
+            , ( View.Theme.Tatty, Translations.ThemeTatty )
             ]
     in
     viewOptions i theme options theme Theme

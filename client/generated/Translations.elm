@@ -58,6 +58,7 @@ type Key
     | Theme
     | ThemeDark
     | ThemeLight
+    | ThemeTatty
     | ToPost
     | UnexpectedRegisterError
     | UnknownError
@@ -245,6 +246,9 @@ keyFromString key =
         "THEME_LIGHT" ->
             ThemeLight
 
+        "THEME_TATTY" ->
+            ThemeTatty
+
         "TO_POST" ->
             ToPost
 
@@ -422,6 +426,9 @@ keyToString key =
 
         ThemeLight ->
             "THEME_LIGHT"
+
+        ThemeTatty ->
+            "THEME_TATTY"
 
         ToPost ->
             "TO_POST"
@@ -756,6 +763,9 @@ phrases =
         , ( "THEME_DARK", Dict.fromList [ ( "en", "Dark" ), ( "pt", "Dark" ) ] )
         , ( "THEME_LIGHT"
           , Dict.fromList [ ( "en", "Light" ), ( "pt", "Light" ) ]
+          )
+        , ( "THEME_TATTY"
+          , Dict.fromList [ ( "en", "Tatty" ), ( "pt", "Tatty" ) ]
           )
         , ( "TO_POST", Dict.fromList [ ( "en", "Post" ), ( "pt", "Postar" ) ] )
         , ( "UNEXPECTED_REGISTER_ERROR"

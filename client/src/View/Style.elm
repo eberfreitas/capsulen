@@ -62,7 +62,7 @@ btnInverse theme =
     Css.batch
         [ Css.backgroundColor Css.transparent
         , Css.borderColor (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
-        , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+        , Css.color (theme |> View.Theme.foregroundColor |> Color.Extra.toCss)
         ]
 
 

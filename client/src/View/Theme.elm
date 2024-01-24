@@ -16,11 +16,13 @@ import Json.Encode
 import View.Theme.Dark
 import View.Theme.Light
 import View.Theme.Palette
+import View.Theme.Tatty
 
 
 type Theme
     = Dark
     | Light
+    | Tatty
 
 
 fromString : String -> Theme
@@ -31,6 +33,9 @@ fromString theme =
 
         "dark" ->
             Dark
+
+        "tatty" ->
+            Tatty
 
         _ ->
             Light
@@ -45,6 +50,9 @@ toString theme =
         Dark ->
             "dark"
 
+        Tatty ->
+            "tatty"
+
 
 themePalette : Theme -> View.Theme.Palette.Palette
 themePalette theme =
@@ -54,6 +62,9 @@ themePalette theme =
 
         Light ->
             View.Theme.Light.palette
+
+        Tatty ->
+            View.Theme.Tatty.palette
 
 
 backgroundColor : Theme -> Color.Color

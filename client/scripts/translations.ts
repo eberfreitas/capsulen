@@ -227,4 +227,8 @@ export const translations = {
     en: "Dark",
     pt: "Dark",
   },
+  THEME_TATTY: {
+    en: "Tatty",
+    pt: "Tatty",
+  }
 };
