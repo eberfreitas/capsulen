@@ -18,7 +18,6 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.7.0",
-            "krisajenkins/remotedata": "6.0.1",
             "lydell/elm-app-url": "1.0.4",
             "miniBill/date-format-languages": "1.2.1",
             "phosphor-icons/phosphor-elm": "2.0.0",
@@ -28,7 +27,6 @@
         "indirect": {
             "elm/bytes": "1.0.8",
             "elm/html": "1.0.0",
-            "elm/http": "2.0.0",
             "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
             "elm/svg": "1.0.1",

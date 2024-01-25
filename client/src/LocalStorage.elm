@@ -1,4 +1,4 @@
-port module LocalStorage exposing (bool, set, str)
+port module LocalStorage exposing (Value, bool, set, str)
 
 import Json.Encode
 
@@ -14,6 +14,7 @@ type Value
 set : String -> Value -> Cmd.Cmd msg
 set key value =
     let
+        value_ : Json.Encode.Value
         value_ =
             case value of
                 Str str_ ->
@@ -22,6 +23,7 @@ set key value =
                 Boolean bool_ ->
                     Json.Encode.bool bool_
 
+        data : Json.Encode.Value
         data =
             Json.Encode.object
                 [ ( "key", Json.Encode.string key )

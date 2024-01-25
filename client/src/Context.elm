@@ -1,4 +1,4 @@
-module Context exposing (Context, fromFlags, new)
+module Context exposing (Context, fromFlags)
 
 import Alert
 import Browser.Navigation

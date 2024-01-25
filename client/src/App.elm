@@ -1,4 +1,4 @@
-module App exposing (main)
+module App exposing (Model, Msg, Page, main)
 
 import AppUrl
 import Browser

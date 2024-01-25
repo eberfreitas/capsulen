@@ -1,6 +1,7 @@
 module Page.Posts exposing
     ( Model
     , Msg
+    , PostsLoading
     , TaskOutput
     , TaskPool
     , init
@@ -291,24 +292,11 @@ viewWithUser i context model _ =
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
 viewGallery theme index gallery =
     let
+        image : String
         image =
             List.Extra.getAt index gallery |> Maybe.withDefault ""
 
-        navStyle =
-            Css.batch
-                [ Css.position Css.absolute
-                , Css.top <| Css.px 0
-                , Css.bottom <| Css.px 0
-                , Css.border <| Css.px 0
-                , Css.backgroundColor Css.transparent
-                , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
-                , Css.display Css.flex_
-                , Css.alignItems Css.center
-                , Css.cursor Css.pointer
-                , Css.fontSize <| Css.rem 2
-                , Css.padding <| Css.rem 1
-                ]
-
+        onClickNoPropagation : msg -> Html.Attribute msg
         onClickNoPropagation msg =
             HtmlEvents.stopPropagationOn "click" (Json.Decode.succeed ( msg, True ))
     in
@@ -337,6 +325,23 @@ viewGallery theme index gallery =
             ]
             []
             :: (if List.length gallery > 1 then
+                    let
+                        navStyle : Css.Style
+                        navStyle =
+                            Css.batch
+                                [ Css.position Css.absolute
+                                , Css.top <| Css.px 0
+                                , Css.bottom <| Css.px 0
+                                , Css.border <| Css.px 0
+                                , Css.backgroundColor Css.transparent
+                                , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
+                                , Css.display Css.flex_
+                                , Css.alignItems Css.center
+                                , Css.cursor Css.pointer
+                                , Css.fontSize <| Css.rem 2
+                                , Css.padding <| Css.rem 1
+                                ]
+                    in
                     [ Html.button
                         [ HtmlAttributes.css
                             [ navStyle
@@ -395,6 +400,7 @@ loadMoreBtn i theme loading =
                 NoMore ->
                     ( True, Translations.AllPostsLoaded )
 
+        btnStyle : Css.Style
         btnStyle =
             if disabled then
                 View.Style.btnDisabled
@@ -501,10 +507,12 @@ viewPost language theme post =
 processBody : View.Theme.Theme -> String -> List (Html.Html msg)
 processBody theme body =
     let
+        urlRegex : Regex.Regex
         urlRegex =
             Regex.fromString "^(https?:\\/\\/[^\\s]+)$"
                 |> Maybe.withDefault Regex.never
 
+        embedLink : String -> Html.Html msg
         embedLink url =
             Html.a
                 [ HtmlAttributes.href url
@@ -514,8 +522,10 @@ processBody theme body =
                 ]
                 [ Html.text url ]
 
+        embedLinks : String -> List (Html.Html msg)
         embedLinks str =
             let
+                mapperFn : String -> Html.Html msg
                 mapperFn word =
                     if isUrl word then
                         embedLink word
@@ -528,8 +538,10 @@ processBody theme body =
                 |> List.map mapperFn
                 |> List.intersperse (Html.text " ")
 
+        embedYouTube : String -> Html.Html msg
         embedYouTube url =
             let
+                videoId : Maybe String
                 videoId =
                     url
                         |> Url.fromString
@@ -577,6 +589,7 @@ processBody theme body =
                 Nothing ->
                     embedLink url
 
+        embedImage : String -> Html.Html msg
         embedImage url =
             Html.div
                 [ HtmlAttributes.css
@@ -602,20 +615,25 @@ processBody theme body =
                     ]
                 ]
 
+        isYouTube : String -> Bool
         isYouTube url =
             let
+                youtubeDomains : List String
                 youtubeDomains =
                     [ "https://www.youtube.com", "https://youtu.be" ]
             in
             youtubeDomains
                 |> List.map (\domain -> String.startsWith domain url)
-                |> List.any ((==) True)
+                |> List.member True
 
+        isImage : String -> Bool
         isImage url =
             let
+                imageExtensions : List String
                 imageExtensions =
                     [ "png", "jpg", "jpeg", "gif", "webp" ]
 
+                urlPath : String
                 urlPath =
                     url
                         |> Url.fromString
@@ -624,16 +642,18 @@ processBody theme body =
             in
             imageExtensions
                 |> List.map (\ext -> String.endsWith ext urlPath)
-                |> List.any ((==) True)
+                |> List.member True
 
+        isUrl : String -> Bool
         isUrl str =
             let
+                schemes : List String
                 schemes =
                     [ "http://", "https://" ]
             in
             schemes
                 |> List.map (\scheme -> String.startsWith scheme str)
-                |> List.any ((==) True)
+                |> List.member True
     in
     body
         |> String.lines
@@ -705,54 +725,54 @@ viewPostImages images =
 
 formatDate : Translations.Language -> String -> String
 formatDate language date =
-    let
-        dateFormatLanguage : DateFormat.Languages.Language
-        dateFormatLanguage =
-            case language of
-                Translations.En ->
-                    DateFormat.Languages.english
-
-                Translations.Pt ->
-                    DateFormat.Languages.portuguese
-
-        dateFormatTokens : List DateFormat.Token
-        dateFormatTokens =
-            case language of
-                Translations.En ->
-                    [ DateFormat.dayOfWeekNameAbbreviated
-                    , DateFormat.text ", "
-                    , DateFormat.monthNameAbbreviated
-                    , DateFormat.text " "
-                    , DateFormat.dayOfMonthSuffix
-                    , DateFormat.text ", "
-                    , DateFormat.yearNumber
-                    , DateFormat.text " - "
-                    , DateFormat.hourFixed
-                    , DateFormat.text ":"
-                    , DateFormat.minuteFixed
-                    , DateFormat.text " "
-                    , DateFormat.amPmUppercase
-                    ]
-
-                Translations.Pt ->
-                    [ DateFormat.dayOfWeekNameAbbreviated
-                    , DateFormat.text ", "
-                    , DateFormat.dayOfMonthFixed
-                    , DateFormat.text " de "
-                    , DateFormat.monthNameAbbreviated
-                    , DateFormat.text " de "
-                    , DateFormat.yearNumber
-                    , DateFormat.text " - "
-                    , DateFormat.hourMilitaryFixed
-                    , DateFormat.text ":"
-                    , DateFormat.minuteFixed
-                    ]
-    in
     date
         |> Iso8601.toTime
         |> Result.toMaybe
         |> Maybe.map
             (\posix ->
+                let
+                    dateFormatLanguage : DateFormat.Languages.Language
+                    dateFormatLanguage =
+                        case language of
+                            Translations.En ->
+                                DateFormat.Languages.english
+
+                            Translations.Pt ->
+                                DateFormat.Languages.portuguese
+
+                    dateFormatTokens : List DateFormat.Token
+                    dateFormatTokens =
+                        case language of
+                            Translations.En ->
+                                [ DateFormat.dayOfWeekNameAbbreviated
+                                , DateFormat.text ", "
+                                , DateFormat.monthNameAbbreviated
+                                , DateFormat.text " "
+                                , DateFormat.dayOfMonthSuffix
+                                , DateFormat.text ", "
+                                , DateFormat.yearNumber
+                                , DateFormat.text " - "
+                                , DateFormat.hourFixed
+                                , DateFormat.text ":"
+                                , DateFormat.minuteFixed
+                                , DateFormat.text " "
+                                , DateFormat.amPmUppercase
+                                ]
+
+                            Translations.Pt ->
+                                [ DateFormat.dayOfWeekNameAbbreviated
+                                , DateFormat.text ", "
+                                , DateFormat.dayOfMonthFixed
+                                , DateFormat.text " de "
+                                , DateFormat.monthNameAbbreviated
+                                , DateFormat.text " de "
+                                , DateFormat.yearNumber
+                                , DateFormat.text " - "
+                                , DateFormat.hourMilitaryFixed
+                                , DateFormat.text ":"
+                                , DateFormat.minuteFixed
+                                ]
+                in
                 DateFormat.formatWithLanguage dateFormatLanguage dateFormatTokens Time.utc posix
             )
         |> Maybe.withDefault ""
@@ -939,6 +959,7 @@ updateWithUser i msg model user =
 
         Delete hashId ->
             let
+                task : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                 task =
                     ConcurrentTask.define
                         { function = "posts:deleteConfirm"
@@ -1032,6 +1053,7 @@ updateWithUser i msg model user =
 
                 Just hashId ->
                     let
+                        task : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         task =
                             ConcurrentTask.Http.post
                                 { url = "/api/posts/" ++ hashId
@@ -1043,6 +1065,7 @@ updateWithUser i msg model user =
                                 |> ConcurrentTask.mapError Page.httpErrorMapper
                                 |> ConcurrentTask.map BlackHole
 
+                        posts : List Business.Post.Post
                         posts =
                             model.posts |> List.filter (\post -> post.id /= hashId)
 
@@ -1094,9 +1117,11 @@ updateWithUser i msg model user =
                 ( _, gallery ) =
                     model.gallery
 
+                lastIndex : Int
                 lastIndex =
                     List.length gallery - 1
 
+                nextId : Int
                 nextId =
                     if index < 0 then
                         lastIndex
@@ -1107,6 +1132,7 @@ updateWithUser i msg model user =
                     else
                         index
 
+                nextGallery : ( Int, List String )
                 nextGallery =
                     ( nextId, gallery )
             in
@@ -1125,6 +1151,7 @@ updateWithUser i msg model user =
 
                 imageFiles ->
                     let
+                        filteredFiles : List File.File
                         filteredFiles =
                             imageFiles |> List.filter (\file -> imageMimes |> List.member (File.mime file))
                     in

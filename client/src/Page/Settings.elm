@@ -108,6 +108,7 @@ viewOptions i theme options selected msg =
             |> List.map
                 (\( option, label ) ->
                     let
+                        btnStyle : Css.Style
                         btnStyle =
                             if option /= selected then
                                 View.Style.btnInverse theme
@@ -127,6 +128,7 @@ viewOptions i theme options selected msg =
 languageOptions : Translations.Helper -> View.Theme.Theme -> Translations.Language -> Html.Html Msg
 languageOptions i theme selected =
     let
+        options : List (Option Translations.Language)
         options =
             [ ( Translations.En, Translations.English )
             , ( Translations.Pt, Translations.Portuguese )
@@ -138,6 +140,7 @@ languageOptions i theme selected =
 themeOptions : Translations.Helper -> View.Theme.Theme -> Html.Html Msg
 themeOptions i theme =
     let
+        options : List (Option View.Theme.Theme)
         options =
             [ ( View.Theme.Light, Translations.ThemeLight )
             , ( View.Theme.Dark, Translations.ThemeDark )
@@ -150,6 +153,7 @@ themeOptions i theme =
 autoLogoutOptions : Translations.Helper -> View.Theme.Theme -> Bool -> Html.Html Msg
 autoLogoutOptions i theme selected =
     let
+        options : List (Option Bool)
         options =
             [ ( False, Translations.No )
             , ( True, Translations.Yes )

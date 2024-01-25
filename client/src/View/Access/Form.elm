@@ -1,4 +1,4 @@
-module View.Access.Form exposing (Msgs, form, inviteCodeField, privateKeyField, usernameField)
+module View.Access.Form exposing (form, inviteCodeField, privateKeyField, usernameField)
 
 import Business.InviteCode
 import Business.PrivateKey
@@ -13,14 +13,6 @@ import Phosphor
 import Translations
 import View.Style
 import View.Theme
-
-
-type alias Msgs msg =
-    { submit : msg
-    , username : Form.InputEvent -> msg
-    , privateKey : Form.InputEvent -> msg
-    , togglePrivateKey : msg
-    }
 
 
 inputWrapperStyle : Css.Style

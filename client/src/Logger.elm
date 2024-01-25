@@ -1,4 +1,4 @@
-port module Logger exposing (..)
+port module Logger exposing (captureMessage)
 
 import Json.Encode
 

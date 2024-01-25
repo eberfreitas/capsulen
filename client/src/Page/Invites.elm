@@ -1,8 +1,9 @@
-module Page.Invites exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Invites exposing (Model, Msg, TaskOutput, TaskPool, init, subscriptions, update, view)
 
 import Alert
 import Business.InviteCode
 import Business.User
+import Color
 import Color.Extra
 import ConcurrentTask
 import ConcurrentTask.Http
@@ -160,6 +161,7 @@ viewInvite i theme invite =
                 Business.InviteCode.Used ->
                     ( View.Theme.successColor theme, Translations.InviteUsed )
 
+        textColor : Color.Color
         textColor =
             color |> Color.Extra.toContrast 0.5
     in

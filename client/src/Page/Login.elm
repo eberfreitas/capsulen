@@ -94,6 +94,7 @@ initModel =
 init : Context.Context -> ( Model, Effect.Effect, Cmd Msg )
 init context =
     let
+        model : Model
         model =
             case context.username of
                 Nothing ->
@@ -101,9 +102,11 @@ init context =
 
                 Just username ->
                     let
+                        usernameInput : Form.Input Business.Username.Username
                         usernameInput =
                             initModel.usernameInput
 
+                        nextUsernameInput : Form.Input Business.Username.Username
                         nextUsernameInput =
                             { usernameInput | raw = username } |> Form.parseInput Business.Username.fromString
                     in
@@ -125,6 +128,7 @@ update i context msg model =
                         _ ->
                             ( Cmd.none, context.username )
 
+                nextModel : Model
                 nextModel =
                     { model | usernameInput = Form.updateInput event Business.Username.fromString model.usernameInput }
             in
