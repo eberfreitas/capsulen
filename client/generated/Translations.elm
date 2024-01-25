@@ -548,15 +548,15 @@ phrases =
                 ]
           )
         , ( "CLEAR_POST"
-          , Dict.fromList [ ( "en", "Clear post" ), ( "pt", "Cancelar post" ) ]
+          , Dict.fromList [ ( "en", "Clear post" ), ( "pt", "Limpar post" ) ]
           )
         , ( "CREDENTIALS_INCORRECT"
           , Dict.fromList
                 [ ( "en"
-                  , "Username or private key incorrect. Please, try again"
+                  , "Username or private key incorrect. Please try again."
                   )
                 , ( "pt"
-                  , "Nome de usuário ou chave privada incorretos. Por favor, tente novamente"
+                  , "Nome de usuário ou chave privada incorretos. Por favor, tente novamente."
                   )
                 ]
           )
@@ -603,25 +603,27 @@ phrases =
           )
         , ( "FORBIDDEN_AREA"
           , Dict.fromList
-                [ ( "en", "You need to be logged in to see this page. Please" )
+                [ ( "en"
+                  , "You need to be logged in to see this page. Please log in."
+                  )
                 , ( "pt"
-                  , "Você precisa ter feito login para acessar esta página"
+                  , "Você precisa ter feito login para acessar esta página."
                   )
                 ]
           )
         , ( "INPUT_EMPTY"
           , Dict.fromList
-                [ ( "en", "This field can't be empty" )
-                , ( "pt", "Este campo não pode ficar vazio" )
+                [ ( "en", "This field can't be empty." )
+                , ( "pt", "Este campo não pode ficar vazio." )
                 ]
           )
         , ( "INVALID_INPUTS"
           , Dict.fromList
                 [ ( "en"
-                  , "One or more inputs are invalid. Check the messages in the form to fix and try again"
+                  , "One or more inputs are invalid. Check the messages in the form to fix and try again."
                   )
                 , ( "pt"
-                  , "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente"
+                  , "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente."
                   )
                 ]
           )
@@ -646,7 +648,7 @@ phrases =
         , ( "INVITE_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error while creating your invite. Please, try again."
+                  , "There was an error while creating your invite. Please try again."
                   )
                 , ( "pt"
                   , "Ocorreu um erro ao criar seu convite. Por favor, tente novamente."
@@ -656,7 +658,7 @@ phrases =
         , ( "INVITE_FETCH_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error while fetching your invites. Please, try again."
+                  , "There was an error while fetching your invites. Please try again."
                   )
                 , ( "pt"
                   , "Ocorreu um erro ao resgatar seus convites. Por favor, tente novamente."
@@ -670,10 +672,10 @@ phrases =
         , ( "INVITE_HELP"
           , Dict.fromList
                 [ ( "en"
-                  , "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time. Share your codes responsibly."
+                  , "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time and if not used, they will be deleted after 1 day. Share your codes responsibly."
                   )
                 , ( "pt"
-                  , "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo. Compartilhe seus convites com responsabilidade."
+                  , "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo e se não usados eles serão deletados depois de 1 dia. Compartilhe seus convites com responsabilidade."
                   )
                 ]
           )
@@ -695,14 +697,14 @@ phrases =
                 , ( "pt", "Carregar mais postagens" )
                 ]
           )
-        , ( "LOGIN", Dict.fromList [ ( "en", "Login" ), ( "pt", "Login" ) ] )
+        , ( "LOGIN", Dict.fromList [ ( "en", "Login" ), ( "pt", "Entrar" ) ] )
         , ( "LOGIN_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error trying to log you in. Please, try again"
+                  , "There was an error trying to log you in. Please try again."
                   )
                 , ( "pt"
-                  , "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente"
+                  , "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente."
                   )
                 ]
           )
@@ -720,7 +722,7 @@ phrases =
         , ( "POSTS_NO_MORE"
           , Dict.fromList
                 [ ( "en", "There are no more posts to load" )
-                , ( "pt", "Não há mais postagems a serem carregadas" )
+                , ( "pt", "Não há mais postagens a serem carregadas" )
                 ]
           )
         , ( "POST_ABOUT"
@@ -738,20 +740,20 @@ phrases =
         , ( "POST_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error saving your post. Please, try again"
+                  , "There was an error saving your post. Please try again."
                   )
                 , ( "pt"
-                  , "Houve um error ao salvar sua postagem. Por favor, tente novamente"
+                  , "Houve um erro ao salvar sua postagem. Por favor, tente novamente."
                   )
                 ]
           )
         , ( "POST_FETCH_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error fetching your posts. Please, try again"
+                  , "There was an error fetching your posts. Please try again."
                   )
                 , ( "pt"
-                  , "Houve um erro ao buscar seus posts. Por favor, tente novamente"
+                  , "Houve um erro ao buscar seus posts. Por favor, tente novamente."
                   )
                 ]
           )
@@ -792,10 +794,10 @@ phrases =
         , ( "REGISTER_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error registering your account. Please, try again"
+                  , "There was an error registering your account. Please try again."
                   )
                 , ( "pt"
-                  , "Houve um error ao registrar sua conta. Por favor, tente novamente"
+                  , "Houve um erro ao registrar sua conta. Por favor, tente novamente."
                   )
                 ]
           )
@@ -807,19 +809,19 @@ phrases =
           )
         , ( "REGISTER_SUCCESS"
           , Dict.fromList
-                [ ( "en", "Registration successful! Please log in now" )
+                [ ( "en", "Registration successful! Please log in now." )
                 , ( "pt"
-                  , "Registro realizado com sucesso! Você pode acessar sua conta agora"
+                  , "Registro realizado com sucesso! Você pode acessar sua conta agora."
                   )
                 ]
           )
         , ( "REQUEST_ERROR"
           , Dict.fromList
                 [ ( "en"
-                  , "There was an error processing your request. Please, try again"
+                  , "There was an error processing your request. Please try again."
                   )
                 , ( "pt"
-                  , "Ocorreu um erro ao realizar esta requisição. Por favor, tente novamente"
+                  , "Ocorreu um erro ao realizar esta requisição. Por favor, tente novamente."
                   )
                 ]
           )
@@ -829,7 +831,7 @@ phrases =
         , ( "SETTINGS_NOTICE"
           , Dict.fromList
                 [ ( "en"
-                  , "All settings are stored in browser. This means your changes won't be carried to other browsers or computers."
+                  , "All settings are stored in the browser. This means your changes won't be carried to other browsers or computers."
                   )
                 , ( "pt"
                   , "Todas as configurações são guardadas no seu navegador. Isto significa que as alterações não serão replicadas em outros navegadores ou computadores."
@@ -846,12 +848,14 @@ phrases =
           , Dict.fromList
                 [ ( "en", "Color theme" ), ( "pt", "Esquema de cores" ) ]
           )
-        , ( "THEME_DARK", Dict.fromList [ ( "en", "Dark" ), ( "pt", "Dark" ) ] )
+        , ( "THEME_DARK"
+          , Dict.fromList [ ( "en", "Dark" ), ( "pt", "Escuro" ) ]
+          )
         , ( "THEME_LIGHT"
-          , Dict.fromList [ ( "en", "Light" ), ( "pt", "Light" ) ]
+          , Dict.fromList [ ( "en", "Light" ), ( "pt", "Claro" ) ]
           )
         , ( "THEME_TATTY"
-          , Dict.fromList [ ( "en", "Tatty" ), ( "pt", "Tatty" ) ]
+          , Dict.fromList [ ( "en", "Tatty" ), ( "pt", "Gasto" ) ]
           )
         , ( "TO_POST", Dict.fromList [ ( "en", "Post" ), ( "pt", "Postar" ) ] )
         , ( "UNEXPECTED_REGISTER_ERROR"
@@ -860,7 +864,7 @@ phrases =
                   , "Unexpected error while handling your registration request"
                   )
                 , ( "pt"
-                  , "Erro inexperado ao lidar com seu pedido de registro"
+                  , "Erro inesperado ao lidar com seu pedido de registro"
                   )
                 ]
           )

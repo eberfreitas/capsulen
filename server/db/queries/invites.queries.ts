@@ -211,3 +211,33 @@ const countInvitesIR: any = {"usedParamSet":{"user_id":true},"params":[{"name":"
 export const countInvites = new PreparedQuery<ICountInvitesParams,ICountInvitesResult>(countInvitesIR);
 
 
+/** 'CleanUpInvites' parameters type */
+export interface ICleanUpInvitesParams {
+  threshold?: Date | string | null | void;
+}
+
+/** 'CleanUpInvites' return type */
+export type ICleanUpInvitesResult = void;
+
+/** 'CleanUpInvites' query type */
+export interface ICleanUpInvitesQuery {
+  params: ICleanUpInvitesParams;
+  result: ICleanUpInvitesResult;
+}
+
+const cleanUpInvitesIR: any = {"usedParamSet":{"threshold":true},"params":[{"name":"threshold","required":false,"transform":{"type":"scalar"},"locs":[{"a":47,"b":56}]}],"statement":"DELETE FROM\n    invites\nWHERE\n    created_at < :threshold\nAND\n    status = 'pending'"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * DELETE FROM
+ *     invites
+ * WHERE
+ *     created_at < :threshold
+ * AND
+ *     status = 'pending'
+ * ```
+ */
+export const cleanUpInvites = new PreparedQuery<ICleanUpInvitesParams,ICleanUpInvitesResult>(cleanUpInvitesIR);
+
+

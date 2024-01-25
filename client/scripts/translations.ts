@@ -1,19 +1,19 @@
 export const translations = {
   CREDENTIALS_INCORRECT: {
-    en: "Username or private key incorrect. Please, try again",
-    pt: "Nome de usuário ou chave privada incorretos. Por favor, tente novamente",
+    en: "Username or private key incorrect. Please try again.",
+    pt: "Nome de usuário ou chave privada incorretos. Por favor, tente novamente.",
   },
   FORBIDDEN_AREA: {
-    en: "You need to be logged in to see this page. Please",
-    pt: "Você precisa ter feito login para acessar esta página",
+    en: "You need to be logged in to see this page. Please log in.",
+    pt: "Você precisa ter feito login para acessar esta página.",
   },
   INPUT_EMPTY: {
-    en: "This field can't be empty",
-    pt: "Este campo não pode ficar vazio",
+    en: "This field can't be empty.",
+    pt: "Este campo não pode ficar vazio.",
   },
   INVALID_INPUTS: {
-    en: "One or more inputs are invalid. Check the messages in the form to fix and try again",
-    pt: "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente",
+    en: "One or more inputs are invalid. Check the messages in the form to fix and try again.",
+    pt: "Um ou mais campos estão incorretos. Verifique as mensagens no formulário e tente novamente.",
   },
   LOAD_MORE_POSTS: {
     en: "Load more posts",
@@ -29,11 +29,11 @@ export const translations = {
   },
   LOGIN: {
     en: "Login",
-    pt: "Login",
+    pt: "Entrar",
   },
   LOGIN_ERROR: {
-    en: "There was an error trying to log you in. Please, try again",
-    pt: "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente",
+    en: "There was an error trying to log you in. Please try again.",
+    pt: "Houve um erro ao tentar acessar sua conta. Por favor, tente novamente.",
   },
   LOGOUT: {
     en: "Logout",
@@ -52,12 +52,12 @@ export const translations = {
     pt: "Sobre o que você quer escrever?",
   },
   POST_FETCH_ERROR: {
-    en: "There was an error fetching your posts. Please, try again",
-    pt: "Houve um erro ao buscar seus posts. Por favor, tente novamente",
+    en: "There was an error fetching your posts. Please try again.",
+    pt: "Houve um erro ao buscar seus posts. Por favor, tente novamente.",
   },
   POST_ERROR: {
-    en: "There was an error saving your post. Please, try again",
-    pt: "Houve um error ao salvar sua postagem. Por favor, tente novamente",
+    en: "There was an error saving your post. Please try again.",
+    pt: "Houve um erro ao salvar sua postagem. Por favor, tente novamente.",
   },
   POST_NEW: {
     en: "New post added",
@@ -65,7 +65,7 @@ export const translations = {
   },
   POSTS_NO_MORE: {
     en: "There are no more posts to load",
-    pt: "Não há mais postagems a serem carregadas",
+    pt: "Não há mais postagens a serem carregadas",
   },
   PRIVATE_KEY: {
     en: "Private key",
@@ -88,20 +88,20 @@ export const translations = {
     pt: "Registrar conta",
   },
   REGISTER_ERROR: {
-    en: "There was an error registering your account. Please, try again",
-    pt: "Houve um error ao registrar sua conta. Por favor, tente novamente",
+    en: "There was an error registering your account. Please try again.",
+    pt: "Houve um erro ao registrar sua conta. Por favor, tente novamente.",
   },
   REGISTER_NEW: {
     en: "Register new account",
     pt: "Registrar nova conta",
   },
   REGISTER_SUCCESS: {
-    en: "Registration successful! Please log in now",
-    pt: "Registro realizado com sucesso! Você pode acessar sua conta agora",
+    en: "Registration successful! Please log in now.",
+    pt: "Registro realizado com sucesso! Você pode acessar sua conta agora.",
   },
   REQUEST_ERROR: {
-    en: "There was an error processing your request. Please, try again",
-    pt: "Ocorreu um erro ao realizar esta requisição. Por favor, tente novamente",
+    en: "There was an error processing your request. Please try again.",
+    pt: "Ocorreu um erro ao realizar esta requisição. Por favor, tente novamente.",
   },
   UNKNOWN_ERROR: {
     en: "Unknown error",
@@ -109,7 +109,7 @@ export const translations = {
   },
   UNEXPECTED_REGISTER_ERROR: {
     en: "Unexpected error while handling your registration request",
-    pt: "Erro inexperado ao lidar com seu pedido de registro",
+    pt: "Erro inesperado ao lidar com seu pedido de registro",
   },
   USER_NOT_FOUND: {
     en: "User not found",
@@ -153,7 +153,7 @@ export const translations = {
   },
   CLEAR_POST: {
     en: "Clear post",
-    pt: "Cancelar post",
+    pt: "Limpar post",
   },
   INVITE_CODE_INVALID: {
     en: "This invite code looks invalid.",
@@ -164,19 +164,19 @@ export const translations = {
     pt: "Código de convite",
   },
   INVITE_HELP: {
-    en: "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time. Share your codes responsibly.",
-    pt: "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo. Compartilhe seus convites com responsabilidade.",
+    en: "The only way to create new accounts is with invite codes. You can generate new invite codes here and share as you please. You can only have 3 pending invite codes at a time and if not used, they will be deleted after 1 day. Share your codes responsibly.",
+    pt: "A única forma de criar novas contas é através de convites. Você pode gerar novos convites aqui e compartilhar como e com quem quiser. Você só pode ter 3 convites pendentes ao mesmo tempo e se não usados eles serão deletados depois de 1 dia. Compartilhe seus convites com responsabilidade.",
   },
   INVITE_GENERATE: {
     en: "Generate invite code",
     pt: "Gerar convite",
   },
   INVITE_ERROR: {
-    en: "There was an error while creating your invite. Please, try again.",
+    en: "There was an error while creating your invite. Please try again.",
     pt: "Ocorreu um erro ao criar seu convite. Por favor, tente novamente.",
   },
   INVITE_FETCH_ERROR: {
-    en: "There was an error while fetching your invites. Please, try again.",
+    en: "There was an error while fetching your invites. Please try again.",
     pt: "Ocorreu um erro ao resgatar seus convites. Por favor, tente novamente.",
   },
   INVITE_PENDING: {
@@ -200,7 +200,7 @@ export const translations = {
     pt: "Configurações",
   },
   SETTINGS_NOTICE: {
-    en: "All settings are stored in browser. This means your changes won't be carried to other browsers or computers.",
+    en: "All settings are stored in the browser. This means your changes won't be carried to other browsers or computers.",
     pt: "Todas as configurações são guardadas no seu navegador. Isto significa que as alterações não serão replicadas em outros navegadores ou computadores.",
   },
   LANGUAGE: {
@@ -221,15 +221,15 @@ export const translations = {
   },
   THEME_LIGHT: {
     en: "Light",
-    pt: "Light",
+    pt: "Claro",
   },
   THEME_DARK: {
     en: "Dark",
-    pt: "Dark",
+    pt: "Escuro",
   },
   THEME_TATTY: {
     en: "Tatty",
-    pt: "Tatty",
+    pt: "Gasto",
   },
   CREDITS: {
     en: "created with ❤️ by",

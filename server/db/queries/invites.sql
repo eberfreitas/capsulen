@@ -51,3 +51,12 @@ WHERE
     user_id = :user_id
 AND
     status = 'pending';
+
+
+/* @name cleanUpInvites */
+DELETE FROM
+    invites
+WHERE
+    created_at < :threshold
+AND
+    status = 'pending';

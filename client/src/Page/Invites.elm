@@ -155,10 +155,10 @@ viewInvite i theme invite =
         ( color, statusLabel ) =
             case invite.status of
                 Business.InviteCode.Pending ->
-                    ( View.Theme.successColor theme, Translations.InvitePending )
+                    ( View.Theme.warningColor theme, Translations.InvitePending )
 
                 Business.InviteCode.Used ->
-                    ( View.Theme.errorColor theme, Translations.InviteUsed )
+                    ( View.Theme.successColor theme, Translations.InviteUsed )
 
         textColor =
             color |> Color.Extra.toContrast 0.5

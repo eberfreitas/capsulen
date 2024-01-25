@@ -9,6 +9,7 @@ import Hashids from "hashids";
 import * as Sentry from "@sentry/node";
 import { ProfilingIntegration } from "@sentry/profiling-node";
 import dotenv from "dotenv";
+import { schedule } from "node-cron";
 
 import {
   IGetUserResult,
@@ -28,12 +29,14 @@ import {
   getPosts,
 } from "./db/queries/posts.queries";
 import {
+  cleanUpInvites,
   countInvites,
   fetchInvites,
   useInvite,
   userInvite,
   validInvite,
 } from "./db/queries/invites.queries";
+import dayjs from "dayjs";
 
 dotenv.config({ path: "../.env" });
 
@@ -97,6 +100,7 @@ async function getAuthUser(req: Request): Promise<IGetUserResult> {
 const server = express();
 
 let captureException = console.error;
+let captureMessage = console.log;
 
 if (process.env?.SENTRY_SERVER_DSN) {
   Sentry.init({
@@ -114,7 +118,25 @@ if (process.env?.SENTRY_SERVER_DSN) {
   server.use(Sentry.Handlers.tracingHandler());
 
   captureException = Sentry.captureException;
+  captureMessage = Sentry.captureMessage;
 }
+
+// "Cron job" to clean up old invite codes
+schedule("* */1 * * *", async () => {
+  try {
+    const now = dayjs();
+
+    captureMessage(`[CRON] Starting invites cleanup at ${now.toDate().toString()}`);
+
+    const then = now.subtract(1, "day");
+    const threshold = then.format("YYYY-MM-DD HH:mm:ss");
+
+    await cleanUpInvites.run({ threshold }, db);
+  } catch (e) {
+    console.log(e);
+    captureException(e);
+  }
+});
 
 server.use(express.static(path.join(__dirname, "public")));
 server.use(bodyParser.json({ limit: "10mb" }));
