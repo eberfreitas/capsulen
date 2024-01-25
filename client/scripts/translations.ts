@@ -229,7 +229,7 @@ export const translations = {
   },
   THEME_TATTY: {
     en: "Tatty",
-    pt: "Gasto",
+    pt: "Tatty",
   },
   CREDITS: {
     en: "created with ❤️ by",

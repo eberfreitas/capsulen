@@ -10,6 +10,7 @@ import * as Sentry from "@sentry/node";
 import { ProfilingIntegration } from "@sentry/profiling-node";
 import dotenv from "dotenv";
 import { schedule } from "node-cron";
+import dayjs from "dayjs";
 
 import {
   IGetUserResult,
@@ -36,7 +37,6 @@ import {
   userInvite,
   validInvite,
 } from "./db/queries/invites.queries";
-import dayjs from "dayjs";
 
 dotenv.config({ path: "../.env" });
 

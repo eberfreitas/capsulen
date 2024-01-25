@@ -855,7 +855,7 @@ phrases =
           , Dict.fromList [ ( "en", "Light" ), ( "pt", "Claro" ) ]
           )
         , ( "THEME_TATTY"
-          , Dict.fromList [ ( "en", "Tatty" ), ( "pt", "Gasto" ) ]
+          , Dict.fromList [ ( "en", "Tatty" ), ( "pt", "Tatty" ) ]
           )
         , ( "TO_POST", Dict.fromList [ ( "en", "Post" ), ( "pt", "Postar" ) ] )
         , ( "UNEXPECTED_REGISTER_ERROR"
