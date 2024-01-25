@@ -21,6 +21,7 @@ import ConcurrentTask.Http.Extra
 import Context
 import Css
 import DateFormat
+import DateFormat.Extra.Deutsch
 import DateFormat.Languages
 import Dict
 import Effect
@@ -740,6 +741,15 @@ formatDate language date =
                             Translations.Pt ->
                                 DateFormat.Languages.portuguese
 
+                            Translations.Es ->
+                                DateFormat.Languages.spanish
+
+                            Translations.Fr ->
+                                DateFormat.Languages.french
+
+                            Translations.De ->
+                                DateFormat.Extra.Deutsch.deutsch
+
                     dateFormatTokens : List DateFormat.Token
                     dateFormatTokens =
                         case language of
@@ -751,7 +761,7 @@ formatDate language date =
                                 , DateFormat.dayOfMonthSuffix
                                 , DateFormat.text ", "
                                 , DateFormat.yearNumber
-                                , DateFormat.text " - "
+                                , DateFormat.text " at "
                                 , DateFormat.hourFixed
                                 , DateFormat.text ":"
                                 , DateFormat.minuteFixed
@@ -767,10 +777,47 @@ formatDate language date =
                                 , DateFormat.monthNameAbbreviated
                                 , DateFormat.text " de "
                                 , DateFormat.yearNumber
-                                , DateFormat.text " - "
+                                , DateFormat.text " às "
                                 , DateFormat.hourMilitaryFixed
                                 , DateFormat.text ":"
                                 , DateFormat.minuteFixed
+                                ]
+
+                            Translations.Es ->
+                                [ DateFormat.dayOfMonthNumber
+                                , DateFormat.text " de "
+                                , DateFormat.monthNameAbbreviated
+                                , DateFormat.text " de "
+                                , DateFormat.yearNumber
+                                , DateFormat.text " a las "
+                                , DateFormat.hourMilitaryFixed
+                                , DateFormat.text ":"
+                                , DateFormat.minuteFixed
+                                ]
+
+                            Translations.Fr ->
+                                [ DateFormat.dayOfMonthNumber
+                                , DateFormat.text " "
+                                , DateFormat.monthNameAbbreviated
+                                , DateFormat.text " "
+                                , DateFormat.yearNumber
+                                , DateFormat.text " à "
+                                , DateFormat.hourMilitaryFixed
+                                , DateFormat.text ":"
+                                , DateFormat.minuteFixed
+                                ]
+
+                            Translations.De ->
+                                [ DateFormat.dayOfMonthSuffix
+                                , DateFormat.text " "
+                                , DateFormat.monthNameAbbreviated
+                                , DateFormat.text " "
+                                , DateFormat.yearNumber
+                                , DateFormat.text " um "
+                                , DateFormat.hourMilitaryFixed
+                                , DateFormat.text ":"
+                                , DateFormat.minuteFixed
+                                , DateFormat.text " Uhr"
                                 ]
                 in
                 DateFormat.formatWithLanguage dateFormatLanguage dateFormatTokens Time.utc posix

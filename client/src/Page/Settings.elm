@@ -132,6 +132,9 @@ languageOptions i theme selected =
         options =
             [ ( Translations.En, Translations.English )
             , ( Translations.Pt, Translations.Portuguese )
+            , ( Translations.Es, Translations.Spanish )
+            , ( Translations.Fr, Translations.French )
+            , ( Translations.De, Translations.German )
             ]
     in
     viewOptions i theme options selected Language
