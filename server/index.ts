@@ -11,6 +11,7 @@ import { ProfilingIntegration } from "@sentry/profiling-node";
 import dotenv from "dotenv";
 import { schedule } from "node-cron";
 import dayjs from "dayjs";
+import parseDatabaseUrl from "ts-parse-database-url";
 
 import {
   IGetUserResult,
@@ -38,7 +39,7 @@ import {
   validInvite,
 } from "./db/queries/invites.queries";
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const POSTS_LIMIT = 10;
 
@@ -46,11 +47,14 @@ const port = process.env?.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
   : 3000;
 
+const dbClientConfig = parseDatabaseUrl(process.env?.DATABASE_URL || "");
+
 const db = new Client({
-  host: "localhost",
-  user: "postgres",
-  password: "postgres",
-  database: "capsulen",
+  host: dbClientConfig.host || "localhost",
+  user: dbClientConfig.user || "postgres",
+  password: dbClientConfig.password || "postgres",
+  database: dbClientConfig.database || "capsulen",
+  port: dbClientConfig.port || 5432,
 });
 
 const hashids = new Hashids(process.env?.PRIVATE_KEY || "", 16);
@@ -126,7 +130,9 @@ schedule("* */1 * * *", async () => {
   try {
     const now = dayjs();
 
-    captureMessage(`[CRON] Starting invites cleanup at ${now.toDate().toString()}`);
+    captureMessage(
+      `[CRON] Starting invites cleanup at ${now.toDate().toString()}`,
+    );
 
     const then = now.subtract(1, "day");
     const threshold = then.format("YYYY-MM-DD HH:mm:ss");

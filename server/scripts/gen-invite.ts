@@ -1,13 +1,21 @@
 import { Client } from "pg";
 import randomstring from "randomstring";
 import { masterInvite } from "../db/queries/invites.queries";
+import dotenv from "dotenv";
+import path from "path";
+import parseDatabaseUrl from "ts-parse-database-url";
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 (async function() {
+  const dbClientConfig = parseDatabaseUrl(process.env?.DATABASE_URL || "");
+
   const db = new Client({
-    host: "localhost",
-    user: "postgres",
-    password: "postgres",
-    database: "capsulen",
+    host: dbClientConfig.host || "localhost",
+    user: dbClientConfig.user || "postgres",
+    password: dbClientConfig.password || "postgres",
+    database: dbClientConfig.database || "capsulen",
+    port: dbClientConfig.port || 5432,
   });
 
   await db.connect();
