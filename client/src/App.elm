@@ -18,6 +18,8 @@ import Page.Posts
 import Page.Register
 import Page.Settings
 import Port
+import Task
+import Time
 import Translations
 import Tuple.Extra
 import Url
@@ -52,6 +54,7 @@ type Msg
     | SettingsMsg Page.Settings.Msg
     | AlertsMsg View.Alerts.Msg
     | Logout Browser.Events.Visibility
+    | GotTimeZone (Result () Time.Zone)
 
 
 view : Model -> Browser.Document Msg
@@ -222,6 +225,21 @@ update msg model =
                 Browser.Events.Visible ->
                     ( model, Cmd.none )
 
+        ( GotTimeZone result, _ ) ->
+            case result of
+                Ok timeZone ->
+                    let
+                        context =
+                            model.context
+
+                        nextContext =
+                            { context | timeZone = timeZone }
+                    in
+                    ( { model | context = nextContext }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
@@ -242,12 +260,16 @@ init flags url key =
         setTheme : Cmd msg
         setTheme =
             Port.setTheme <| View.Theme.encode nextContext.theme
+
+        getTimeZone : Cmd Msg
+        getTimeZone =
+            Task.attempt GotTimeZone Time.here
     in
     ( { url = url
       , context = nextContext
       , page = page
       }
-    , Cmd.batch [ effectCmd, pageCmd, setTheme ]
+    , Cmd.batch [ getTimeZone, effectCmd, pageCmd, setTheme ]
     )
 
 

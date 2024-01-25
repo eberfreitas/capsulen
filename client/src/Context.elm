@@ -6,6 +6,7 @@ import Business.User
 import Json.Decode
 import Translations
 import View.Theme
+import Time
 
 
 type alias Context =
@@ -16,6 +17,7 @@ type alias Context =
     , username : Maybe String
     , user : Maybe Business.User.User
     , autoLogout : Bool
+    , timeZone : Time.Zone
     }
 
 
@@ -34,6 +36,7 @@ new key lang theme username autoLogout =
     , username = username
     , user = Nothing
     , autoLogout = autoLogout
+    , timeZone = Time.utc
     }
 
 

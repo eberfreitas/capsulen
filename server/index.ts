@@ -126,7 +126,7 @@ if (process.env?.SENTRY_SERVER_DSN) {
 }
 
 // "Cron job" to clean up old invite codes
-schedule("* */1 * * *", async () => {
+schedule("0 */1 * * *", async () => {
   try {
     const now = dayjs();
 

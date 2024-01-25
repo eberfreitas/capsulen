@@ -276,7 +276,7 @@ viewWithUser i context model _ =
                         ]
 
                     ( posts, _ ) ->
-                        [ Html.div [] (posts |> List.map (viewPost context.language context.theme))
+                        [ Html.div [] (posts |> List.map (viewPost context.timeZone context.language context.theme))
                         , Html.div []
                             [ loadMoreBtn i context.theme model.loadingState ]
                         ]
@@ -417,8 +417,8 @@ loadMoreBtn i theme loading =
         [ Html.text <| i label ]
 
 
-viewPost : Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
-viewPost language theme post =
+viewPost : Time.Zone -> Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
+viewPost timeZone language theme post =
     Html.div
         [ HtmlAttributes.css
             [ Css.backgroundColor
@@ -449,7 +449,7 @@ viewPost language theme post =
                         |> Phosphor.toHtml []
                         |> Html.fromUnstyled
                     ]
-                , Html.text <| formatDate language post.createdAt
+                , Html.text <| formatDate timeZone language post.createdAt
                 ]
             , Html.div
                 [ HtmlAttributes.css
@@ -724,8 +724,8 @@ viewPostImages images =
         )
 
 
-formatDate : Translations.Language -> String -> String
-formatDate language date =
+formatDate : Time.Zone -> Translations.Language -> String -> String
+formatDate timeZone language date =
     date
         |> Iso8601.toTime
         |> Result.toMaybe
@@ -820,7 +820,7 @@ formatDate language date =
                                 , DateFormat.text " Uhr"
                                 ]
                 in
-                DateFormat.formatWithLanguage dateFormatLanguage dateFormatTokens Time.utc posix
+                DateFormat.formatWithLanguage dateFormatLanguage dateFormatTokens timeZone posix
             )
         |> Maybe.withDefault ""
 

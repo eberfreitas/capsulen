@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "watch": "nodemon index.ts",
-    "gen:pasetokey": "ts-node ./scripts/paseto-key.ts"
+    "gen:pasetoKey": "ts-node ./scripts/gen-paseto-key.ts",
+    "gen:invite": "ts-node ./scripts/gen-invite.ts",
+    "db:drop": "npx dbmate --env-file ../.env drop",
+    "db:up": "npx dbmate --env-file ../.env up",
+    "db:refresh": "npm run db:drop && npm run db:up"
   },
   "keywords": [],
   "author": "",

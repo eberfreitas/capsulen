@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "run-pty % npm run watch -w server % npm run watch:elm -w client % npm run watch:ts -w client"
+    "dev": "run-pty % npm run watch -w server % npm run watch:elm -w client % npm run watch:ts -w client",
+    "db:drop": "npm run db:drop -w server",
+    "db:up": "npm run db:up -w server",
+    "db:refresh": "npm run db:refresh -w server",
+    "gen:translations": "npm run gen:translations -w client",
+    "gen:invite": "npm run gen:invite -w server",
+    "gen:pasetoKey": "npm run gen:pasetoKey -w server"
   },
   "keywords": [],
   "author": "",

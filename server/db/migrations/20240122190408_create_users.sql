@@ -9,7 +9,7 @@ CREATE TABLE users (
     challenge varchar(255) NOT NULL,
     challenge_encrypted varchar(512) NULL,
     status user_status DEFAULT 'requested',
-    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (invite_id) REFERENCES invites(id)
 );
 
