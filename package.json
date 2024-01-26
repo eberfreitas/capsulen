@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "npx elm-tooling install",
     "dev": "run-pty % npm run watch -w server % npm run watch:elm -w client % npm run watch:ts -w client",
     "db:drop": "npm run db:drop -w server",
     "db:up": "npm run db:up -w server",
