@@ -1,4 +1,4 @@
-import { BuildOptions, context } from "esbuild";
+import { BuildOptions, build } from "esbuild";
 import dotenv from "dotenv";
 
 dotenv.config({ path: "../.env" });
@@ -18,13 +18,5 @@ const options: BuildOptions = {
 };
 
 (async function() {
-  try {
-    const ctx = await context(options);
-
-    await ctx.watch();
-
-    console.log("Client dev build watching...");
-  } catch (_) {
-    process.exit(1);
-  }
+  await build(options);
 })();

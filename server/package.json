@@ -9,7 +9,8 @@
     "gen:invite": "ts-node ./scripts/gen-invite.ts",
     "db:drop": "npx dbmate --env-file ../.env drop",
     "db:up": "npx dbmate --env-file ../.env up",
-    "db:refresh": "npm run db:drop && npm run db:up"
+    "db:refresh": "npm run db:drop && npm run db:up",
+    "start": "npx ts-node --transpile-only index.ts"
   },
   "keywords": [],
   "author": "",

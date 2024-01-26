@@ -10,7 +10,9 @@
     "db:refresh": "npm run db:refresh -w server",
     "gen:translations": "npm run gen:translations -w client",
     "gen:invite": "npm run gen:invite -w server",
-    "gen:pasetoKey": "npm run gen:pasetoKey -w server"
+    "gen:pasetoKey": "npm run gen:pasetoKey -w server",
+    "build": "npm run build -w client",
+    "start": "npm run db:up && npm run start -w server"
   },
   "keywords": [],
   "author": "",
