@@ -10,11 +10,11 @@
     "nodemon": "^3.0.1"
   },
   "scripts": {
-    "watch:elm": "elm-watch hot",
-    "watch:ts": "ts-node ./scripts/build-dev.ts",
-    "gen:translations": "ts-node ./scripts/gen-translations.ts",
-    "build:elm": "elm-watch make --optimize",
-    "build:ts": "ts-node ./scripts/build.ts",
+    "watch:elm": "npx elm-watch hot",
+    "watch:ts": "npx ts-node ./scripts/build-dev.ts",
+    "gen:translations": "npx ts-node ./scripts/gen-translations.ts",
+    "build:elm": "npx elm-watch make --optimize",
+    "build:ts": "npx ts-node ./scripts/build.ts",
     "build": "npm run build:elm && npm run build:ts"
   },
   "keywords": [],

@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "nodemon index.ts",
-    "gen:pasetoKey": "ts-node ./scripts/gen-paseto-key.ts",
-    "gen:invite": "ts-node ./scripts/gen-invite.ts",
+    "watch": "npx nodemon index.ts",
+    "gen:pasetoKey": "npx ts-node ./scripts/gen-paseto-key.ts",
+    "gen:invite": "npx ts-node ./scripts/gen-invite.ts",
     "db:drop": "npx dbmate --env-file ../.env drop",
     "db:up": "npx dbmate --env-file ../.env up",
     "db:refresh": "npm run db:drop && npm run db:up",
