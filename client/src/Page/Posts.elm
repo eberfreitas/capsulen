@@ -12,6 +12,7 @@ module Page.Posts exposing
 
 import Alert
 import AppUrl
+import Browser.Events
 import Business.Post
 import Business.User
 import Color.Extra
@@ -93,6 +94,7 @@ type Msg
     | GalleryOpen (List String) Int
     | GalleryClose
     | GalleryNav Int
+    | GalleryKeys String
     | ClearPost
     | Paste (List File.File)
     | NoOp
@@ -1161,32 +1163,41 @@ updateWithUser i msg model user =
 
         GalleryNav index ->
             let
-                ( _, gallery ) =
-                    model.gallery
-
-                lastIndex : Int
-                lastIndex =
-                    List.length gallery - 1
-
-                nextId : Int
-                nextId =
-                    if index < 0 then
-                        lastIndex
-
-                    else if index > lastIndex then
-                        0
-
-                    else
-                        index
-
                 nextGallery : ( Int, List String )
                 nextGallery =
-                    ( nextId, gallery )
+                    galleryGoTo index model.gallery
             in
             ( { model | gallery = nextGallery }, Effect.none, Cmd.none )
 
         GalleryClose ->
             ( { model | gallery = ( 0, [] ) }, Effect.none, Cmd.none )
+
+        GalleryKeys key ->
+            let
+                ( galleryCurrentIndex, _ ) =
+                    model.gallery
+            in
+            case key of
+                "ArrowRight" ->
+                    ( { model | gallery = galleryGoTo (galleryCurrentIndex + 1) model.gallery }
+                    , Effect.none
+                    , Cmd.none
+                    )
+
+                "ArrowLeft" ->
+                    ( { model | gallery = galleryGoTo (galleryCurrentIndex - 1) model.gallery }
+                    , Effect.none
+                    , Cmd.none
+                    )
+
+                "Escape" ->
+                    ( { model | gallery = ( 0, [] ) }
+                    , Effect.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Effect.none, Cmd.none )
 
         ClearPost ->
             ( { model | postImages = [], postInput = Form.newInput }, Effect.none, Cmd.none )
@@ -1208,6 +1219,30 @@ updateWithUser i msg model user =
                     )
 
 
+galleryGoTo : Int -> ( Int, List String ) -> ( Int, List String )
+galleryGoTo index gallery =
+    let
+        ( _, images ) =
+            gallery
+
+        lastIndex : Int
+        lastIndex =
+            List.length images - 1
+
+        nextId : Int
+        nextId =
+            if index < 0 then
+                lastIndex
+
+            else if index > lastIndex then
+                0
+
+            else
+                index
+    in
+    ( nextId, images )
+
+
 buildPostContent : Model -> Result Translations.Key Business.Post.PostContent
 buildPostContent model =
     case ( model.postInput.valid, model.postImages ) of
@@ -1221,11 +1256,25 @@ buildPostContent model =
             Ok { body = "", images = images }
 
 
-subscriptions : TaskPool -> Sub Msg
-subscriptions pool =
-    ConcurrentTask.onProgress
-        { send = Port.taskSend
-        , receive = Port.taskReceive
-        , onProgress = OnTaskProgress
-        }
-        pool
+keyDecoder : Json.Decode.Decoder Msg
+keyDecoder =
+    Json.Decode.field "key" Json.Decode.string
+        |> Json.Decode.andThen (GalleryKeys >> Json.Decode.succeed)
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ ConcurrentTask.onProgress
+            { send = Port.taskSend
+            , receive = Port.taskReceive
+            , onProgress = OnTaskProgress
+            }
+            model.tasks
+        , case model.gallery of
+            ( _, [] ) ->
+                Sub.none
+
+            _ ->
+                Browser.Events.onKeyDown keyDecoder
+        ]

@@ -229,9 +229,11 @@ update msg model =
             case result of
                 Ok timeZone ->
                     let
+                        context : Context.Context
                         context =
                             model.context
 
+                        nextContext : Context.Context
                         nextContext =
                             { context | timeZone = timeZone }
                     in
@@ -328,7 +330,7 @@ subscriptions model =
                     Page.Login.subscriptions subModel.tasks |> Sub.map LoginMsg
 
                 Posts subModel ->
-                    Page.Posts.subscriptions subModel.tasks |> Sub.map PostsMsg
+                    Page.Posts.subscriptions subModel |> Sub.map PostsMsg
 
                 Invites subModel ->
                     Page.Invites.subscriptions subModel.tasks |> Sub.map InvitesMsg
