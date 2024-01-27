@@ -475,4 +475,11 @@ export const translations = {
     de: "Nein",
     fr: "Non",
   },
+  BIG_PAYLOAD: {
+    en: "Your post is too big. If you are sending images, try to remove some or decrease the quality in an editing software.",
+    pt: "Seu post é muito grande. Se estiver enviando imagens, tente remover algumas ou diminuir a qualidade em um software de edição.",
+    es: "Tu publicación es demasiado grande. Si estás enviando imágenes, intenta eliminar algunas o disminuir la calidad en un software de edición.",
+    de: "Dein Beitrag ist zu groß. Wenn du Bilder sendest, versuche einige zu entfernen oder die Qualität in einer Bearbeitungssoftware zu verringern.",
+    fr: "Votre publication est trop volumineuse. Si vous envoyez des images, essayez d'en supprimer quelques-unes ou de réduire la qualité dans un logiciel de retouche.",
+  },
 };

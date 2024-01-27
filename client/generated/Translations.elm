@@ -15,6 +15,7 @@ type Key
     = AllPostsLoaded
     | AutoLogout
     | AutoLogoutHint
+    | BigPayload
     | BuyMePizza
     | ClearPost
     | CredentialsIncorrect
@@ -138,6 +139,9 @@ keyFromString key =
 
         "AUTO_LOGOUT_HINT" ->
             AutoLogoutHint
+
+        "BIG_PAYLOAD" ->
+            BigPayload
 
         "BUY_ME_PIZZA" ->
             BuyMePizza
@@ -349,6 +353,9 @@ keyToString key =
 
         AutoLogoutHint ->
             "AUTO_LOGOUT_HINT"
+
+        BigPayload ->
+            "BIG_PAYLOAD"
 
         BuyMePizza ->
             "BUY_ME_PIZZA"
@@ -597,6 +604,25 @@ phrases =
                   )
                 , ( "pt"
                   , "Ao ativar esta configuração você fará logout sempre que mudar de aba no seu navegador."
+                  )
+                ]
+          )
+        , ( "BIG_PAYLOAD"
+          , Dict.fromList
+                [ ( "de"
+                  , "Dein Beitrag ist zu groß. Wenn du Bilder sendest, versuche einige zu entfernen oder die Qualität in einer Bearbeitungssoftware zu verringern."
+                  )
+                , ( "en"
+                  , "Your post is too big. If you are sending images, try to remove some or decrease the quality in an editing software."
+                  )
+                , ( "es"
+                  , "Tu publicación es demasiado grande. Si estás enviando imágenes, intenta eliminar algunas o disminuir la calidad en un software de edición."
+                  )
+                , ( "fr"
+                  , "Votre publication est trop volumineuse. Si vous envoyez des images, essayez d'en supprimer quelques-unes ou de réduire la qualité dans un logiciel de retouche."
+                  )
+                , ( "pt"
+                  , "Seu post é muito grande. Se estiver enviando imagens, tente remover algumas ou diminuir a qualidade em um software de edição."
                   )
                 ]
           )
