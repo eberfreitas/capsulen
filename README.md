@@ -38,7 +38,7 @@ sequenceDiagram
 ## Running locally
 
 Ensure you have a PostgreSQL database created and running. Next, copy the `.env.example` as `.env`, replacing the
-values (PASETO key and Sentry ones are not required). Then run the following commands:
+values (paseto key and Sentry ones are not required). Then run the following commands:
 
 ```shell
 npm install
