@@ -45,7 +45,7 @@ const POSTS_LIMIT = 10;
 
 const port = process.env?.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
-  : 3000;
+  : 5000;
 
 const dbClientConfig = parseDatabaseUrl(process.env?.DATABASE_URL || "");
 
