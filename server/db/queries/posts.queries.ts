@@ -5,13 +5,15 @@ import { PreparedQuery } from '@pgtyped/runtime';
 export interface ICreatePostParams {
   post: {
     user_id: number | null | void,
-    content: string | null | void
+    content: string | null | void,
+    content_size: number | null | void
   };
 }
 
 /** 'CreatePost' return type */
 export interface ICreatePostResult {
   content: string;
+  content_size: number | null;
   created_at: Date | null;
   id: number;
   user_id: number;
@@ -23,13 +25,13 @@ export interface ICreatePostQuery {
   result: ICreatePostResult;
 }
 
-const createPostIR: any = {"usedParamSet":{"post":true},"params":[{"name":"post","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"user_id","required":false},{"name":"content","required":false}]},"locs":[{"a":52,"b":56}]}],"statement":"INSERT INTO\n    posts (user_id, content)\nVALUES\n    :post\nRETURNING *"};
+const createPostIR: any = {"usedParamSet":{"post":true},"params":[{"name":"post","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"user_id","required":false},{"name":"content","required":false},{"name":"content_size","required":false}]},"locs":[{"a":66,"b":70}]}],"statement":"INSERT INTO\n    posts (user_id, content, content_size)\nVALUES\n    :post\nRETURNING *"};
 
 /**
  * Query generated from SQL:
  * ```
  * INSERT INTO
- *     posts (user_id, content)
+ *     posts (user_id, content, content_size)
  * VALUES
  *     :post
  * RETURNING *
@@ -38,40 +40,94 @@ const createPostIR: any = {"usedParamSet":{"post":true},"params":[{"name":"post"
 export const createPost = new PreparedQuery<ICreatePostParams,ICreatePostResult>(createPostIR);
 
 
-/** 'GetPost' parameters type */
-export interface IGetPostParams {
-  id?: number | null | void;
+/** 'AllPosts' parameters type */
+export interface IAllPostsParams {
+  limit?: number | string | null | void;
+  size_threshold?: number | null | void;
+  user_id?: number | null | void;
 }
 
-/** 'GetPost' return type */
-export interface IGetPostResult {
-  content: string;
+/** 'AllPosts' return type */
+export interface IAllPostsResult {
+  content: string | null;
   created_at: Date | null;
   id: number;
 }
 
-/** 'GetPost' query type */
-export interface IGetPostQuery {
-  params: IGetPostParams;
-  result: IGetPostResult;
+/** 'AllPosts' query type */
+export interface IAllPostsQuery {
+  params: IAllPostsParams;
+  result: IAllPostsResult;
 }
 
-const getPostIR: any = {"usedParamSet":{"id":true},"params":[{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":73,"b":75}]}],"statement":"SELECT\n    id,\n    content,\n    created_at\nFROM\n    posts\nWHERE\n    id = :id"};
+const allPostsIR: any = {"usedParamSet":{"size_threshold":true,"user_id":true,"limit":true},"params":[{"name":"size_threshold","required":false,"transform":{"type":"scalar"},"locs":[{"a":44,"b":58}]},{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":158,"b":165}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":194,"b":199}]}],"statement":"SELECT\n    id,\n    CASE WHEN content_size > :size_threshold\n    THEN NULL\n    ELSE content\n    END content,\n    created_at\nFROM\n    posts\nWHERE\n    user_id = :user_id\nORDER BY\n    id DESC\nLIMIT :limit"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
  *     id,
- *     content,
+ *     CASE WHEN content_size > :size_threshold
+ *     THEN NULL
+ *     ELSE content
+ *     END content,
  *     created_at
  * FROM
  *     posts
  * WHERE
- *     id = :id
+ *     user_id = :user_id
+ * ORDER BY
+ *     id DESC
+ * LIMIT :limit
  * ```
  */
-export const getPost = new PreparedQuery<IGetPostParams,IGetPostResult>(getPostIR);
+export const allPosts = new PreparedQuery<IAllPostsParams,IAllPostsResult>(allPostsIR);
+
+
+/** 'AllPostsFrom' parameters type */
+export interface IAllPostsFromParams {
+  id?: number | null | void;
+  limit?: number | string | null | void;
+  size_threshold?: number | null | void;
+  user_id?: number | null | void;
+}
+
+/** 'AllPostsFrom' return type */
+export interface IAllPostsFromResult {
+  content: string | null;
+  created_at: Date | null;
+  id: number;
+}
+
+/** 'AllPostsFrom' query type */
+export interface IAllPostsFromQuery {
+  params: IAllPostsFromParams;
+  result: IAllPostsFromResult;
+}
+
+const allPostsFromIR: any = {"usedParamSet":{"size_threshold":true,"user_id":true,"id":true,"limit":true},"params":[{"name":"size_threshold","required":false,"transform":{"type":"scalar"},"locs":[{"a":44,"b":58}]},{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":158,"b":165}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":180,"b":182}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":211,"b":216}]}],"statement":"SELECT\n    id,\n    CASE WHEN content_size > :size_threshold\n    THEN NULL\n    ELSE content\n    END content,\n    created_at\nFROM\n    posts\nWHERE\n    user_id = :user_id\n    AND id < :id\nORDER BY\n    id DESC\nLIMIT :limit"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     id,
+ *     CASE WHEN content_size > :size_threshold
+ *     THEN NULL
+ *     ELSE content
+ *     END content,
+ *     created_at
+ * FROM
+ *     posts
+ * WHERE
+ *     user_id = :user_id
+ *     AND id < :id
+ * ORDER BY
+ *     id DESC
+ * LIMIT :limit
+ * ```
+ */
+export const allPostsFrom = new PreparedQuery<IAllPostsFromParams,IAllPostsFromResult>(allPostsFromIR);
 
 
 /** 'GetInitialPosts' parameters type */

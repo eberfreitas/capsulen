@@ -23,12 +23,10 @@ import {
 } from "./db/queries/users.queries";
 
 import {
-  IGetInitialPostsResult,
-  IGetPostsResult,
+  IAllPostsResult,
+  allPosts,
   createPost,
   deletePost,
-  getInitialPosts,
-  getPosts,
 } from "./db/queries/posts.queries";
 import {
   cleanUpInvites,
@@ -275,6 +273,7 @@ server.post("/api/posts", async (req, res) => {
     const postData = {
       user_id: user.id,
       content: req.body,
+      content_size: req.body.length,
     };
 
     const possiblePost = await createPost.run({ post: postData }, db);
@@ -297,42 +296,29 @@ server.post("/api/posts", async (req, res) => {
   }
 });
 
-server.get("/api/posts", async (req, res) => {
+function processPostId(post: IAllPostsResult): {
+  id: string;
+  content: string;
+  created_at: Date;
+} {
+  return {
+    id: hashids.encode(post.id),
+    content: post.content,
+    created_at: post.created_at,
+  };
+}
+
+server.get("/api/posts/all", async (req, res) => {
   try {
     const user = await getAuthUser(req);
-    const from = (req.query?.from as string) ?? null;
-    let rawPosts: IGetInitialPostsResult[] | IGetPostsResult[] = [];
+    const posts = await allPosts.run(
+      { size_threshold: 10000, user_id: user.id, limit: POSTS_LIMIT },
+      db,
+    );
 
-    if (!from) {
-      rawPosts = await getInitialPosts.run(
-        {
-          user_id: user.id,
-          limit: POSTS_LIMIT,
-        },
-        db,
-      );
-    } else {
-      const id = (hashids.decode(from)?.[0] as number) ?? 0;
+    console.log(posts);
 
-      rawPosts = await getPosts.run(
-        {
-          user_id: user.id,
-          limit: POSTS_LIMIT,
-          id,
-        },
-        db,
-      );
-    }
-
-    const posts = rawPosts.map((post) => {
-      return {
-        id: hashids.encode(post.id),
-        content: post.content,
-        created_at: post.created_at,
-      };
-    });
-
-    res.send(posts);
+    return res.send(posts.map(processPostId));
   } catch (e) {
     captureException(e);
 
@@ -340,6 +326,7 @@ server.get("/api/posts", async (req, res) => {
   }
 });
 
+// @TODO: make this an actual delete method post
 server.post("/api/posts/:id", async (req, res) => {
   try {
     const user = await getAuthUser(req);

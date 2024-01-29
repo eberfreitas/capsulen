@@ -501,8 +501,8 @@ viewPost timeZone language theme post =
                             viewPostImages images
                     ]
 
-                Business.Post.Encrypted ->
-                    [ Html.text "" ]
+                Business.Post.NotLoaded ->
+                    [ Html.text "Loading..." ]
             )
         ]
 
@@ -827,6 +827,26 @@ formatDate timeZone language date =
         |> Maybe.withDefault ""
 
 
+loadAllPosts tasks user =
+    ConcurrentTask.define
+        { function = "posts:allPosts"
+        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
+        , errors = ConcurrentTask.expectErrors Json.Decode.string
+        , args =
+            Json.Encode.object
+                [ ( "userToken", Json.Encode.string user.token )
+                , ( "privateKey", user.privateKey )
+                ]
+        }
+        |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
+        |> ConcurrentTask.map PostsLoaded
+        |> ConcurrentTask.attempt
+            { pool = tasks
+            , send = Port.taskSend
+            , onComplete = OnTaskComplete
+            }
+
+
 loadPosts :
     (List Business.Post.Post -> TaskOutput)
     -> String
@@ -876,15 +896,7 @@ init i context =
 
         ( newTasks, cmd ) =
             context.user
-                |> Maybe.map
-                    (\user ->
-                        ConcurrentTask.attempt
-                            { pool = tasks
-                            , send = Port.taskSend
-                            , onComplete = OnTaskComplete
-                            }
-                            (loadPosts PostsLoaded "/api/posts" user)
-                    )
+                |> Maybe.map (loadAllPosts tasks)
                 |> Maybe.withDefault ( tasks, Cmd.none )
     in
     ( { tasks = newTasks

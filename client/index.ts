@@ -7,7 +7,7 @@ import { ColorPalette } from "./@types/global";
 
 import { encryptChallenge } from "./tasks/register";
 import { buildUser, decryptChallenge } from "./tasks/login";
-import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
+import { allPosts, decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
 import { get, set } from "./local-storage";
 import { captureMessage } from "./logger";
 
@@ -53,6 +53,7 @@ if (process.env.SENTRY_CLIENT_DSN) {
       "register:encryptChallenge": encryptChallenge,
       "login:decryptChallenge": decryptChallenge,
       "login:buildUser": buildUser,
+      "posts:allPosts": allPosts,
       "posts:encryptPost": encryptPost,
       "posts:decryptPosts": decryptPosts,
       "posts:deleteConfirm": deleteConfirm,

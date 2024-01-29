@@ -1,6 +1,46 @@
 import { decryptData, encryptData } from "../crypto";
 import { captureException } from "../logger";
 
+export async function allPosts(args: {
+  userToken: string;
+  privateKey: CryptoKey;
+  from?: string;
+}) {
+  try {
+    const response = await fetch(
+      `/api/posts/all?from=${args?.from || ""}`,
+      {
+        headers: new Headers({ Authorization: `Bearer ${args.userToken}` }),
+      },
+    );
+
+    const posts = await response.json();
+
+    for (let i = 0; i < posts.length; i++) {
+      posts[i] = await decryptPost(posts[i], args.privateKey);
+    }
+
+    return posts;
+  } catch (e) {
+    captureException(e);
+
+    return { error: "POST_FETCH_ERROR" };
+  }
+}
+
+async function decryptPost(
+  rawPost: { content: string },
+  privateKey: CryptoKey,
+): Promise<{ content: unknown }> {
+  const post = Object.assign({}, rawPost);
+
+  if (post.content) {
+    post.content = JSON.parse(await decryptData(post.content, privateKey));
+  }
+
+  return post;
+}
+
 export async function encryptPost(args: {
   privateKey: CryptoKey;
   postContent: { body: string };
