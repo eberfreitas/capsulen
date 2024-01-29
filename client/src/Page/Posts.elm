@@ -827,6 +827,7 @@ formatDate timeZone language date =
         |> Maybe.withDefault ""
 
 
+loadAllPosts : TaskPool -> Business.User.User -> ( TaskPool, Cmd.Cmd Msg )
 loadAllPosts tasks user =
     ConcurrentTask.define
         { function = "posts:allPosts"
@@ -972,43 +973,25 @@ updateWithUser i msg model user =
             case buildPostContent newModel of
                 Ok postContent ->
                     let
-                        encryptPost : ConcurrentTask.ConcurrentTask Page.TaskError String
-                        encryptPost =
+                        ( tasks, cmd ) =
                             ConcurrentTask.define
-                                { function = "posts:encryptPost"
-                                , expect = ConcurrentTask.expectString
+                                { function = "posts:createPost"
+                                , expect = ConcurrentTask.expectJson Business.Post.decode
                                 , errors = ConcurrentTask.expectErrors Json.Decode.string
                                 , args =
                                     Json.Encode.object
                                         [ ( "privateKey", user.privateKey )
                                         , ( "postContent", Business.Post.encodePostContent postContent )
+                                        , ( "userToken", Json.Encode.string user.token )
                                         ]
                                 }
                                 |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
-
-                        persistPost : String -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-                        persistPost encryptedPost =
-                            ConcurrentTask.Http.post
-                                { url = "/api/posts"
-                                , headers = [ ConcurrentTask.Http.header "authorization" ("Bearer " ++ user.token) ]
-                                , body = ConcurrentTask.Http.stringBody "text/plain" encryptedPost
-                                , expect = ConcurrentTask.Http.expectJson Business.Post.decode
-                                , timeout = Nothing
-                                }
-                                |> ConcurrentTask.mapError Page.httpErrorMapper
-                                |> ConcurrentTask.map (\post -> Posted { post | content = Business.Post.Decrypted postContent })
-
-                        postTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-                        postTask =
-                            encryptPost |> ConcurrentTask.andThen persistPost
-
-                        ( tasks, cmd ) =
-                            ConcurrentTask.attempt
-                                { pool = model.tasks
-                                , send = Port.taskSend
-                                , onComplete = OnTaskComplete
-                                }
-                                postTask
+                                |> ConcurrentTask.map Posted
+                                |> ConcurrentTask.attempt
+                                    { pool = model.tasks
+                                    , send = Port.taskSend
+                                    , onComplete = OnTaskComplete
+                                    }
                     in
                     ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
