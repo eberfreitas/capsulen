@@ -90,9 +90,9 @@ view model =
         [ View.Style.app model.context.theme
         , Html.div
             [ HtmlAttributes.css
-                [ Css.display Css.flex_
+                [ Css.displayFlex
                 , Css.justifyContent Css.center
-                , Css.minHeight (Css.calc (Css.vh 100) (Css.minus <| Css.rem 2))
+                , Css.property "min-height" "calc(100vh - 2rem)"
                 , Css.padding <| Css.rem 2
                 , Css.width <| Css.pct 100
                 ]

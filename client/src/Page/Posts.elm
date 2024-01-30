@@ -21,6 +21,7 @@ import ConcurrentTask.Http
 import ConcurrentTask.Http.Extra
 import Context
 import Css
+import Css.Animations
 import DateFormat
 import DateFormat.Extra.Deutsch
 import DateFormat.Languages
@@ -98,6 +99,7 @@ type Msg
     | ClearPost
     | Paste (List File.File)
     | NoOp
+    | GotPost Json.Decode.Value
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -168,10 +170,10 @@ viewWithUser i context model _ =
                         _ ->
                             Html.div
                                 [ HtmlAttributes.css
-                                    [ Css.display Css.grid_
+                                    [ Css.property "display" "grid"
                                     , Css.property "grid-template-columns" "repeat(4, 1fr)"
-                                    , Css.columnGap <| Css.rem 0.5
-                                    , Css.rowGap <| Css.rem 0.5
+                                    , Css.property "column-gap" "0.5rem"
+                                    , Css.property "row-gap" "0.5rem"
                                     , Css.marginBottom <| Css.rem 0.95
                                     ]
                                 ]
@@ -184,7 +186,7 @@ viewWithUser i context model _ =
                                                     , HtmlAttributes.css
                                                         [ Css.width <| Css.pct 100
                                                         , Css.property "aspect-ratio" "1/1"
-                                                        , Css.objectFit Css.cover
+                                                        , Css.property "object-fit" "cover"
                                                         , Css.display Css.block
                                                         , Css.borderRadius <| Css.rem 0.5
                                                         ]
@@ -214,7 +216,7 @@ viewWithUser i context model _ =
                                 )
                     , Html.div
                         [ HtmlAttributes.css
-                            [ Css.display Css.flex_
+                            [ Css.displayFlex
                             , Css.justifyContent Css.spaceBetween
                             ]
                         ]
@@ -235,7 +237,7 @@ viewWithUser i context model _ =
                             ]
                             [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                         , Html.div
-                            [ HtmlAttributes.css [ Css.display Css.flex_ ] ]
+                            [ HtmlAttributes.css [ Css.displayFlex ] ]
                             [ case buildPostContent model of
                                 Ok _ ->
                                     Html.button
@@ -278,7 +280,7 @@ viewWithUser i context model _ =
                         ]
 
                     ( posts, _ ) ->
-                        [ Html.div [] (posts |> List.map (viewPost context.timeZone context.language context.theme))
+                        [ Html.div [] (posts |> List.map (viewPost i context.timeZone context.language context.theme))
                         , Html.div []
                             [ loadMoreBtn i context.theme model.loadingState ]
                         ]
@@ -290,6 +292,27 @@ viewWithUser i context model _ =
                 ( index, gallery ) ->
                     viewGallery context.theme index gallery
             ]
+
+
+asyncLoadPosts : Business.User.User -> List Business.Post.Post -> Cmd.Cmd Msg
+asyncLoadPosts user posts =
+    posts
+        |> List.filterMap
+            (\post ->
+                case post.content of
+                    Business.Post.NotLoaded ->
+                        Json.Encode.object
+                            [ ( "id", Json.Encode.string post.id )
+                            , ( "userToken", Json.Encode.string user.token )
+                            , ( "privateKey", user.privateKey )
+                            ]
+                            |> Port.requestPost
+                            |> Just
+
+                    _ ->
+                        Nothing
+            )
+        |> Cmd.batch
 
 
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
@@ -311,7 +334,7 @@ viewGallery theme index gallery =
             , Css.left <| Css.px 0
             , Css.right <| Css.px 0
             , Css.backgroundColor (theme |> View.Theme.backgroundColor |> Color.Extra.withAlpha 0.9 |> Color.Extra.toCss)
-            , Css.display Css.flex_
+            , Css.displayFlex
             , Css.alignItems Css.center
             , Css.justifyContent Css.center
             ]
@@ -338,7 +361,7 @@ viewGallery theme index gallery =
                                 , Css.border <| Css.px 0
                                 , Css.backgroundColor Css.transparent
                                 , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
-                                , Css.display Css.flex_
+                                , Css.displayFlex
                                 , Css.alignItems Css.center
                                 , Css.cursor Css.pointer
                                 , Css.fontSize <| Css.rem 2
@@ -419,8 +442,14 @@ loadMoreBtn i theme loading =
         [ Html.text <| i label ]
 
 
-viewPost : Time.Zone -> Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
-viewPost timeZone language theme post =
+viewPost :
+    Translations.Helper
+    -> Time.Zone
+    -> Translations.Language
+    -> View.Theme.Theme
+    -> Business.Post.Post
+    -> Html.Html Msg
+viewPost i timeZone language theme post =
     Html.div
         [ HtmlAttributes.css
             [ Css.backgroundColor
@@ -443,7 +472,7 @@ viewPost timeZone language theme post =
                 , Css.color (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.5 |> Color.Extra.toCss)
                 ]
             ]
-            [ Html.div [ HtmlAttributes.css [ Css.display Css.flex_, Css.alignItems Css.center ] ]
+            [ Html.div [ HtmlAttributes.css [ Css.displayFlex, Css.alignItems Css.center ] ]
                 [ Html.div [ HtmlAttributes.css [ Css.marginRight <| Css.rem 0.5 ] ]
                     [ Phosphor.clock Phosphor.Bold
                         |> Phosphor.withSize 1.5
@@ -501,8 +530,27 @@ viewPost timeZone language theme post =
                             viewPostImages images
                     ]
 
-                Business.Post.Encrypted ->
-                    [ Html.text "" ]
+                Business.Post.NotLoaded ->
+                    [ Html.div
+                        [ HtmlAttributes.css
+                            [ Css.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss)
+                            , Css.borderRadius <| Css.rem 0.5
+                            , Css.minHeight <| Css.rem 2
+                            , Css.marginBottom <| Css.rem 1
+                            , Css.animationName <|
+                                Css.Animations.keyframes
+                                    [ ( 0, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss) ] )
+                                    , ( 50, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.3 |> Color.Extra.toCss) ] )
+                                    , ( 100, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss) ] )
+                                    ]
+                            , Css.animationIterationCount Css.infinite
+                            , Css.property "animation-timing-function" "linear"
+                            , Css.animationDuration <| Css.ms 2000
+                            ]
+                        , HtmlAttributes.title <| i Translations.Loading ++ "..."
+                        ]
+                        [ Html.text "" ]
+                    ]
             )
         ]
 
@@ -567,7 +615,7 @@ processBody theme body =
                                     [ Css.display Css.block
                                     , Css.width <| Css.pct 100
                                     , Css.property "aspect-ratio" "16/9"
-                                    , Css.objectFit Css.cover
+                                    , Css.property "object-fit" "cover"
                                     , Css.borderRadius <| Css.rem 0.5
                                     ]
                                 ]
@@ -596,7 +644,7 @@ processBody theme body =
         embedImage url =
             Html.div
                 [ HtmlAttributes.css
-                    [ Css.display Css.flex_
+                    [ Css.displayFlex
                     , Css.justifyContent Css.center
                     ]
                 ]
@@ -697,10 +745,10 @@ viewPostImages images =
     in
     Html.div
         [ HtmlAttributes.css
-            [ Css.display Css.grid_
+            [ Css.property "display" "grid"
             , Css.property "grid-template-columns" ("repeat(" ++ repeats ++ ", 1fr)")
-            , Css.columnGap <| Css.rem 1
-            , Css.rowGap <| Css.rem 1
+            , Css.property "column-gap" "1rem"
+            , Css.property "row-gap" "1rem"
             , Css.marginBottom <| Css.rem 1
             ]
         ]
@@ -714,7 +762,7 @@ viewPostImages images =
                             , HtmlAttributes.css
                                 [ Css.width <| Css.pct 100
                                 , Css.property "aspect-ratio" aspectRatio
-                                , Css.objectFit Css.cover
+                                , Css.property "object-fit" "cover"
                                 , Css.display Css.block
                                 , Css.borderRadius <| Css.rem 0.5
                                 , Css.cursor Css.zoomIn
@@ -827,40 +875,43 @@ formatDate timeZone language date =
         |> Maybe.withDefault ""
 
 
-loadPosts :
-    (List Business.Post.Post -> TaskOutput)
-    -> String
+loadAllPosts :
+    TaskPool
+    -> Maybe String
+    -> (List Business.Post.Post -> TaskOutput)
     -> Business.User.User
-    -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-loadPosts output url user =
+    -> ( TaskPool, Cmd.Cmd Msg )
+loadAllPosts tasks from taskOutput user =
     let
-        getPosts : ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
-        getPosts =
-            ConcurrentTask.Http.get
-                { url = url
-                , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
-                , expect = ConcurrentTask.Http.expectJson Json.Decode.value
-                , timeout = Nothing
-                }
-                |> ConcurrentTask.mapError Page.httpErrorMapper
-
-        decryptPosts : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError (List Business.Post.Post)
-        decryptPosts value =
-            ConcurrentTask.define
-                { function = "posts:decryptPosts"
-                , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
-                , errors = ConcurrentTask.expectErrors Json.Decode.string
-                , args =
+        args : Json.Encode.Value
+        args =
+            case from of
+                Nothing ->
                     Json.Encode.object
-                        [ ( "privateKey", user.privateKey )
-                        , ( "posts", value )
+                        [ ( "userToken", Json.Encode.string user.token )
+                        , ( "privateKey", user.privateKey )
                         ]
-                }
-                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
+
+                Just id ->
+                    Json.Encode.object
+                        [ ( "userToken", Json.Encode.string user.token )
+                        , ( "privateKey", user.privateKey )
+                        , ( "from", Json.Encode.string id )
+                        ]
     in
-    getPosts
-        |> ConcurrentTask.andThen decryptPosts
-        |> ConcurrentTask.map output
+    ConcurrentTask.define
+        { function = "posts:allPosts"
+        , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
+        , errors = ConcurrentTask.expectErrors Json.Decode.string
+        , args = args
+        }
+        |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
+        |> ConcurrentTask.map taskOutput
+        |> ConcurrentTask.attempt
+            { pool = tasks
+            , send = Port.taskSend
+            , onComplete = OnTaskComplete
+            }
 
 
 init : Translations.Helper -> Context.Context -> ( Model, Effect.Effect, Cmd Msg )
@@ -876,15 +927,7 @@ init i context =
 
         ( newTasks, cmd ) =
             context.user
-                |> Maybe.map
-                    (\user ->
-                        ConcurrentTask.attempt
-                            { pool = tasks
-                            , send = Port.taskSend
-                            , onComplete = OnTaskComplete
-                            }
-                            (loadPosts PostsLoaded "/api/posts" user)
-                    )
+                |> Maybe.map (loadAllPosts tasks Nothing PostsLoaded)
                 |> Maybe.withDefault ( tasks, Cmd.none )
     in
     ( { tasks = newTasks
@@ -960,43 +1003,25 @@ updateWithUser i msg model user =
             case buildPostContent newModel of
                 Ok postContent ->
                     let
-                        encryptPost : ConcurrentTask.ConcurrentTask Page.TaskError String
-                        encryptPost =
+                        ( tasks, cmd ) =
                             ConcurrentTask.define
-                                { function = "posts:encryptPost"
-                                , expect = ConcurrentTask.expectString
+                                { function = "posts:createPost"
+                                , expect = ConcurrentTask.expectJson Business.Post.decode
                                 , errors = ConcurrentTask.expectErrors Json.Decode.string
                                 , args =
                                     Json.Encode.object
                                         [ ( "privateKey", user.privateKey )
                                         , ( "postContent", Business.Post.encodePostContent postContent )
+                                        , ( "userToken", Json.Encode.string user.token )
                                         ]
                                 }
                                 |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
-
-                        persistPost : String -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-                        persistPost encryptedPost =
-                            ConcurrentTask.Http.post
-                                { url = "/api/posts"
-                                , headers = [ ConcurrentTask.Http.header "authorization" ("Bearer " ++ user.token) ]
-                                , body = ConcurrentTask.Http.stringBody "text/plain" encryptedPost
-                                , expect = ConcurrentTask.Http.expectJson Business.Post.decode
-                                , timeout = Nothing
-                                }
-                                |> ConcurrentTask.mapError Page.httpErrorMapper
-                                |> ConcurrentTask.map (\post -> Posted { post | content = Business.Post.Decrypted postContent })
-
-                        postTask : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-                        postTask =
-                            encryptPost |> ConcurrentTask.andThen persistPost
-
-                        ( tasks, cmd ) =
-                            ConcurrentTask.attempt
-                                { pool = model.tasks
-                                , send = Port.taskSend
-                                , onComplete = OnTaskComplete
-                                }
-                                postTask
+                                |> ConcurrentTask.map Posted
+                                |> ConcurrentTask.attempt
+                                    { pool = model.tasks
+                                    , send = Port.taskSend
+                                    , onComplete = OnTaskComplete
+                                    }
                     in
                     ( { newModel | tasks = tasks }, Effect.toggleLoader, cmd )
 
@@ -1035,21 +1060,14 @@ updateWithUser i msg model user =
 
         LoadMore ->
             let
-                url : String
-                url =
+                from : Maybe String
+                from =
                     model.posts
                         |> List.Extra.last
                         |> Maybe.map .id
-                        |> Maybe.map (\id -> "/api/posts?from=" ++ id)
-                        |> Maybe.withDefault "/api/posts"
 
                 ( tasks, cmd ) =
-                    ConcurrentTask.attempt
-                        { pool = model.tasks
-                        , send = Port.taskSend
-                        , onComplete = OnTaskComplete
-                        }
-                        (loadPosts MorePostsLoaded url user)
+                    loadAllPosts model.tasks from MorePostsLoaded user
             in
             ( { model | tasks = tasks, loadingState = Loading }, Effect.toggleLoader, cmd )
 
@@ -1076,7 +1094,7 @@ updateWithUser i msg model user =
         OnTaskComplete (ConcurrentTask.Success (PostsLoaded posts)) ->
             ( { model | posts = model.posts ++ posts, loadingState = Loaded }
             , Effect.none
-            , Cmd.none
+            , asyncLoadPosts user posts
             )
 
         OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
@@ -1092,7 +1110,7 @@ updateWithUser i msg model user =
             in
             ( { model | posts = model.posts ++ posts, loadingState = loading }
             , Effect.batch [ effect, Effect.toggleLoader ]
-            , Cmd.none
+            , asyncLoadPosts user posts
             )
 
         OnTaskComplete (ConcurrentTask.Success (DeleteConfirm confirm)) ->
@@ -1104,8 +1122,9 @@ updateWithUser i msg model user =
                     let
                         task : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         task =
-                            ConcurrentTask.Http.post
-                                { url = "/api/posts/" ++ hashId
+                            ConcurrentTask.Http.request
+                                { method = "DELETE"
+                                , url = "/api/posts/" ++ hashId
                                 , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
                                 , body = ConcurrentTask.Http.emptyBody
                                 , expect = ConcurrentTask.Http.expectWhatever
@@ -1139,30 +1158,6 @@ updateWithUser i msg model user =
                 ]
             , Cmd.none
             )
-
-        OnTaskComplete (ConcurrentTask.Error (Page.RequestError (ConcurrentTask.Http.BadStatus meta value))) ->
-            if meta.statusCode == 413 then
-                ( { model | loadingState = Loaded, postFormState = Form.Editing }
-                , Effect.batch
-                    [ Effect.addAlert (Alert.new Alert.Error <| i Translations.BigPayload)
-                    , Effect.toggleLoader
-                    ]
-                , Cmd.none
-                )
-
-            else
-                let
-                    httpError : ConcurrentTask.Http.Error
-                    httpError =
-                        ConcurrentTask.Http.BadStatus meta value
-                in
-                ( { model | loadingState = Loaded, postFormState = Form.Editing }
-                , Effect.batch
-                    [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
-                    , Effect.toggleLoader
-                    ]
-                , Logger.captureMessage <| ConcurrentTask.Http.Extra.errorToString httpError
-                )
 
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
             ( { model | loadingState = Loaded, postFormState = Form.Editing }
@@ -1242,6 +1237,27 @@ updateWithUser i msg model user =
                     , Task.attempt GotImagesUrls (Task.sequence (filteredFiles |> List.map File.toUrl))
                     )
 
+        GotPost raw ->
+            case Json.Decode.decodeValue Business.Post.decode raw of
+                Ok post ->
+                    let
+                        posts : List Business.Post.Post
+                        posts =
+                            model.posts
+                                |> List.map
+                                    (\existingPost ->
+                                        if existingPost.id == post.id then
+                                            post
+
+                                        else
+                                            existingPost
+                                    )
+                    in
+                    ( { model | posts = posts }, Effect.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Effect.none, Cmd.none )
+
 
 galleryGoTo : Int -> ( Int, List String ) -> ( Int, List String )
 galleryGoTo index gallery =
@@ -1301,4 +1317,5 @@ subscriptions model =
 
             _ ->
                 Browser.Events.onKeyDown keyDecoder
+        , Port.getPost GotPost
         ]

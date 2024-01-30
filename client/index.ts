@@ -7,7 +7,7 @@ import { ColorPalette } from "./@types/global";
 
 import { encryptChallenge } from "./tasks/register";
 import { buildUser, decryptChallenge } from "./tasks/login";
-import { decryptPosts, deleteConfirm, encryptPost } from "./tasks/posts";
+import { allPosts, createPost, deleteConfirm, getPost } from "./tasks/posts";
 import { get, set } from "./local-storage";
 import { captureMessage } from "./logger";
 
@@ -53,8 +53,8 @@ if (process.env.SENTRY_CLIENT_DSN) {
       "register:encryptChallenge": encryptChallenge,
       "login:decryptChallenge": decryptChallenge,
       "login:buildUser": buildUser,
-      "posts:encryptPost": encryptPost,
-      "posts:decryptPosts": decryptPosts,
+      "posts:allPosts": allPosts,
+      "posts:createPost": createPost,
       "posts:deleteConfirm": deleteConfirm,
     },
     ports: {
@@ -93,4 +93,8 @@ if (process.env.SENTRY_CLIENT_DSN) {
   });
 
   app.ports.logMessage.subscribe(captureMessage);
+
+  app.ports.requestPost.subscribe((data) =>
+    getPost(data, app.ports.getPost.send),
+  );
 })();

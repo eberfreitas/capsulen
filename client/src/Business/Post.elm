@@ -17,7 +17,7 @@ type alias PostContent =
 
 
 type Content
-    = Encrypted
+    = NotLoaded
     | Decrypted PostContent
 
 
@@ -43,19 +43,21 @@ decodeDecryptedContent =
         (Json.Decode.field "images" (Json.Decode.list Json.Decode.string))
 
 
-decodeEncryptedContent : Json.Decode.Decoder Content
-decodeEncryptedContent =
-    Json.Decode.succeed Encrypted
-
-
-decodeContent : Json.Decode.Decoder Content
-decodeContent =
-    Json.Decode.oneOf [ decodeDecryptedContent, decodeEncryptedContent ]
-
-
 decode : Json.Decode.Decoder Post
 decode =
     Json.Decode.map3 Post
         (Json.Decode.field "id" Json.Decode.string)
-        (Json.Decode.field "content" decodeContent)
+        (Json.Decode.field "content"
+            (Json.Decode.nullable decodeDecryptedContent
+                |> Json.Decode.andThen
+                    (\content ->
+                        case content of
+                            Just content_ ->
+                                Json.Decode.succeed content_
+
+                            Nothing ->
+                                Json.Decode.succeed NotLoaded
+                    )
+            )
+        )
         (Json.Decode.field "created_at" Json.Decode.string)

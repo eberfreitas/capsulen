@@ -23,12 +23,12 @@ import {
 } from "./db/queries/users.queries";
 
 import {
-  IGetInitialPostsResult,
-  IGetPostsResult,
+  IAllPostsResult,
+  allPosts,
+  allPostsFrom,
   createPost,
   deletePost,
-  getInitialPosts,
-  getPosts,
+  getPost,
 } from "./db/queries/posts.queries";
 import {
   cleanUpInvites,
@@ -42,6 +42,7 @@ import {
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const POSTS_LIMIT = 10;
+const SIZE_THRESHOLD = 1024;
 
 const port = process.env?.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -275,6 +276,7 @@ server.post("/api/posts", async (req, res) => {
     const postData = {
       user_id: user.id,
       content: req.body,
+      content_size: req.body.length,
     };
 
     const possiblePost = await createPost.run({ post: postData }, db);
@@ -297,42 +299,48 @@ server.post("/api/posts", async (req, res) => {
   }
 });
 
-server.get("/api/posts", async (req, res) => {
+function processPostId(post: IAllPostsResult): {
+  id: string;
+  content: string;
+  created_at: Date;
+} {
+  return {
+    id: hashids.encode(post.id),
+    content: post.content,
+    created_at: post.created_at,
+  };
+}
+
+server.get("/api/posts/all", async (req, res) => {
   try {
     const user = await getAuthUser(req);
-    const from = (req.query?.from as string) ?? null;
-    let rawPosts: IGetInitialPostsResult[] | IGetPostsResult[] = [];
+    const from = (req.query?.from as string) || null;
+    let posts: IAllPostsResult[] = [];
 
     if (!from) {
-      rawPosts = await getInitialPosts.run(
+      posts = await allPosts.run(
         {
+          size_threshold: SIZE_THRESHOLD,
           user_id: user.id,
           limit: POSTS_LIMIT,
         },
         db,
       );
     } else {
-      const id = (hashids.decode(from)?.[0] as number) ?? 0;
+      const id = (hashids.decode(from)?.[0] as number) || 0;
 
-      rawPosts = await getPosts.run(
+      posts = await allPostsFrom.run(
         {
-          user_id: user.id,
+          size_threshold: SIZE_THRESHOLD,
           limit: POSTS_LIMIT,
+          user_id: user.id,
           id,
         },
         db,
       );
     }
 
-    const posts = rawPosts.map((post) => {
-      return {
-        id: hashids.encode(post.id),
-        content: post.content,
-        created_at: post.created_at,
-      };
-    });
-
-    res.send(posts);
+    return res.send(posts.map(processPostId));
   } catch (e) {
     captureException(e);
 
@@ -340,7 +348,22 @@ server.get("/api/posts", async (req, res) => {
   }
 });
 
-server.post("/api/posts/:id", async (req, res) => {
+server.get("/api/posts/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    const rawId = (req.params?.id as string) || "";
+    const id = (hashids.decode(rawId)?.[0] as number) || 0;
+    const post = await getPost.run({ user_id: user.id, id }, db);
+
+    return res.send(processPostId(post?.[0]) || null);
+  } catch(e) {
+    captureException(e);
+
+    return res.status(500).send("POST_FETCH_ERROR");
+  }
+});
+
+server.delete("/api/posts/:id", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     const rawPostId = req.params?.id || "";

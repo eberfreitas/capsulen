@@ -33,7 +33,7 @@ view theme alerts =
                     , Css.position Css.fixed
                     , Css.padding <| Css.rem 2
                     , Css.paddingBottom <| Css.px 1
-                    , Css.display Css.flex_
+                    , Css.displayFlex
                     , Css.flexDirection Css.column
                     , Css.alignItems Css.center
                     ]

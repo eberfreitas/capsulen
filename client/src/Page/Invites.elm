@@ -179,7 +179,7 @@ viewInvite i theme invite =
             [ HtmlAttributes.css
                 [ Css.fontSize <| Css.rem 1.5
                 , Css.fontFamily Css.monospace
-                , Css.display Css.flex_
+                , Css.displayFlex
                 , Css.alignItems Css.center
                 ]
             ]

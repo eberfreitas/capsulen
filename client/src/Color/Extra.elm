@@ -2,7 +2,6 @@ module Color.Extra exposing (toContrast, toCss, withAlpha)
 
 import Color
 import Css
-import Css.Value
 
 
 type alias Rgba =
@@ -21,7 +20,7 @@ type alias Hsla =
     }
 
 
-toCss : Color.Color -> Css.Value.Value { provides | rgba : Css.Value.Supported }
+toCss : Color.Color -> Css.Color
 toCss color =
     let
         rgba : Rgba
