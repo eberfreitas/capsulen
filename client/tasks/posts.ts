@@ -38,7 +38,7 @@ export async function allPosts(args: {
   }
 }
 
-export async function post(
+export async function getPost(
   args: {
     id: string;
     userToken: string;

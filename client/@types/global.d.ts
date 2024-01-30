@@ -35,6 +35,20 @@ export interface App {
     };
 
     logMessage: { subscribe: (callback: (msg: string) => void) => void };
+
+    requestPost: {
+      subscribe: (
+        callback: (args: {
+          id: string;
+          userToken: string;
+          privateKey: CryptoKey;
+        }) => void,
+      ) => void;
+    };
+
+    getPost: {
+      send: (result: unknown) => void;
+    };
   };
 }
 
