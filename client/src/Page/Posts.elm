@@ -883,6 +883,7 @@ loadAllPosts :
     -> ( TaskPool, Cmd.Cmd Msg )
 loadAllPosts tasks from taskOutput user =
     let
+        args : Json.Encode.Value
         args =
             case from of
                 Nothing ->
@@ -1240,6 +1241,7 @@ updateWithUser i msg model user =
             case Json.Decode.decodeValue Business.Post.decode raw of
                 Ok post ->
                     let
+                        posts : List Business.Post.Post
                         posts =
                             model.posts
                                 |> List.map
