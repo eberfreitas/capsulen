@@ -42,7 +42,7 @@ export async function post(args: {
   id: string;
   userToken: string;
   privateKey: CryptoKey;
-}, send: any) {
+}, send: (data: unknown) => void) {
   try {
     const response = await fetch(`/api/posts/${args.id}`, {
       headers: new Headers({ Authorization: `Bearer ${args.userToken}` }),
@@ -87,48 +87,6 @@ export async function createPost(args: {
 
     //@TODO: right error here
     return { error: "ENCRYPT_ERROR" };
-  }
-}
-
-export async function encryptPost(args: {
-  privateKey: CryptoKey;
-  postContent: { body: string };
-}) {
-  try {
-    const content = await encryptData(
-      JSON.stringify(args.postContent),
-      args.privateKey,
-    );
-
-    return content;
-  } catch (e) {
-    captureException(e);
-
-    return { error: "ENCRYPT_ERROR" };
-  }
-}
-
-export async function decryptPosts(args: {
-  privateKey: CryptoKey;
-  posts: { id: string; content: string; created_at: string }[];
-}) {
-  try {
-    const posts: { id: string; content: unknown; created_at: string }[] = [];
-
-    for (let i = 0; i < args.posts.length; i++) {
-      const post = args.posts[i];
-      const content = JSON.parse(
-        await decryptData(post.content, args.privateKey),
-      );
-
-      posts.push({ id: post.id, created_at: post.created_at, content });
-    }
-
-    return posts;
-  } catch (e) {
-    captureException(e);
-
-    return { error: "DECRYPT_ERROR" };
   }
 }
 

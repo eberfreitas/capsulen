@@ -55,8 +55,6 @@ if (process.env.SENTRY_CLIENT_DSN) {
       "login:buildUser": buildUser,
       "posts:allPosts": allPosts,
       "posts:createPost": createPost,
-      "posts:encryptPost": encryptPost,
-      "posts:decryptPosts": decryptPosts,
       "posts:deleteConfirm": deleteConfirm,
     },
     ports: {

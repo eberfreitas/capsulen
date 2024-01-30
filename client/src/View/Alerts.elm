@@ -48,4 +48,5 @@ update msg =
             Effect.removeAlert index
 
         Decay delta ->
-            Effect.decayAlerts delta
+            -- Effect.decayAlerts delta
+            Effect.none
