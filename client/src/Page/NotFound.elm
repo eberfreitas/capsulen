@@ -14,7 +14,7 @@ view theme =
         [ HtmlAttributes.css
             [ Css.width <| Css.vw 100
             , Css.height <| Css.vh 100
-            , Css.display Css.flex_
+            , Css.displayFlex
             , Css.flexDirection Css.column
             , Css.alignItems Css.center
             , Css.justifyContent Css.center

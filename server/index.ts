@@ -25,6 +25,7 @@ import {
 import {
   IAllPostsResult,
   allPosts,
+  allPostsFrom,
   createPost,
   deletePost,
 } from "./db/queries/posts.queries";
@@ -40,6 +41,7 @@ import {
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const POSTS_LIMIT = 10;
+const SIZE_THRESHOLD = 1024;
 
 const port = process.env?.BACKEND_PORT
   ? parseInt(process.env.BACKEND_PORT, 10)
@@ -311,12 +313,31 @@ function processPostId(post: IAllPostsResult): {
 server.get("/api/posts/all", async (req, res) => {
   try {
     const user = await getAuthUser(req);
-    const posts = await allPosts.run(
-      { size_threshold: 10000, user_id: user.id, limit: POSTS_LIMIT },
-      db,
-    );
+    const from = (req.query?.from as string) || null;
+    let posts: IAllPostsResult[] = [];
 
-    console.log(posts);
+    if (!from) {
+      posts = await allPosts.run(
+        {
+          size_threshold: SIZE_THRESHOLD,
+          user_id: user.id,
+          limit: POSTS_LIMIT,
+        },
+        db,
+      );
+    } else {
+      const id = (hashids.decode(from)?.[0] as number) || 0;
+
+      posts = await allPostsFrom.run(
+        {
+          size_threshold: SIZE_THRESHOLD,
+          limit: POSTS_LIMIT,
+          user_id: user.id,
+          id,
+        },
+        db,
+      );
+    }
 
     return res.send(posts.map(processPostId));
   } catch (e) {

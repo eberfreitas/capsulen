@@ -41,7 +41,7 @@ btn theme =
         , Css.display Css.block
         , Css.fontVariant Css.allPetiteCaps
         , Css.fontWeight Css.bold
-        , Css.padding <| Css.calc (Css.rem 1) (Css.minus (Css.px 2))
+        , Css.property "padding" "calc(1rem - 2px)"
         , Css.textAlign Css.center
         , Css.textDecoration Css.none
         ]

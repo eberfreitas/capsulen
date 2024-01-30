@@ -32,7 +32,7 @@ template i theme logoutMsg content =
         [ Html.div
             [ HtmlAttributes.css
                 [ Css.marginBottom <| Css.rem 2
-                , Css.display Css.flex_
+                , Css.displayFlex
                 , Css.justifyContent Css.spaceBetween
                 , Css.alignItems Css.center
                 ]
@@ -40,7 +40,7 @@ template i theme logoutMsg content =
             [ Html.div []
                 [ Html.a [ HtmlAttributes.href "/posts" ] [ View.Logo.logo 40 <| View.Theme.foregroundColor theme ] ]
             , Html.div
-                [ HtmlAttributes.css [ Css.display Css.flex_, Css.alignItems Css.center ] ]
+                [ HtmlAttributes.css [ Css.displayFlex, Css.alignItems Css.center ] ]
                 [ Html.div [ HtmlAttributes.css [ Css.marginRight <| Css.rem 1 ] ]
                     [ Html.a
                         [ HtmlAttributes.css

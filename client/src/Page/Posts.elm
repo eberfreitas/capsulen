@@ -168,10 +168,10 @@ viewWithUser i context model _ =
                         _ ->
                             Html.div
                                 [ HtmlAttributes.css
-                                    [ Css.display Css.grid_
+                                    [ Css.property "display" "grid"
                                     , Css.property "grid-template-columns" "repeat(4, 1fr)"
-                                    , Css.columnGap <| Css.rem 0.5
-                                    , Css.rowGap <| Css.rem 0.5
+                                    , Css.property "column-gap" "0.5rem"
+                                    , Css.property "row-gap" "0.5rem"
                                     , Css.marginBottom <| Css.rem 0.95
                                     ]
                                 ]
@@ -184,7 +184,7 @@ viewWithUser i context model _ =
                                                     , HtmlAttributes.css
                                                         [ Css.width <| Css.pct 100
                                                         , Css.property "aspect-ratio" "1/1"
-                                                        , Css.objectFit Css.cover
+                                                        , Css.property "object-fit" "cover"
                                                         , Css.display Css.block
                                                         , Css.borderRadius <| Css.rem 0.5
                                                         ]
@@ -214,7 +214,7 @@ viewWithUser i context model _ =
                                 )
                     , Html.div
                         [ HtmlAttributes.css
-                            [ Css.display Css.flex_
+                            [ Css.displayFlex
                             , Css.justifyContent Css.spaceBetween
                             ]
                         ]
@@ -235,7 +235,7 @@ viewWithUser i context model _ =
                             ]
                             [ Phosphor.cameraPlus Phosphor.Bold |> Phosphor.toHtml [] |> Html.fromUnstyled ]
                         , Html.div
-                            [ HtmlAttributes.css [ Css.display Css.flex_ ] ]
+                            [ HtmlAttributes.css [ Css.displayFlex ] ]
                             [ case buildPostContent model of
                                 Ok _ ->
                                     Html.button
@@ -292,6 +292,21 @@ viewWithUser i context model _ =
             ]
 
 
+asyncLoadPosts : List Business.Post.Post -> Cmd.Cmd Msg
+asyncLoadPosts posts =
+    posts
+        |> List.filterMap
+            (\post ->
+                case post.content of
+                    Business.Post.NotLoaded ->
+                        Just (Port.requestPost Json.Encode.null)
+
+                    _ ->
+                        Nothing
+            )
+        |> Cmd.batch
+
+
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
 viewGallery theme index gallery =
     let
@@ -311,7 +326,7 @@ viewGallery theme index gallery =
             , Css.left <| Css.px 0
             , Css.right <| Css.px 0
             , Css.backgroundColor (theme |> View.Theme.backgroundColor |> Color.Extra.withAlpha 0.9 |> Color.Extra.toCss)
-            , Css.display Css.flex_
+            , Css.displayFlex
             , Css.alignItems Css.center
             , Css.justifyContent Css.center
             ]
@@ -338,7 +353,7 @@ viewGallery theme index gallery =
                                 , Css.border <| Css.px 0
                                 , Css.backgroundColor Css.transparent
                                 , Css.color (theme |> View.Theme.textColor |> Color.Extra.toCss)
-                                , Css.display Css.flex_
+                                , Css.displayFlex
                                 , Css.alignItems Css.center
                                 , Css.cursor Css.pointer
                                 , Css.fontSize <| Css.rem 2
@@ -443,7 +458,7 @@ viewPost timeZone language theme post =
                 , Css.color (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.5 |> Color.Extra.toCss)
                 ]
             ]
-            [ Html.div [ HtmlAttributes.css [ Css.display Css.flex_, Css.alignItems Css.center ] ]
+            [ Html.div [ HtmlAttributes.css [ Css.displayFlex, Css.alignItems Css.center ] ]
                 [ Html.div [ HtmlAttributes.css [ Css.marginRight <| Css.rem 0.5 ] ]
                     [ Phosphor.clock Phosphor.Bold
                         |> Phosphor.withSize 1.5
@@ -567,7 +582,7 @@ processBody theme body =
                                     [ Css.display Css.block
                                     , Css.width <| Css.pct 100
                                     , Css.property "aspect-ratio" "16/9"
-                                    , Css.objectFit Css.cover
+                                    , Css.property "object-fit" "cover"
                                     , Css.borderRadius <| Css.rem 0.5
                                     ]
                                 ]
@@ -596,7 +611,7 @@ processBody theme body =
         embedImage url =
             Html.div
                 [ HtmlAttributes.css
-                    [ Css.display Css.flex_
+                    [ Css.displayFlex
                     , Css.justifyContent Css.center
                     ]
                 ]
@@ -697,10 +712,10 @@ viewPostImages images =
     in
     Html.div
         [ HtmlAttributes.css
-            [ Css.display Css.grid_
+            [ Css.property "display" "grid"
             , Css.property "grid-template-columns" ("repeat(" ++ repeats ++ ", 1fr)")
-            , Css.columnGap <| Css.rem 1
-            , Css.rowGap <| Css.rem 1
+            , Css.property "column-gap" "1rem"
+            , Css.property "row-gap" "1rem"
             , Css.marginBottom <| Css.rem 1
             ]
         ]
@@ -714,7 +729,7 @@ viewPostImages images =
                             , HtmlAttributes.css
                                 [ Css.width <| Css.pct 100
                                 , Css.property "aspect-ratio" aspectRatio
-                                , Css.objectFit Css.cover
+                                , Css.property "object-fit" "cover"
                                 , Css.display Css.block
                                 , Css.borderRadius <| Css.rem 0.5
                                 , Css.cursor Css.zoomIn
@@ -827,61 +842,42 @@ formatDate timeZone language date =
         |> Maybe.withDefault ""
 
 
-loadAllPosts : TaskPool -> Business.User.User -> ( TaskPool, Cmd.Cmd Msg )
-loadAllPosts tasks user =
+loadAllPosts :
+    TaskPool
+    -> Maybe String
+    -> (List Business.Post.Post -> TaskOutput)
+    -> Business.User.User
+    -> ( TaskPool, Cmd.Cmd Msg )
+loadAllPosts tasks from taskOutput user =
+    let
+        args =
+            case from of
+                Nothing ->
+                    Json.Encode.object
+                        [ ( "userToken", Json.Encode.string user.token )
+                        , ( "privateKey", user.privateKey )
+                        ]
+
+                Just id ->
+                    Json.Encode.object
+                        [ ( "userToken", Json.Encode.string user.token )
+                        , ( "privateKey", user.privateKey )
+                        , ( "from", Json.Encode.string id )
+                        ]
+    in
     ConcurrentTask.define
         { function = "posts:allPosts"
         , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
         , errors = ConcurrentTask.expectErrors Json.Decode.string
-        , args =
-            Json.Encode.object
-                [ ( "userToken", Json.Encode.string user.token )
-                , ( "privateKey", user.privateKey )
-                ]
+        , args = args
         }
         |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
-        |> ConcurrentTask.map PostsLoaded
+        |> ConcurrentTask.map taskOutput
         |> ConcurrentTask.attempt
             { pool = tasks
             , send = Port.taskSend
             , onComplete = OnTaskComplete
             }
-
-
-loadPosts :
-    (List Business.Post.Post -> TaskOutput)
-    -> String
-    -> Business.User.User
-    -> ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
-loadPosts output url user =
-    let
-        getPosts : ConcurrentTask.ConcurrentTask Page.TaskError Json.Decode.Value
-        getPosts =
-            ConcurrentTask.Http.get
-                { url = url
-                , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
-                , expect = ConcurrentTask.Http.expectJson Json.Decode.value
-                , timeout = Nothing
-                }
-                |> ConcurrentTask.mapError Page.httpErrorMapper
-
-        decryptPosts : Json.Decode.Value -> ConcurrentTask.ConcurrentTask Page.TaskError (List Business.Post.Post)
-        decryptPosts value =
-            ConcurrentTask.define
-                { function = "posts:decryptPosts"
-                , expect = ConcurrentTask.expectJson (Json.Decode.list Business.Post.decode)
-                , errors = ConcurrentTask.expectErrors Json.Decode.string
-                , args =
-                    Json.Encode.object
-                        [ ( "privateKey", user.privateKey )
-                        , ( "posts", value )
-                        ]
-                }
-                |> ConcurrentTask.mapError (Translations.keyFromString >> Page.Generic)
-    in
-    getPosts
-        |> ConcurrentTask.andThen decryptPosts
-        |> ConcurrentTask.map output
 
 
 init : Translations.Helper -> Context.Context -> ( Model, Effect.Effect, Cmd Msg )
@@ -897,7 +893,7 @@ init i context =
 
         ( newTasks, cmd ) =
             context.user
-                |> Maybe.map (loadAllPosts tasks)
+                |> Maybe.map (loadAllPosts tasks Nothing PostsLoaded)
                 |> Maybe.withDefault ( tasks, Cmd.none )
     in
     ( { tasks = newTasks
@@ -1030,21 +1026,14 @@ updateWithUser i msg model user =
 
         LoadMore ->
             let
-                url : String
-                url =
+                from : Maybe String
+                from =
                     model.posts
                         |> List.Extra.last
                         |> Maybe.map .id
-                        |> Maybe.map (\id -> "/api/posts?from=" ++ id)
-                        |> Maybe.withDefault "/api/posts"
 
                 ( tasks, cmd ) =
-                    ConcurrentTask.attempt
-                        { pool = model.tasks
-                        , send = Port.taskSend
-                        , onComplete = OnTaskComplete
-                        }
-                        (loadPosts MorePostsLoaded url user)
+                    loadAllPosts model.tasks from MorePostsLoaded user
             in
             ( { model | tasks = tasks, loadingState = Loading }, Effect.toggleLoader, cmd )
 

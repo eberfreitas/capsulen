@@ -79,8 +79,8 @@ toHtml theme closeFn index (Message message) =
             , Css.borderRadius <| Css.rem 1
             , Css.border3 (Css.rem 0.5) Css.solid (theme |> View.Theme.backgroundColor |> Color.Extra.toCss)
             , Css.position Css.relative
-            , Css.maxWidth (Css.calc (Css.px 600) (Css.plus <| Css.rem 1))
-            , Css.width <| Css.calc (Css.pct 100) (Css.plus <| Css.rem 1)
+            , Css.property "max-width" "calc(600px - 1rem)"
+            , Css.property "width" "calc(100% - 1rem)"
             ]
         ]
         [ Html.div [] [ Html.text <| message.body ]
