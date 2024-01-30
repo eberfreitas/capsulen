@@ -21,6 +21,7 @@ import ConcurrentTask.Http
 import ConcurrentTask.Http.Extra
 import Context
 import Css
+import Css.Animations
 import DateFormat
 import DateFormat.Extra.Deutsch
 import DateFormat.Languages
@@ -278,7 +279,7 @@ viewWithUser i context model _ =
                         ]
 
                     ( posts, _ ) ->
-                        [ Html.div [] (posts |> List.map (viewPost context.timeZone context.language context.theme))
+                        [ Html.div [] (posts |> List.map (viewPost i context.timeZone context.language context.theme))
                         , Html.div []
                             [ loadMoreBtn i context.theme model.loadingState ]
                         ]
@@ -292,19 +293,19 @@ viewWithUser i context model _ =
             ]
 
 
-asyncLoadPosts : List Business.Post.Post -> Cmd.Cmd Msg
-asyncLoadPosts posts =
-    posts
-        |> List.filterMap
-            (\post ->
-                case post.content of
-                    Business.Post.NotLoaded ->
-                        Just (Port.requestPost Json.Encode.null)
+-- asyncLoadPosts : List Business.Post.Post -> Cmd.Cmd Msg
+-- asyncLoadPosts posts =
+--     posts
+--         |> List.filterMap
+--             (\post ->
+--                 case post.content of
+--                     Business.Post.NotLoaded ->
+--                         Just (Port.requestPost Json.Encode.null)
 
-                    _ ->
-                        Nothing
-            )
-        |> Cmd.batch
+--                     _ ->
+--                         Nothing
+--             )
+--         |> Cmd.batch
 
 
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
@@ -434,8 +435,14 @@ loadMoreBtn i theme loading =
         [ Html.text <| i label ]
 
 
-viewPost : Time.Zone -> Translations.Language -> View.Theme.Theme -> Business.Post.Post -> Html.Html Msg
-viewPost timeZone language theme post =
+viewPost :
+    Translations.Helper
+    -> Time.Zone
+    -> Translations.Language
+    -> View.Theme.Theme
+    -> Business.Post.Post
+    -> Html.Html Msg
+viewPost i timeZone language theme post =
     Html.div
         [ HtmlAttributes.css
             [ Css.backgroundColor
@@ -517,7 +524,26 @@ viewPost timeZone language theme post =
                     ]
 
                 Business.Post.NotLoaded ->
-                    [ Html.text "Loading..." ]
+                    [ Html.div
+                        [ HtmlAttributes.css
+                            [ Css.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss)
+                            , Css.borderRadius <| Css.rem 0.5
+                            , Css.minHeight <| Css.rem 2
+                            , Css.marginBottom <| Css.rem 1
+                            , Css.animationName <|
+                                Css.Animations.keyframes
+                                    [ ( 0, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss) ] )
+                                    , ( 50, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.3 |> Color.Extra.toCss) ] )
+                                    , ( 100, [ Css.Animations.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.05 |> Color.Extra.toCss) ] )
+                                    ]
+                            , Css.animationIterationCount Css.infinite
+                            , Css.property "animation-timing-function" "linear"
+                            , Css.animationDuration <| Css.ms 2000
+                            ]
+                        , HtmlAttributes.title <| i Translations.Loading ++ "..."
+                        ]
+                        [ Html.text "" ]
+                    ]
             )
         ]
 
