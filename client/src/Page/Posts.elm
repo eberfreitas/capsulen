@@ -1121,8 +1121,9 @@ updateWithUser i msg model user =
                     let
                         task : ConcurrentTask.ConcurrentTask Page.TaskError TaskOutput
                         task =
-                            ConcurrentTask.Http.post
-                                { url = "/api/posts/" ++ hashId
+                            ConcurrentTask.Http.request
+                                { method = "DELETE"
+                                , url = "/api/posts/" ++ hashId
                                 , headers = [ ConcurrentTask.Http.header "authorization" user.token ]
                                 , body = ConcurrentTask.Http.emptyBody
                                 , expect = ConcurrentTask.Http.expectWhatever

@@ -363,8 +363,7 @@ server.get("/api/posts/:id", async (req, res) => {
   }
 });
 
-// @TODO: make this an actual delete method post
-server.post("/api/posts/:id", async (req, res) => {
+server.delete("/api/posts/:id", async (req, res) => {
   try {
     const user = await getAuthUser(req);
     const rawPostId = req.params?.id || "";
