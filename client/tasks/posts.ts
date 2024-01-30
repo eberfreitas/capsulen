@@ -38,11 +38,14 @@ export async function allPosts(args: {
   }
 }
 
-export async function post(args: {
-  id: string;
-  userToken: string;
-  privateKey: CryptoKey;
-}, send: (data: unknown) => void) {
+export async function post(
+  args: {
+    id: string;
+    userToken: string;
+    privateKey: CryptoKey;
+  },
+  send: (data: unknown) => void,
+) {
   try {
     const response = await fetch(`/api/posts/${args.id}`, {
       headers: new Headers({ Authorization: `Bearer ${args.userToken}` }),
@@ -50,10 +53,12 @@ export async function post(args: {
 
     const data = await response.json();
 
-    data["content"] = JSON.parse(await decryptData(data.content, args.privateKey));
+    data["content"] = JSON.parse(
+      await decryptData(data.content, args.privateKey),
+    );
 
     send(data);
-  } catch(e) {
+  } catch (e) {
     captureException(e);
 
     return { error: "POST_FETCH_ERROR" };
@@ -77,6 +82,10 @@ export async function createPost(args: {
       body: content,
     });
 
+    if (response.status === 413) {
+      return { error: "BIG_PAYLOAD" };
+    }
+
     const data = await response.json();
 
     data["content"] = args.postContent;
@@ -85,8 +94,7 @@ export async function createPost(args: {
   } catch (e) {
     captureException(e);
 
-    //@TODO: right error here
-    return { error: "ENCRYPT_ERROR" };
+    return { error: "POST_ERROR" };
   }
 }
 

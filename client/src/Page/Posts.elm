@@ -1157,30 +1157,6 @@ updateWithUser i msg model user =
             , Cmd.none
             )
 
-        OnTaskComplete (ConcurrentTask.Error (Page.RequestError (ConcurrentTask.Http.BadStatus meta value))) ->
-            if meta.statusCode == 413 then
-                ( { model | loadingState = Loaded, postFormState = Form.Editing }
-                , Effect.batch
-                    [ Effect.addAlert (Alert.new Alert.Error <| i Translations.BigPayload)
-                    , Effect.toggleLoader
-                    ]
-                , Cmd.none
-                )
-
-            else
-                let
-                    httpError : ConcurrentTask.Http.Error
-                    httpError =
-                        ConcurrentTask.Http.BadStatus meta value
-                in
-                ( { model | loadingState = Loaded, postFormState = Form.Editing }
-                , Effect.batch
-                    [ Effect.addAlert (Alert.new Alert.Error <| i Translations.RequestError)
-                    , Effect.toggleLoader
-                    ]
-                , Logger.captureMessage <| ConcurrentTask.Http.Extra.errorToString httpError
-                )
-
         OnTaskComplete (ConcurrentTask.Error (Page.RequestError httpError)) ->
             ( { model | loadingState = Loaded, postFormState = Form.Editing }
             , Effect.batch
