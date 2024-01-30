@@ -99,6 +99,7 @@ type Msg
     | ClearPost
     | Paste (List File.File)
     | NoOp
+    | GotPost Json.Decode.Value
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -293,19 +294,25 @@ viewWithUser i context model _ =
             ]
 
 
--- asyncLoadPosts : List Business.Post.Post -> Cmd.Cmd Msg
--- asyncLoadPosts posts =
---     posts
---         |> List.filterMap
---             (\post ->
---                 case post.content of
---                     Business.Post.NotLoaded ->
---                         Just (Port.requestPost Json.Encode.null)
+asyncLoadPosts : Business.User.User -> List Business.Post.Post -> Cmd.Cmd Msg
+asyncLoadPosts user posts =
+    posts
+        |> List.filterMap
+            (\post ->
+                case post.content of
+                    Business.Post.NotLoaded ->
+                        Json.Encode.object
+                            [ ( "id", Json.Encode.string post.id )
+                            , ( "userToken", Json.Encode.string user.token )
+                            , ( "privateKey", user.privateKey )
+                            ]
+                            |> Port.requestPost
+                            |> Just
 
---                     _ ->
---                         Nothing
---             )
---         |> Cmd.batch
+                    _ ->
+                        Nothing
+            )
+        |> Cmd.batch
 
 
 viewGallery : View.Theme.Theme -> Int -> List String -> Html.Html Msg
@@ -1086,7 +1093,7 @@ updateWithUser i msg model user =
         OnTaskComplete (ConcurrentTask.Success (PostsLoaded posts)) ->
             ( { model | posts = model.posts ++ posts, loadingState = Loaded }
             , Effect.none
-            , Cmd.none
+            , asyncLoadPosts user posts
             )
 
         OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
@@ -1102,7 +1109,7 @@ updateWithUser i msg model user =
             in
             ( { model | posts = model.posts ++ posts, loadingState = loading }
             , Effect.batch [ effect, Effect.toggleLoader ]
-            , Cmd.none
+            , asyncLoadPosts user posts
             )
 
         OnTaskComplete (ConcurrentTask.Success (DeleteConfirm confirm)) ->
@@ -1252,6 +1259,26 @@ updateWithUser i msg model user =
                     , Task.attempt GotImagesUrls (Task.sequence (filteredFiles |> List.map File.toUrl))
                     )
 
+        GotPost raw ->
+            case Json.Decode.decodeValue Business.Post.decode raw of
+                Ok post ->
+                    let
+                        posts =
+                            model.posts
+                                |> List.map
+                                    (\existingPost ->
+                                        if existingPost.id == post.id then
+                                            post
+
+                                        else
+                                            existingPost
+                                    )
+                    in
+                    ( { model | posts = posts }, Effect.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Effect.none, Cmd.none )
+
 
 galleryGoTo : Int -> ( Int, List String ) -> ( Int, List String )
 galleryGoTo index gallery =
@@ -1311,4 +1338,5 @@ subscriptions model =
 
             _ ->
                 Browser.Events.onKeyDown keyDecoder
+        , Port.getPost GotPost
         ]

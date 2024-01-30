@@ -38,6 +38,28 @@ export async function allPosts(args: {
   }
 }
 
+export async function post(args: {
+  id: string;
+  userToken: string;
+  privateKey: CryptoKey;
+}, send: any) {
+  try {
+    const response = await fetch(`/api/posts/${args.id}`, {
+      headers: new Headers({ Authorization: `Bearer ${args.userToken}` }),
+    });
+
+    const data = await response.json();
+
+    data["content"] = JSON.parse(await decryptData(data.content, args.privateKey));
+
+    send(data);
+  } catch(e) {
+    captureException(e);
+
+    return { error: "POST_FETCH_ERROR" };
+  }
+}
+
 export async function createPost(args: {
   postContent: unknown;
   privateKey: CryptoKey;

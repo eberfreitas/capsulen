@@ -170,6 +170,45 @@ const getInitialPostsIR: any = {"usedParamSet":{"user_id":true,"limit":true},"pa
 export const getInitialPosts = new PreparedQuery<IGetInitialPostsParams,IGetInitialPostsResult>(getInitialPostsIR);
 
 
+/** 'GetPost' parameters type */
+export interface IGetPostParams {
+  id?: number | null | void;
+  user_id?: number | null | void;
+}
+
+/** 'GetPost' return type */
+export interface IGetPostResult {
+  content: string;
+  created_at: Date | null;
+  id: number;
+}
+
+/** 'GetPost' query type */
+export interface IGetPostQuery {
+  params: IGetPostParams;
+  result: IGetPostResult;
+}
+
+const getPostIR: any = {"usedParamSet":{"user_id":true,"id":true},"params":[{"name":"user_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":78,"b":85}]},{"name":"id","required":false,"transform":{"type":"scalar"},"locs":[{"a":100,"b":102}]}],"statement":"SELECT\n    id,\n    content,\n    created_at\nFROM\n    posts\nWHERE\n    user_id = :user_id\n    AND id = :id\nLIMIT 1"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     id,
+ *     content,
+ *     created_at
+ * FROM
+ *     posts
+ * WHERE
+ *     user_id = :user_id
+ *     AND id = :id
+ * LIMIT 1
+ * ```
+ */
+export const getPost = new PreparedQuery<IGetPostParams,IGetPostResult>(getPostIR);
+
+
 /** 'GetPosts' parameters type */
 export interface IGetPostsParams {
   id?: number | null | void;

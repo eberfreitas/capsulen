@@ -28,6 +28,7 @@ import {
   allPostsFrom,
   createPost,
   deletePost,
+  getPost,
 } from "./db/queries/posts.queries";
 import {
   cleanUpInvites,
@@ -341,6 +342,21 @@ server.get("/api/posts/all", async (req, res) => {
 
     return res.send(posts.map(processPostId));
   } catch (e) {
+    captureException(e);
+
+    return res.status(500).send("POST_FETCH_ERROR");
+  }
+});
+
+server.get("/api/posts/:id", async (req, res) => {
+  try {
+    const user = await getAuthUser(req);
+    const rawId = (req.params?.id as string) || "";
+    const id = (hashids.decode(rawId)?.[0] as number) || 0;
+    const post = await getPost.run({ user_id: user.id, id }, db);
+
+    return res.send(processPostId(post?.[0]) || null);
+  } catch(e) {
     captureException(e);
 
     return res.status(500).send("POST_FETCH_ERROR");

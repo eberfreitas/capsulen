@@ -54,6 +54,19 @@ ORDER BY
     id DESC
 LIMIT :limit;
 
+/* @name getPost */
+SELECT
+    id,
+    content,
+    created_at
+FROM
+    posts
+WHERE
+    user_id = :user_id
+    AND id = :id
+LIMIT 1;
+
+
 /* @name getPosts */
 SELECT
     id,
