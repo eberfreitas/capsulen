@@ -91,7 +91,7 @@ initEffect : Translations.Helper -> Maybe Business.User.User -> Effect.Effect
 initEffect i user =
     user
         |> Maybe.map (always Effect.none)
-        |> Maybe.withDefault (Effect.redirectWithAlert "/" (Alert.new Alert.Error <| i Translations.ForbiddenArea))
+        |> Maybe.withDefault (Effect.redirectWithAlert "/" (Alert.new Alert.Warning <| i Translations.ForbiddenArea))
 
 
 update :

@@ -97,4 +97,8 @@ if (process.env.SENTRY_CLIENT_DSN) {
   app.ports.requestPost.subscribe((data) =>
     getPost(data, app.ports.getPost.send),
   );
+
+  document.addEventListener("scroll", (event) => {
+    app.ports.onScroll.send(null);
+  });
 })();

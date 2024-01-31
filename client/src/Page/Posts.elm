@@ -12,6 +12,7 @@ module Page.Posts exposing
 
 import Alert
 import AppUrl
+import Browser.Dom
 import Browser.Events
 import Business.Post
 import Business.User
@@ -87,7 +88,6 @@ type Msg
     | GotImagesUrls (Result () (List String))
     | RemoveImage Int
     | Submit
-    | LoadMore
     | Logout
     | Delete String
     | OnTaskProgress ( TaskPool, Cmd Msg )
@@ -100,6 +100,8 @@ type Msg
     | Paste (List File.File)
     | NoOp
     | GotPost Json.Decode.Value
+    | OnScroll ()
+    | GotViewport (Result () Browser.Dom.Viewport)
 
 
 view : Translations.Helper -> Context.Context -> Model -> Html.Html Msg
@@ -282,7 +284,7 @@ viewWithUser i context model _ =
                     ( posts, _ ) ->
                         [ Html.div [] (posts |> List.map (viewPost i context.timeZone context.language context.theme))
                         , Html.div []
-                            [ loadMoreBtn i context.theme model.loadingState ]
+                            [ loadingIndicator i context.theme model.loadingState ]
                         ]
                 )
             , case model.gallery of
@@ -412,34 +414,29 @@ viewGallery theme index gallery =
         )
 
 
-loadMoreBtn : Translations.Helper -> View.Theme.Theme -> PostsLoading -> Html.Html Msg
-loadMoreBtn i theme loading =
+loadingIndicator : Translations.Helper -> View.Theme.Theme -> PostsLoading -> Html.Html msg
+loadingIndicator i theme loading =
     let
-        ( disabled, label ) =
+        label : String
+        label =
             case loading of
                 Loaded ->
-                    ( False, Translations.LoadMorePosts )
+                    ""
 
                 Loading ->
-                    ( True, Translations.Loading )
+                    i Translations.Loading
 
                 NoMore ->
-                    ( True, Translations.AllPostsLoaded )
-
-        btnStyle : Css.Style
-        btnStyle =
-            if disabled then
-                View.Style.btnDisabled
-
-            else
-                Css.batch []
+                    i Translations.AllPostsLoaded
     in
-    Html.button
-        [ HtmlEvents.onClick LoadMore
-        , HtmlAttributes.css [ View.Style.btn theme, View.Style.btnFull, btnStyle ]
-        , HtmlAttributes.disabled disabled
+    Html.div
+        [ HtmlAttributes.css
+            [ Css.textAlign Css.center
+            , Css.color (theme |> View.Theme.foregroundColor |> Color.Extra.withAlpha 0.5 |> Color.Extra.toCss)
+            , Css.marginBottom <| Css.rem 2
+            ]
         ]
-        [ Html.text <| i label ]
+        [ Html.text label ]
 
 
 viewPost :
@@ -959,6 +956,47 @@ updateWithUser i msg model user =
         NoOp ->
             ( model, Effect.none, Cmd.none )
 
+        OnScroll () ->
+            ( model, Effect.none, Browser.Dom.getViewport |> Task.attempt GotViewport )
+
+        GotViewport res ->
+            case res of
+                Ok { scene, viewport } ->
+                    let
+                        maxY : Float
+                        maxY =
+                            scene.height - viewport.height
+
+                        triggerLoadMore : Bool
+                        triggerLoadMore =
+                            viewport.y >= (maxY - 200)
+                    in
+                    case ( triggerLoadMore, model.posts, model.loadingState ) of
+                        ( True, _ :: _, Loaded ) ->
+                            let
+                                from : Maybe String
+                                from =
+                                    model.posts
+                                        |> List.Extra.last
+                                        |> Maybe.map .id
+
+                                ( tasks, cmd ) =
+                                    loadAllPosts model.tasks from MorePostsLoaded user
+                            in
+                            ( { model
+                                | tasks = tasks
+                                , loadingState = Loading
+                              }
+                            , Effect.toggleLoader
+                            , cmd
+                            )
+
+                        _ ->
+                            ( model, Effect.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Effect.none, Cmd.none )
+
         WithPostInput event ->
             ( { model | postInput = Form.updateInput event Page.nonEmptyInputParser model.postInput }
             , Effect.none
@@ -1058,19 +1096,6 @@ updateWithUser i msg model user =
             in
             ( { model | tasks = tasks }, Effect.none, cmd )
 
-        LoadMore ->
-            let
-                from : Maybe String
-                from =
-                    model.posts
-                        |> List.Extra.last
-                        |> Maybe.map .id
-
-                ( tasks, cmd ) =
-                    loadAllPosts model.tasks from MorePostsLoaded user
-            in
-            ( { model | tasks = tasks, loadingState = Loading }, Effect.toggleLoader, cmd )
-
         Logout ->
             Internal.logout i model
 
@@ -1099,17 +1124,16 @@ updateWithUser i msg model user =
 
         OnTaskComplete (ConcurrentTask.Success (MorePostsLoaded posts)) ->
             let
-                ( effect, loading ) =
+                loading : PostsLoading
+                loading =
                     if posts == [] then
-                        ( Effect.addAlert (Alert.new Alert.Warning <| i Translations.PostsNoMore)
-                        , NoMore
-                        )
+                        NoMore
 
                     else
-                        ( Effect.none, Loaded )
+                        Loaded
             in
             ( { model | posts = model.posts ++ posts, loadingState = loading }
-            , Effect.batch [ effect, Effect.toggleLoader ]
+            , Effect.toggleLoader
             , asyncLoadPosts user posts
             )
 
@@ -1318,4 +1342,5 @@ subscriptions model =
             _ ->
                 Browser.Events.onKeyDown keyDecoder
         , Port.getPost GotPost
+        , Port.onScroll OnScroll
         ]

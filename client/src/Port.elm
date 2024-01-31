@@ -5,6 +5,7 @@ port module Port exposing
     , taskReceive
     , taskSend
     , toggleLoader
+    , onScroll
     )
 
 import Json.Decode
@@ -27,3 +28,6 @@ port requestPost : Json.Encode.Value -> Cmd msg
 
 
 port getPost : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port onScroll : (() -> msg) -> Sub msg
