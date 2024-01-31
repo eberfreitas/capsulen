@@ -13,7 +13,7 @@
     "gen:invite": "npm run gen:invite -w server",
     "gen:pasetoKey": "npm run gen:pasetoKey -w server",
     "build": "npm run build -w client",
-    "start": "npm run db:up && npm run start -w server"
+    "start": "npm run start -w server"
   },
   "keywords": [],
   "author": "",
