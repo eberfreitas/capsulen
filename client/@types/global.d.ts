@@ -49,6 +49,10 @@ export interface App {
     getPost: {
       send: (result: unknown) => void;
     };
+
+    onScroll: {
+      send: (param: null) => void;
+    };
   };
 }
 
