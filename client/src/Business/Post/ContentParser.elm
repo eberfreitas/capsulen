@@ -1,4 +1,4 @@
-module Business.Post.ContentParser exposing (render)
+module Business.Post.ContentParser exposing (..)
 
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
@@ -15,106 +15,99 @@ type Node
     | NewLine
     | Hashtag String
     | Text String
+    | End
 
 
-anchor : Parser.Parser (List Node)
+anchor : Parser.Parser Node
 anchor =
     (Parser.succeed
-        (\anchorText url_ tailNodes -> ( anchorText, url_, tailNodes ))
+        (\anchorText url_ -> ( anchorText, url_ ))
         |. Parser.symbol "["
         |= Parser.getChompedString (Parser.chompUntil "]")
         |. Parser.symbol "]"
         |. Parser.symbol "("
         |= Parser.getChompedString (Parser.chompUntil ")")
         |. Parser.symbol ")"
-        |= Parser.lazy (\_ -> node)
     )
         |> Parser.andThen
-            (\( anchorText, url_, tailNodes ) ->
-                case ( Parser.run node anchorText, Url.fromString url_ ) of
+            (\( anchorText, url_ ) ->
+                case ( Parser.run nodes anchorText, Url.fromString url_ ) of
                     ( Ok anchorNodes, Just parsedUrl ) ->
-                        Parser.succeed <| Anchor anchorNodes parsedUrl :: tailNodes
+                        Parser.succeed <| Anchor anchorNodes parsedUrl
 
                     _ ->
                         Parser.problem "Could not produce anchor"
             )
 
 
-anchorFallback : Parser.Parser (List Node)
+anchorFallback : Parser.Parser Node
 anchorFallback =
-    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
+    Parser.succeed Text
         |= Parser.getChompedString (Parser.symbol "[")
-        |= Parser.lazy (\_ -> node)
 
 
-nodeHelper : (List Node -> Node) -> String -> List Node -> List Node
-nodeHelper nodeTag text_ tailNodes =
-    case Parser.run node text_ of
+nodeHelper : (List Node -> Node) -> String -> Node
+nodeHelper nodeTag text_ =
+    case Parser.run nodes text_ of
         Ok parsed ->
-            nodeTag parsed :: tailNodes
+            nodeTag parsed
 
         Err _ ->
-            Text text_ :: tailNodes
+            Text text_
 
 
-bold : Parser.Parser (List Node)
+bold : Parser.Parser Node
 bold =
     Parser.succeed (nodeHelper Bold)
         |. Parser.symbol "*"
         |= Parser.getChompedString (Parser.chompUntil "*")
         |. Parser.symbol "*"
-        |= Parser.lazy (\_ -> node)
 
 
-boldFallback : Parser.Parser (List Node)
+boldFallback : Parser.Parser Node
 boldFallback =
-    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
+    Parser.succeed Text
         |= Parser.getChompedString (Parser.symbol "*")
-        |= Parser.lazy (\_ -> node)
 
 
-italic : Parser.Parser (List Node)
+italic : Parser.Parser Node
 italic =
     Parser.succeed (nodeHelper Italic)
         |. Parser.symbol "_"
         |= Parser.getChompedString (Parser.chompUntil "_")
         |. Parser.symbol "_"
-        |= Parser.lazy (\_ -> node)
 
 
-italicFallback : Parser.Parser (List Node)
+italicFallback : Parser.Parser Node
 italicFallback =
-    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
+    Parser.succeed Text
         |= Parser.getChompedString (Parser.symbol "_")
-        |= Parser.lazy (\_ -> node)
 
 
-listItem : Parser.Parser (List Node)
+listItem : Parser.Parser Node
 listItem =
     Parser.succeed (nodeHelper ListItem)
         |. Parser.symbol "-"
         |. Parser.spaces
         |= Parser.getChompedString (Parser.chompUntilEndOr "\n")
         |. Parser.spaces
-        |= Parser.lazy (\_ -> node)
 
 
-newLine : Parser.Parser (List Node)
+newLine : Parser.Parser Node
 newLine =
-    Parser.succeed (\tailNodes -> NewLine :: tailNodes)
+    Parser.succeed NewLine
         |. Parser.chompIf (\c -> c == '\n')
-        |= Parser.lazy (\_ -> node)
 
 
-end : Parser.Parser (List Node)
+end : Parser.Parser Node
 end =
-    Parser.succeed []
+    Parser.succeed End
         |. Parser.end
 
 
-hashtag : Parser.Parser (List Node)
+hashtag : Parser.Parser Node
 hashtag =
-    Parser.succeed (\hashtag_ tailNodes -> Hashtag hashtag_ :: tailNodes)
+    Parser.succeed Hashtag
         |. Parser.symbol "#"
         |= (Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n' && c /= '#'))
                 |> Parser.andThen
@@ -126,14 +119,12 @@ hashtag =
                             Parser.succeed hashtag_
                     )
            )
-        |= Parser.lazy (\_ -> node)
 
 
-hashtagFallback : Parser.Parser (List Node)
+hashtagFallback : Parser.Parser Node
 hashtagFallback =
-    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
+    Parser.succeed Text
         |= Parser.getChompedString (Parser.symbol "#")
-        |= Parser.lazy (\_ -> node)
 
 
 textString : Parser.Parser String
@@ -149,34 +140,38 @@ textString =
         |= Parser.getChompedString (Parser.chompWhile whileFn)
 
 
-text : Parser.Parser (List Node)
+text : Parser.Parser Node
 text =
-    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
+    Parser.succeed Text
         |= textString
-        |= Parser.lazy (\_ -> node)
 
 
-node : Parser.Parser (List Node)
-node =
+nodes : Parser.Parser (List Node)
+nodes =
+    Parser.loop [] nodesHelper
+
+
+nodesHelper : List Node -> Parser.Parser (Parser.Step (List Node) (List Node))
+nodesHelper nodes_ =
     Parser.oneOf
-        [ end
-        , newLine
-        , Parser.backtrackable anchor
-        , anchorFallback
-        , Parser.backtrackable bold
-        , boldFallback
-        , Parser.backtrackable italic
-        , italicFallback
-        , listItem
-        , Parser.backtrackable hashtag
-        , hashtagFallback
-        , text
+        [ end |> Parser.map (\_ -> Parser.Done (List.reverse nodes_))
+        , newLine |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , Parser.backtrackable anchor |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , anchorFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , Parser.backtrackable bold |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , boldFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , Parser.backtrackable italic |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , italicFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , Parser.backtrackable hashtag |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , hashtagFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , listItem |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , text |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         ]
 
 
 render : String -> Html.Html msg
 render content =
-    case Parser.run node content |> Debug.log "parsed" of
+    case Parser.run nodes content |> Debug.log "parsed" of
         Ok node_ ->
             Html.div [] (toHtml node_ [])
 
@@ -185,10 +180,13 @@ render content =
 
 
 toHtml : List Node -> List (Html.Html msg) -> List (Html.Html msg)
-toHtml nodes html =
-    case nodes of
+toHtml nodes_ html =
+    case nodes_ of
         [] ->
             List.reverse html
+
+        End :: _ ->
+            toHtml [] html
 
         (Text text_) :: tailNodes ->
             (Html.text text_ :: html) |> toHtml tailNodes

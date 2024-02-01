@@ -15,6 +15,7 @@ import AppUrl
 import Browser.Dom
 import Browser.Events
 import Business.Post
+import Business.Post.ContentParser
 import Business.User
 import Color.Extra
 import ConcurrentTask
@@ -50,7 +51,6 @@ import Translations
 import Url
 import View.Style
 import View.Theme
-import Business.Post.ContentParser
 
 
 type TaskOutput
