@@ -7,21 +7,20 @@ import Url
 
 
 type Node
-    = Anchor Node Url.Url Node
-    | Bold Node Node
-    | Italic Node Node
-    | ListItem Node Node
-    | List (List Node) Node
-    | NewLine Node
-    | Hashtag String Node
-    | Text String Node
-    | End
+    = Anchor (List Node) Url.Url
+    | Bold (List Node)
+    | Italic (List Node)
+    | ListItem (List Node)
+    | List (List (List Node))
+    | NewLine
+    | Hashtag String
+    | Text String
 
 
-anchor : Parser.Parser Node
+anchor : Parser.Parser (List Node)
 anchor =
     (Parser.succeed
-        (\label url_ node_ -> { label = label, url = url_, node = node_ })
+        (\anchorText url_ tailNodes -> ( anchorText, url_, tailNodes ))
         |. Parser.symbol "["
         |= Parser.getChompedString (Parser.chompUntil "]")
         |. Parser.symbol "]"
@@ -31,91 +30,91 @@ anchor =
         |= Parser.lazy (\_ -> node)
     )
         |> Parser.andThen
-            (\params ->
-                case ( Parser.run node params.label, Url.fromString params.url ) of
-                    ( Ok labelNode, Just parsedUrl ) ->
-                        Parser.succeed <| Anchor labelNode parsedUrl params.node
+            (\( anchorText, url_, tailNodes ) ->
+                case ( Parser.run node anchorText, Url.fromString url_ ) of
+                    ( Ok anchorNodes, Just parsedUrl ) ->
+                        Parser.succeed <| Anchor anchorNodes parsedUrl :: tailNodes
 
                     _ ->
                         Parser.problem "Could not produce anchor"
             )
 
 
-anchorFallback : Parser.Parser Node
+anchorFallback : Parser.Parser (List Node)
 anchorFallback =
-    Parser.succeed Text
+    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
         |= Parser.getChompedString (Parser.symbol "[")
         |= Parser.lazy (\_ -> node)
 
 
-nodeHelper : (a -> Node -> Node) -> Parser.Parser a -> String -> Node -> Node
-nodeHelper nodeTag parser value tailNode =
-    case Parser.run parser value of
+nodeHelper : (List Node -> Node) -> String -> List Node -> List Node
+nodeHelper nodeTag text_ tailNodes =
+    case Parser.run node text_ of
         Ok parsed ->
-            nodeTag parsed tailNode
+            nodeTag parsed :: tailNodes
 
         Err _ ->
-            Text value tailNode
+            Text text_ :: tailNodes
 
 
-bold : Parser.Parser Node
+bold : Parser.Parser (List Node)
 bold =
-    Parser.succeed (nodeHelper Bold (Parser.lazy (\_ -> node)))
+    Parser.succeed (nodeHelper Bold)
         |. Parser.symbol "*"
         |= Parser.getChompedString (Parser.chompUntil "*")
         |. Parser.symbol "*"
         |= Parser.lazy (\_ -> node)
 
 
-boldFallback : Parser.Parser Node
+boldFallback : Parser.Parser (List Node)
 boldFallback =
-    Parser.succeed Text
+    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
         |= Parser.getChompedString (Parser.symbol "*")
         |= Parser.lazy (\_ -> node)
 
 
-italic : Parser.Parser Node
+italic : Parser.Parser (List Node)
 italic =
-    Parser.succeed (nodeHelper Italic (Parser.lazy (\_ -> node)))
+    Parser.succeed (nodeHelper Italic)
         |. Parser.symbol "_"
         |= Parser.getChompedString (Parser.chompUntil "_")
         |. Parser.symbol "_"
         |= Parser.lazy (\_ -> node)
 
 
-italicFallback : Parser.Parser Node
+italicFallback : Parser.Parser (List Node)
 italicFallback =
-    Parser.succeed Text
+    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
         |= Parser.getChompedString (Parser.symbol "_")
         |= Parser.lazy (\_ -> node)
 
 
-listItem : Parser.Parser Node
+listItem : Parser.Parser (List Node)
 listItem =
-    Parser.succeed (nodeHelper ListItem (Parser.lazy (\_ -> node)))
+    Parser.succeed (nodeHelper ListItem)
         |. Parser.symbol "-"
         |. Parser.spaces
-        |= Parser.getChompedString (Parser.chompWhile ((/=) '\n'))
-        |. Parser.chompIf ((==) '\n')
+        |= Parser.getChompedString (Parser.chompUntilEndOr "\n")
+        |. Parser.spaces
         |= Parser.lazy (\_ -> node)
 
 
-newLine : Parser.Parser Node
+newLine : Parser.Parser (List Node)
 newLine =
-    Parser.succeed NewLine
+    Parser.succeed (\tailNodes -> NewLine :: tailNodes)
         |. Parser.chompIf (\c -> c == '\n')
         |= Parser.lazy (\_ -> node)
 
 
-end : Parser.Parser Node
+end : Parser.Parser (List Node)
 end =
-    Parser.succeed End
+    Parser.succeed []
         |. Parser.end
 
 
-hashtag : Parser.Parser Node
+hashtag : Parser.Parser (List Node)
 hashtag =
-    Parser.succeed Hashtag
+    Parser.succeed (\hashtag_ tailNodes -> Hashtag hashtag_ :: tailNodes)
         |. Parser.symbol "#"
         |= (Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n' && c /= '#'))
                 |> Parser.andThen
@@ -130,9 +129,9 @@ hashtag =
         |= Parser.lazy (\_ -> node)
 
 
-hashtagFallback : Parser.Parser Node
+hashtagFallback : Parser.Parser (List Node)
 hashtagFallback =
-    Parser.succeed Text
+    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
         |= Parser.getChompedString (Parser.symbol "#")
         |= Parser.lazy (\_ -> node)
 
@@ -150,17 +149,19 @@ textString =
         |= Parser.getChompedString (Parser.chompWhile whileFn)
 
 
-text : Parser.Parser Node
+text : Parser.Parser (List Node)
 text =
-    Parser.succeed Text
+    Parser.succeed (\text_ tailNodes -> Text text_ :: tailNodes)
         |= textString
         |= Parser.lazy (\_ -> node)
 
 
-node : Parser.Parser Node
+node : Parser.Parser (List Node)
 node =
     Parser.oneOf
-        [ Parser.backtrackable anchor
+        [ end
+        , newLine
+        , Parser.backtrackable anchor
         , anchorFallback
         , Parser.backtrackable bold
         , boldFallback
@@ -169,8 +170,6 @@ node =
         , listItem
         , Parser.backtrackable hashtag
         , hashtagFallback
-        , newLine
-        , end
         , text
         ]
 
@@ -185,31 +184,31 @@ render content =
             Html.div [] [ Html.text content ]
 
 
-toHtml : Node -> List (Html.Html msg) -> List (Html.Html msg)
-toHtml node_ html =
-    case node_ of
-        End ->
+toHtml : List Node -> List (Html.Html msg) -> List (Html.Html msg)
+toHtml nodes html =
+    case nodes of
+        [] ->
             List.reverse html
 
-        Text text_ tailNode ->
-            (Html.text text_ :: html) |> toHtml tailNode
+        (Text text_) :: tailNodes ->
+            (Html.text text_ :: html) |> toHtml tailNodes
 
-        Anchor anchorNode url_ tailNode ->
-            (Html.a [ HtmlAttributes.href <| Url.toString url_ ] (toHtml anchorNode []) :: html) |> toHtml tailNode
+        (Anchor anchorNodes url_) :: tailNodes ->
+            (Html.a [ HtmlAttributes.href <| Url.toString url_ ] (toHtml anchorNodes []) :: html) |> toHtml tailNodes
 
-        Bold boldNode tailNode ->
-            (Html.strong [] (toHtml boldNode []) :: html) |> toHtml tailNode
+        (Bold boldNodes) :: tailNodes ->
+            (Html.strong [] (toHtml boldNodes []) :: html) |> toHtml tailNodes
 
-        Italic italicNode tailNode ->
-            (Html.i [] (toHtml italicNode []) :: html) |> toHtml tailNode
+        (Italic italicNodes) :: tailNodes ->
+            (Html.i [] (toHtml italicNodes []) :: html) |> toHtml tailNodes
 
-        ListItem listItemNode tailNode ->
-            toHtml (List [ listItemNode ] tailNode) html
+        (ListItem listItemNodes) :: tailNodes ->
+            toHtml (List [ listItemNodes ] :: tailNodes) html
 
-        List listNodes (ListItem listItemNode tailNode) ->
-            toHtml (List (listItemNode :: listNodes) tailNode) html
+        (List listNodes) :: ((ListItem listItemNodes) :: tailNodes) ->
+            toHtml (List (listItemNodes :: listNodes) :: tailNodes) html
 
-        List listNodes tailNode ->
+        (List listNodes) :: tailNodes ->
             (Html.ul []
                 (listNodes
                     |> List.reverse
@@ -220,10 +219,10 @@ toHtml node_ html =
                 )
                 :: html
             )
-                |> toHtml tailNode
+                |> toHtml tailNodes
 
-        NewLine tailNode ->
-            (Html.br [] [] :: html) |> toHtml tailNode
+        NewLine :: tailNodes ->
+            (Html.br [] [] :: html) |> toHtml tailNodes
 
-        Hashtag hashtag_ tailNode ->
-            ((Html.text <| "#" ++ hashtag_) :: html) |> toHtml tailNode
+        (Hashtag hashtag_) :: tailNodes ->
+            ((Html.text <| "#" ++ hashtag_) :: html) |> toHtml tailNodes
