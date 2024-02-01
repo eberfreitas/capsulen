@@ -177,7 +177,7 @@ node =
 
 render : String -> Html.Html msg
 render content =
-    case Parser.run node content of
+    case Parser.run node content |> Debug.log "parsed" of
         Ok node_ ->
             Html.div [] (toHtml node_ [])
 

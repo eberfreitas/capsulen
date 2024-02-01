@@ -50,6 +50,7 @@ import Translations
 import Url
 import View.Style
 import View.Theme
+import Business.Post.ContentParser
 
 
 type TaskOutput
@@ -518,7 +519,8 @@ viewPost i timeZone language theme post =
                                     , Css.marginBottom <| Css.rem 1
                                     ]
                                 ]
-                                (processBody theme body)
+                                -- (processBody theme body)
+                                [ Business.Post.ContentParser.render body ]
                     , case content.images of
                         [] ->
                             Html.text ""
