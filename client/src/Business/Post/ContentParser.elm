@@ -14,6 +14,7 @@ type Node
     | List (List (List Node))
     | NewLine
     | Hashtag String
+    | Url Url.Url
     | Text String
     | End
 
@@ -127,11 +128,37 @@ hashtagFallback =
         |= Parser.getChompedString (Parser.symbol "#")
 
 
+url : Parser.Parser Node
+url =
+    Parser.succeed
+        (\h protocol rest ->
+            let
+                url_ =
+                    h ++ protocol ++ rest
+            in
+            case Url.fromString url_ of
+                Just parsed ->
+                    Url parsed
+
+                Nothing ->
+                    Text url_
+        )
+        |= Parser.getChompedString (Parser.symbol "h")
+        |= Parser.getChompedString (Parser.oneOf [ Parser.token "ttp://", Parser.token "ttps://" ])
+        |= Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n'))
+
+
+urlFallback : Parser.Parser Node
+urlFallback =
+    Parser.succeed Text
+        |= Parser.getChompedString (Parser.symbol "h")
+
+
 textString : Parser.Parser String
 textString =
     let
         nodeTokens =
-            [ '[', '*', '_', '\n', '#' ]
+            [ 'h', '[', '*', '_', '\n', '#' ]
 
         whileFn =
             \char -> not <| List.member char nodeTokens
@@ -164,6 +191,8 @@ nodesHelper nodes_ =
         , italicFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , Parser.backtrackable hashtag |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , hashtagFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , Parser.backtrackable url |> Parser.map (\node -> Parser.Loop (node :: nodes_))
+        , urlFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , listItem |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , text |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         ]
@@ -187,6 +216,13 @@ toHtml nodes_ html =
 
         End :: _ ->
             toHtml [] html
+
+        (Url url_) :: tailNodes ->
+            let
+                urlAsString =
+                    Url.toString url_
+            in
+            (Html.a [ HtmlAttributes.href urlAsString ] [ Html.text urlAsString ] :: html) |> toHtml tailNodes
 
         (Text text_) :: tailNodes ->
             (Html.text text_ :: html) |> toHtml tailNodes
