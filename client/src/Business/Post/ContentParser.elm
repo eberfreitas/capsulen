@@ -131,10 +131,10 @@ hashtagFallback =
 url : Parser.Parser Node
 url =
     Parser.succeed
-        (\h protocol rest ->
+        (\protocol rest ->
             let
                 url_ =
-                    h ++ protocol ++ rest
+                    protocol ++ rest
             in
             case Url.fromString url_ of
                 Just parsed ->
@@ -143,15 +143,8 @@ url =
                 Nothing ->
                     Text url_
         )
-        |= Parser.getChompedString (Parser.symbol "h")
-        |= Parser.getChompedString (Parser.oneOf [ Parser.token "ttp://", Parser.token "ttps://" ])
+        |= Parser.getChompedString (Parser.oneOf [ Parser.token "http://", Parser.token "https://" ])
         |= Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n'))
-
-
-urlFallback : Parser.Parser Node
-urlFallback =
-    Parser.succeed Text
-        |= Parser.getChompedString (Parser.symbol "h")
 
 
 textString : Parser.Parser String
@@ -191,8 +184,6 @@ nodesHelper nodes_ =
         , italicFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , Parser.backtrackable hashtag |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , hashtagFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
-        , Parser.backtrackable url |> Parser.map (\node -> Parser.Loop (node :: nodes_))
-        , urlFallback |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , listItem |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         , text |> Parser.map (\node -> Parser.Loop (node :: nodes_))
         ]
