@@ -18,12 +18,15 @@ type Node
     = Anchor (List Node) Url.Url
     | Bold (List Node)
     | Italic (List Node)
+    | Strikethrough (List Node)
     | ListItem (List Node)
     | List (List (List Node))
     | NewLine
     | Hashtag String
     | Url Url.Url
     | Text String
+    | Code String
+    | CodeBlock String
     | End
 
 
@@ -93,6 +96,20 @@ italicFallback =
         |= Parser.getChompedString (Parser.symbol "_")
 
 
+strikethrough : Parser.Parser Node
+strikethrough =
+    Parser.succeed (nodeHelper Strikethrough)
+        |. Parser.symbol "~"
+        |= Parser.getChompedString (Parser.chompUntil "~")
+        |. Parser.symbol "~"
+
+
+strikethroughFallback : Parser.Parser Node
+strikethroughFallback =
+    Parser.succeed Text
+        |= Parser.getChompedString (Parser.symbol "~")
+
+
 listItem : Parser.Parser Node
 listItem =
     Parser.succeed (nodeHelper ListItem)
@@ -156,6 +173,28 @@ url =
         |= Parser.getChompedString (Parser.Extra.chompWhileNot [ ' ', '\n' ])
 
 
+blockCode : Parser.Parser Node
+blockCode =
+    Parser.succeed (\code_ -> CodeBlock code_)
+        |. Parser.symbol "```"
+        |= Parser.getChompedString (Parser.chompUntil "```")
+        |. Parser.symbol "```"
+
+
+code : Parser.Parser Node
+code =
+    Parser.succeed (\code_ -> Code code_)
+        |. Parser.symbol "`"
+        |= Parser.getChompedString (Parser.chompUntil "`")
+        |. Parser.symbol "`"
+
+
+codeFallback : Parser.Parser Node
+codeFallback =
+    Parser.succeed Text
+        |= Parser.getChompedString (Parser.symbol "`")
+
+
 loop : List Node -> Parser.Parser Node -> Parser.Parser (Parser.Step (List Node) (List Node))
 loop nodes =
     Parser.map (\node -> Parser.Loop (node :: nodes))
@@ -192,7 +231,7 @@ text =
                 Err _ ->
                     [ Text text_ ]
         )
-        |= Parser.getChompedString (Parser.Extra.chompWhileNot [ '[', '*', '_', '\n', '#' ])
+        |= Parser.getChompedString (Parser.Extra.chompWhileNot [ '[', '*', '_', '~', '`', '\n', '#' ])
 
 
 nodesHelper : List Node -> Parser.Parser (Parser.Step (List Node) (List Node))
@@ -211,6 +250,11 @@ nodesHelper nodes =
         , boldFallback |> loop_
         , Parser.backtrackable italic |> loop_
         , italicFallback |> loop_
+        , Parser.backtrackable strikethrough |> loop_
+        , strikethroughFallback |> loop_
+        , Parser.backtrackable blockCode |> loop_
+        , Parser.backtrackable code |> loop_
+        , codeFallback |> loop_
         , Parser.backtrackable hashtag |> loop_
         , hashtagFallback |> loop_
         , listItem |> loop_
@@ -418,6 +462,13 @@ toHtml theme nodes html =
         (Italic italicNodes) :: tailNodes ->
             (Html.i [] (recurse italicNodes []) :: html) |> recurse tailNodes
 
+        (Strikethrough stNodes) :: tailNodes ->
+            (Html.span [ HtmlAttributes.css [ Css.textDecorationLine Css.lineThrough ] ]
+                (recurse stNodes [])
+                :: html
+            )
+                |> recurse tailNodes
+
         (ListItem listItemNodes) :: tailNodes ->
             recurse (List [ listItemNodes ] :: tailNodes) html
 
@@ -445,3 +496,31 @@ toHtml theme nodes html =
 
         (Hashtag hashtag_) :: tailNodes ->
             ((Html.text <| "#" ++ hashtag_) :: html) |> recurse tailNodes
+
+        (Code code_) :: tailNodes ->
+            (Html.code
+                [ HtmlAttributes.css
+                    [ Css.display Css.inlineBlock
+                    , Css.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.1 |> Color.Extra.toCss)
+                    , Css.borderRadius <| Css.rem 0.5
+                    , Css.padding2 (Css.px 0) (Css.rem 0.6)
+                    ]
+                ]
+                [ Html.text code_ ]
+                :: html
+            )
+                |> recurse tailNodes
+
+        (CodeBlock code_) :: tailNodes ->
+            (Html.pre
+                [ HtmlAttributes.css
+                    [ Css.borderRadius <| Css.rem 0.5
+                    , Css.backgroundColor (theme |> View.Theme.textColor |> Color.Extra.withAlpha 0.1 |> Color.Extra.toCss)
+                    , Css.margin <| Css.px 0
+                    , Css.padding <| Css.rem 1
+                    ]
+                ]
+                [ Html.text <| String.trim code_ ]
+                :: html
+            )
+                |> recurse tailNodes
