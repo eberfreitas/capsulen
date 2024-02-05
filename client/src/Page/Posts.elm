@@ -510,6 +510,7 @@ viewPost i timeZone language theme post =
 
                         body ->
                             let
+                                nodes : List Business.Post.Content.Node
                                 nodes =
                                     Business.Post.Content.parse body
                             in

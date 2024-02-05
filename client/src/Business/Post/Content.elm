@@ -141,6 +141,7 @@ url =
     Parser.succeed
         (\protocol rest ->
             let
+                url_ : String
                 url_ =
                     protocol ++ rest
             in
@@ -165,8 +166,10 @@ text =
     Parser.succeed
         (\text_ ->
             let
+                parserHelper : List Node -> Parser.Parser (Parser.Step (List Node) (List Node))
                 parserHelper nodes =
                     let
+                        loop_ : Parser.Parser Node -> Parser.Parser (Parser.Step (List Node) (List Node))
                         loop_ =
                             loop nodes
                     in
@@ -178,6 +181,7 @@ text =
                         , Parser.succeed Text |= Parser.getChompedString (Parser.chompWhile (always True)) |> loop_
                         ]
 
+                parser_ : Parser.Parser (List Node)
                 parser_ =
                     Parser.loop [] parserHelper
             in
@@ -194,6 +198,7 @@ text =
 nodesHelper : List Node -> Parser.Parser (Parser.Step (List Node) (List Node))
 nodesHelper nodes =
     let
+        loop_ : Parser.Parser Node -> Parser.Parser (Parser.Step (List Node) (List Node))
         loop_ =
             loop nodes
     in
@@ -255,6 +260,7 @@ isImage url_ =
 embedLink : View.Theme.Theme -> List (Html.Html msg) -> Url.Url -> Html.Html msg
 embedLink theme contents url_ =
     let
+        urlAsString : String
         urlAsString =
             Url.toString url_
     in
@@ -280,7 +286,7 @@ embedYouTube theme url_ =
         videoId =
             url_
                 |> AppUrl.fromUrl
-                |> (.queryParameters >> Dict.get "v")
+                |> (\u -> u |> .queryParameters |> Dict.get "v")
                 |> Maybe.andThen (List.Extra.getAt 0)
     in
     case videoId of
@@ -327,6 +333,7 @@ embedYouTube theme url_ =
 embedImage : Url.Url -> Html.Html msg
 embedImage url_ =
     let
+        urlAsString : String
         urlAsString =
             Url.toString url_
     in
@@ -370,6 +377,7 @@ processSingleLink theme url_ =
 toHtml : View.Theme.Theme -> List Node -> List (Html.Html msg) -> List (Html.Html msg)
 toHtml theme nodes html =
     let
+        recurse : List Node -> List (Html.Html msg) -> List (Html.Html msg)
         recurse =
             toHtml theme
     in
