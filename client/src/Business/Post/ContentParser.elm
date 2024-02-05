@@ -147,23 +147,17 @@ url =
         |= Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n'))
 
 
-textString : Parser.Parser String
-textString =
+text : Parser.Parser Node
+text =
     let
         nodeTokens =
-            [ 'h', '[', '*', '_', '\n', '#' ]
+            [ '[', '*', '_', '\n', '#' ]
 
         whileFn =
             \char -> not <| List.member char nodeTokens
     in
-    Parser.succeed identity
-        |= Parser.getChompedString (Parser.chompWhile whileFn)
-
-
-text : Parser.Parser Node
-text =
     Parser.succeed Text
-        |= textString
+        |= Parser.getChompedString (Parser.chompWhile whileFn)
 
 
 nodes : Parser.Parser (List Node)
@@ -191,7 +185,7 @@ nodesHelper nodes_ =
 
 render : String -> Html.Html msg
 render content =
-    case Parser.run nodes content |> Debug.log "parsed" of
+    case Parser.run nodes content of
         Ok node_ ->
             Html.div [] (toHtml node_ [])
 
