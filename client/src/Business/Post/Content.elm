@@ -359,8 +359,10 @@ processSingleLink : View.Theme.Theme -> Url.Url -> Html.Html msg
 processSingleLink theme url_ =
     if isImage url_ then
         embedImage url_
+
     else if isYouTube url_ then
         embedYouTube theme url_
+
     else
         embedLink theme [] url_
 
@@ -415,7 +417,13 @@ toHtml theme nodes html =
             recurse (List (listItemNodes :: listNodes) :: tailNodes) html
 
         (List listNodes) :: tailNodes ->
-            (Html.ul []
+            (Html.ul
+                [ HtmlAttributes.css
+                    [ Css.margin2 (Css.rem 1) (Css.px 0)
+                    , Css.padding <| Css.px 0
+                    , Css.listStylePosition Css.inside
+                    ]
+                ]
                 (listNodes
                     |> List.reverse
                     |> List.map
