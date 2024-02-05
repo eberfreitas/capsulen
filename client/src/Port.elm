@@ -1,11 +1,11 @@
 port module Port exposing
     ( getPost
+    , onScroll
     , requestPost
     , setTheme
     , taskReceive
     , taskSend
     , toggleLoader
-    , onScroll
     )
 
 import Json.Decode
