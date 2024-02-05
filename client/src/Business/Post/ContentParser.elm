@@ -3,6 +3,7 @@ module Business.Post.ContentParser exposing (..)
 import Html.Styled as Html
 import Html.Styled.Attributes as HtmlAttributes
 import Parser exposing ((|.), (|=))
+import Parser.Extra
 import Url
 
 
@@ -110,7 +111,7 @@ hashtag : Parser.Parser Node
 hashtag =
     Parser.succeed Hashtag
         |. Parser.symbol "#"
-        |= (Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n' && c /= '#'))
+        |= (Parser.getChompedString (Parser.chompWhile Char.isAlphaNum)
                 |> Parser.andThen
                     (\hashtag_ ->
                         if hashtag_ == "" then
@@ -144,20 +145,13 @@ url =
                     Text url_
         )
         |= Parser.getChompedString (Parser.oneOf [ Parser.token "http://", Parser.token "https://" ])
-        |= Parser.getChompedString (Parser.chompWhile (\c -> c /= ' ' && c /= '\n'))
+        |= Parser.getChompedString (Parser.Extra.chompWhileNot [ ' ', '\n' ])
 
 
 text : Parser.Parser Node
 text =
-    let
-        nodeTokens =
-            [ '[', '*', '_', '\n', '#' ]
-
-        whileFn =
-            \char -> not <| List.member char nodeTokens
-    in
     Parser.succeed Text
-        |= Parser.getChompedString (Parser.chompWhile whileFn)
+        |= Parser.getChompedString (Parser.Extra.chompWhileNot [ '[', '*', '_', '\n', '#' ])
 
 
 nodes : Parser.Parser (List Node)
