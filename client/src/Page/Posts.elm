@@ -970,6 +970,7 @@ updateWithUser i msg model user =
                 | posts = post :: model.posts
                 , postImages = []
                 , postInput = Form.newInput
+                , postInputHeight = Nothing
                 , postFormState = Form.Editing
               }
             , Effect.batch
