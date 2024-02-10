@@ -70,6 +70,7 @@ type PostsLoading
 type alias Model =
     { tasks : TaskPool
     , postInput : Form.Input String
+    , postInputHeight : Maybe Float
     , postImages : List String
     , postFormState : Form.FormState
     , posts : List Business.Post.Post
@@ -80,6 +81,7 @@ type alias Model =
 
 type Msg
     = WithPostInput Form.InputEvent
+    | GotPostViewport (Result Browser.Dom.Error Browser.Dom.Viewport)
     | RequestImages
     | GotImages File.File (List File.File)
     | GotImagesUrls (Result () (List String))
@@ -142,13 +144,22 @@ viewWithUser i context model _ =
                         [ Html.text <| i Translations.PostAbout ]
                     , Html.textarea
                         ([ HtmlAttributes.value model.postInput.raw
+                         , HtmlAttributes.id "post-content"
                          , HtmlAttributes.css
                             [ Css.border <| Css.px 0
                             , Css.borderRadius <| Css.rem 0.5
                             , Css.marginBottom <| Css.rem 1.5
                             , Css.padding <| Css.rem 1
-                            , Css.resize Css.vertical
+                            , Css.resize Css.none
                             , Css.width <| Css.pct 100
+                            , Css.lineHeight <| Css.num 1.5
+                            , case model.postInputHeight of
+                                Just inputHeight ->
+                                    Css.height <| Css.px inputHeight
+
+                                Nothing ->
+                                    Css.height <| Css.auto
+                            , Css.fontSize <| Css.rem 1
                             ]
                          , HtmlEvents.on "paste"
                             (Json.Decode.map Paste
@@ -758,6 +769,7 @@ init i context =
     in
     ( { tasks = newTasks
       , postInput = Form.newInput
+      , postInputHeight = Nothing
       , postImages = []
       , postFormState = Form.Editing
       , posts = []
@@ -783,6 +795,28 @@ updateWithUser : Translations.Helper -> Msg -> Model -> Business.User.User -> ( 
 updateWithUser i msg model user =
     case msg of
         NoOp ->
+            ( model, Effect.none, Cmd.none )
+
+        GotPostViewport (Ok { scene, viewport }) ->
+            let
+                newHeight : Maybe Float
+                newHeight =
+                    case ( model.postInputHeight, scene.height > viewport.height ) of
+                        ( Nothing, False ) ->
+                            Nothing
+
+                        ( Nothing, True ) ->
+                            Just scene.height
+
+                        ( Just _, False ) ->
+                            model.postInputHeight
+
+                        ( Just _, True ) ->
+                            Just scene.height
+            in
+            ( { model | postInputHeight = newHeight }, Effect.none, Cmd.none )
+
+        GotPostViewport (Err _) ->
             ( model, Effect.none, Cmd.none )
 
         OnScroll () ->
@@ -829,7 +863,7 @@ updateWithUser i msg model user =
         WithPostInput event ->
             ( { model | postInput = Form.updateInput event Page.nonEmptyInputParser model.postInput }
             , Effect.none
-            , Cmd.none
+            , Browser.Dom.getViewportOf "post-content" |> Task.attempt GotPostViewport
             )
 
         RequestImages ->
