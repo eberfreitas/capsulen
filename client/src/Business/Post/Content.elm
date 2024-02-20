@@ -58,22 +58,28 @@ anchorFallback =
         |= Parser.getChompedString (Parser.symbol "[")
 
 
-nodeHelper : (List Node -> Node) -> String -> Node
+nodeHelper : (List Node -> Node) -> String -> Parser.Parser Node
 nodeHelper nodeTag text_ =
-    case Parser.run parser text_ of
-        Ok parsed ->
-            nodeTag parsed
+    if text_ == "" then
+        Parser.problem "Value can't be empty"
 
-        Err _ ->
-            Text text_
+    else
+        case Parser.run parser text_ of
+            Ok parsed ->
+                Parser.succeed <| nodeTag parsed
+
+            Err _ ->
+                Parser.succeed <| Text text_
 
 
 bold : Parser.Parser Node
 bold =
-    Parser.succeed (nodeHelper Bold)
+    (Parser.succeed identity
         |. Parser.symbol "*"
         |= Parser.getChompedString (Parser.chompUntil "*")
         |. Parser.symbol "*"
+    )
+        |> Parser.andThen (nodeHelper Bold)
 
 
 boldFallback : Parser.Parser Node
@@ -84,10 +90,12 @@ boldFallback =
 
 italic : Parser.Parser Node
 italic =
-    Parser.succeed (nodeHelper Italic)
+    (Parser.succeed identity
         |. Parser.symbol "_"
         |= Parser.getChompedString (Parser.chompUntil "_")
         |. Parser.symbol "_"
+    )
+        |> Parser.andThen (nodeHelper Italic)
 
 
 italicFallback : Parser.Parser Node
@@ -98,10 +106,12 @@ italicFallback =
 
 strikethrough : Parser.Parser Node
 strikethrough =
-    Parser.succeed (nodeHelper Strikethrough)
+    (Parser.succeed identity
         |. Parser.symbol "~"
         |= Parser.getChompedString (Parser.chompUntil "~")
         |. Parser.symbol "~"
+    )
+        |> Parser.andThen (nodeHelper Strikethrough)
 
 
 strikethroughFallback : Parser.Parser Node
@@ -112,11 +122,13 @@ strikethroughFallback =
 
 listItem : Parser.Parser Node
 listItem =
-    Parser.succeed (nodeHelper ListItem)
+    (Parser.succeed identity
         |. Parser.symbol "-"
         |. Parser.spaces
         |= Parser.getChompedString (Parser.chompUntilEndOr "\n")
         |. Parser.spaces
+    )
+        |> Parser.andThen (nodeHelper ListItem)
 
 
 newLine : Parser.Parser Node
@@ -175,18 +187,36 @@ url =
 
 blockCode : Parser.Parser Node
 blockCode =
-    Parser.succeed (\code_ -> CodeBlock code_)
+    (Parser.succeed identity
         |. Parser.symbol "```"
         |= Parser.getChompedString (Parser.chompUntil "```")
         |. Parser.symbol "```"
+    )
+        |> Parser.andThen
+            (\text_ ->
+                if text_ == "" then
+                    Parser.problem "Value can't be empty"
+
+                else
+                    Parser.succeed <| CodeBlock text_
+            )
 
 
 code : Parser.Parser Node
 code =
-    Parser.succeed (\code_ -> Code code_)
+    (Parser.succeed identity
         |. Parser.symbol "`"
         |= Parser.getChompedString (Parser.chompUntil "`")
         |. Parser.symbol "`"
+    )
+        |> Parser.andThen
+            (\text_ ->
+                if text_ == "" then
+                    Parser.problem "Value can't be empty"
+
+                else
+                    Parser.succeed <| Code text_
+            )
 
 
 codeFallback : Parser.Parser Node
