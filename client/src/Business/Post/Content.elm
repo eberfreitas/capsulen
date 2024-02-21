@@ -303,6 +303,9 @@ preprocess nodes acc =
         [] ->
             List.reverse acc
 
+        (Text text1) :: ((Text text2) :: tailNodes) ->
+            preprocess (Text (text1 ++ text2) :: tailNodes) acc
+
         (Url url_) :: ((Italic [ Text text_ ]) :: tailNodes) ->
             if String.slice 0 1 text_ /= " " then
                 preprocess (Url url_ :: (Text ("_" ++ text_ ++ "_") :: tailNodes)) acc
@@ -312,6 +315,7 @@ preprocess nodes acc =
 
         (Url url_) :: ((Text text_) :: tailNodes) ->
             let
+                default : List Node
                 default =
                     preprocess tailNodes (Text text_ :: Url url_ :: acc)
             in
@@ -328,14 +332,18 @@ preprocess nodes acc =
                             |> Maybe.withDefault default
 
                     t :: _ ->
-                        let
-                            newText =
-                                String.slice (String.length t) (String.length text_) text_
-                        in
                         Url.toString url_
                             ++ t
                             |> Url.fromString
-                            |> Maybe.map (\u -> preprocess tailNodes (Text newText :: Url u :: acc))
+                            |> Maybe.map
+                                (\u ->
+                                    let
+                                        newText : String
+                                        newText =
+                                            String.slice (String.length t) (String.length text_) text_
+                                    in
+                                    preprocess tailNodes (Text newText :: Url u :: acc)
+                                )
                             |> Maybe.withDefault default
 
             else
@@ -530,9 +538,6 @@ toHtml theme nodes html =
 
         (Url url_) :: tailNodes ->
             (embedLink theme [] url_ :: html) |> recurse tailNodes
-
-        (Text text1) :: ((Text text2) :: tailNodes) ->
-            recurse (Text (text1 ++ text2) :: tailNodes) html
 
         (Text text_) :: tailNodes ->
             (Html.text text_ :: html) |> recurse tailNodes
