@@ -297,11 +297,65 @@ parser =
     Parser.loop [] nodesHelper
 
 
+preprocess : List Node -> List Node -> List Node
+preprocess nodes acc =
+    case nodes of
+        [] ->
+            List.reverse acc
+
+        (Url url_) :: ((Italic [ Text text_ ]) :: tailNodes) ->
+            if String.slice 0 1 text_ /= " " then
+                preprocess (Url url_ :: (Text ("_" ++ text_ ++ "_") :: tailNodes)) acc
+
+            else
+                preprocess tailNodes (Italic [ Text text_ ] :: Url url_ :: acc)
+
+        (Url url_) :: ((Text text_) :: tailNodes) ->
+            let
+                default =
+                    preprocess tailNodes (Text text_ :: Url url_ :: acc)
+            in
+            if String.slice 0 1 text_ /= " " then
+                case String.split " " text_ of
+                    [] ->
+                        []
+
+                    [ t ] ->
+                        Url.toString url_
+                            ++ t
+                            |> Url.fromString
+                            |> Maybe.map (\u -> preprocess (Url u :: tailNodes) acc)
+                            |> Maybe.withDefault default
+
+                    t :: _ ->
+                        let
+                            newText =
+                                String.slice (String.length t) (String.length text_) text_
+                        in
+                        Url.toString url_
+                            ++ t
+                            |> Url.fromString
+                            |> Maybe.map (\u -> preprocess tailNodes (Text newText :: Url u :: acc))
+                            |> Maybe.withDefault default
+
+            else
+                default
+
+        (ListItem listItemNodes) :: tailNodes ->
+            preprocess (List [ listItemNodes ] :: tailNodes) acc
+
+        (List listNodes) :: ((ListItem listItemNodes) :: tailNodes) ->
+            preprocess (List (listItemNodes :: listNodes) :: tailNodes) acc
+
+        node :: tailNodes ->
+            preprocess tailNodes (node :: acc)
+
+
 parse : String -> List Node
 parse content =
     case Parser.run parser content of
         Ok nodes ->
-            nodes
+            preprocess nodes []
 
         Err _ ->
             []
@@ -499,11 +553,9 @@ toHtml theme nodes html =
             )
                 |> recurse tailNodes
 
-        (ListItem listItemNodes) :: tailNodes ->
-            recurse (List [ listItemNodes ] :: tailNodes) html
-
-        (List listNodes) :: ((ListItem listItemNodes) :: tailNodes) ->
-            recurse (List (listItemNodes :: listNodes) :: tailNodes) html
+        (ListItem _) :: tailNodes ->
+            -- After `preprocess` we should not have any `ListItem` in place, skip
+            recurse tailNodes html
 
         (List listNodes) :: tailNodes ->
             (Html.ul
