@@ -297,27 +297,27 @@ parser =
     Parser.loop [] nodesHelper
 
 
-preprocess : List Node -> List Node -> List Node
-preprocess nodes acc =
+postprocess : List Node -> List Node -> List Node
+postprocess nodes acc =
     case nodes of
         [] ->
             List.reverse acc
 
         (Text text1) :: ((Text text2) :: tailNodes) ->
-            preprocess (Text (text1 ++ text2) :: tailNodes) acc
+            postprocess (Text (text1 ++ text2) :: tailNodes) acc
 
         (Url url_) :: ((Italic [ Text text_ ]) :: tailNodes) ->
             if String.slice 0 1 text_ /= " " then
-                preprocess (Url url_ :: (Text ("_" ++ text_ ++ "_") :: tailNodes)) acc
+                postprocess (Url url_ :: (Text ("_" ++ text_ ++ "_") :: tailNodes)) acc
 
             else
-                preprocess tailNodes (Italic [ Text text_ ] :: Url url_ :: acc)
+                postprocess tailNodes (Italic [ Text text_ ] :: Url url_ :: acc)
 
         (Url url_) :: ((Text text_) :: tailNodes) ->
             let
                 default : List Node
                 default =
-                    preprocess tailNodes (Text text_ :: Url url_ :: acc)
+                    postprocess tailNodes (Text text_ :: Url url_ :: acc)
             in
             if String.slice 0 1 text_ /= " " then
                 case String.split " " text_ of
@@ -328,7 +328,7 @@ preprocess nodes acc =
                         Url.toString url_
                             ++ t
                             |> Url.fromString
-                            |> Maybe.map (\u -> preprocess (Url u :: tailNodes) acc)
+                            |> Maybe.map (\u -> postprocess (Url u :: tailNodes) acc)
                             |> Maybe.withDefault default
 
                     t :: _ ->
@@ -342,7 +342,7 @@ preprocess nodes acc =
                                         newText =
                                             String.slice (String.length t) (String.length text_) text_
                                     in
-                                    preprocess tailNodes (Text newText :: Url u :: acc)
+                                    postprocess tailNodes (Text newText :: Url u :: acc)
                                 )
                             |> Maybe.withDefault default
 
@@ -350,20 +350,20 @@ preprocess nodes acc =
                 default
 
         (ListItem listItemNodes) :: tailNodes ->
-            preprocess (List [ listItemNodes ] :: tailNodes) acc
+            postprocess (List [ listItemNodes ] :: tailNodes) acc
 
         (List listNodes) :: ((ListItem listItemNodes) :: tailNodes) ->
-            preprocess (List (listItemNodes :: listNodes) :: tailNodes) acc
+            postprocess (List (listItemNodes :: listNodes) :: tailNodes) acc
 
         node :: tailNodes ->
-            preprocess tailNodes (node :: acc)
+            postprocess tailNodes (node :: acc)
 
 
 parse : String -> List Node
 parse content =
     case Parser.run parser content of
         Ok nodes ->
-            preprocess nodes []
+            postprocess nodes []
 
         Err _ ->
             []
