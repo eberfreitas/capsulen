@@ -1,0 +1,89 @@
+module Main exposing (main)
+
+
+import HttpServer
+import HttpServer.Response as Response
+import Init
+import Node
+import Stream
+import Task
+
+
+type Msg
+    = CreateServerResult (Result HttpServer.ServerError HttpServer.Server)
+    | GotRequest HttpServer.Request Response.Response
+
+
+type alias Model =
+    { server : Maybe HttpServer.Server
+    , stdout : Stream.Stream
+    , stderr : Stream.Stream
+    }
+
+
+init : Node.Environment -> Init.Task { model : Model, command : Cmd Msg }
+init env =
+    Init.await HttpServer.initialize <| \serverPermission ->
+        Node.startProgram
+            { model =
+                { server = Nothing
+                , stdout = env.stdout
+                , stderr = env.stderr
+                }
+            , command =
+                Task.attempt CreateServerResult <|
+                    HttpServer.createServer serverPermission
+                        { host = "0.0.0.0"
+                        , port_ = 6060
+                        }
+            }
+
+
+update : Msg -> Model -> { model : Model, command: Cmd Msg }
+update msg model =
+    case msg of
+        CreateServerResult result ->
+            case result of
+                Ok server ->
+                    { model = { model | server = Just server }
+                    , command =
+                        Stream.sendLine model.stdout "Server started"
+                            |> Task.execute
+                    }
+
+                Err (HttpServer.ServerError code message) ->
+                    { model = model
+                    , command =
+                        "Server failed to start :" ++ code ++ "\n" ++ message
+                            |> Stream.sendLine model.stderr
+                            |> Task.execute
+                    }
+
+        GotRequest _req res ->
+            { model = model
+            , command =
+                res
+                    |> Response.setStatus 200
+                    |> Response.setHeader "Content-type" "text/plain"
+                    |> Response.setBody "Hello World!"
+                    |> Response.send
+            }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.server of
+        Just server ->
+            HttpServer.onRequest server GotRequest
+
+        Nothing ->
+            Sub.none
+
+
+main : Node.Program Model Msg
+main =
+    Node.defineProgram
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        }
