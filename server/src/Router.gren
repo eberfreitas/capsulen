@@ -1,0 +1,10 @@
+module Router exposing (route)
+
+
+import HttpServer
+import HttpServer.Response
+
+
+route : HttpServer.Request -> Response.Response -> Maybe { response = Response.Response, command = Cmd msg }
+route req res =
+    Nothing
