@@ -1,0 +1,42 @@
+module Static exposing (serve)
+
+
+import Bytes
+import Dict
+import HttpServer
+import HttpServer.Response as Response
+import FileSystem.Path as Path
+
+
+contentType : Dict.Dict String String
+contentType =
+    Dict.empty
+        |> Dict.set "css" "text/css"
+        |> Dict.set "html" "text/html"
+        |> Dict.set "ico" "image/x-icon"
+        |> Dict.set "js" "text/javascript"
+        |> Dict.set "png" "image/png"
+        |> Dict.set "txt" "text/plain"
+        |> Dict.set "webmanifest" "application/manifest+json"
+
+
+deriveContentType : HttpServer.Request -> String
+deriveContentType req =
+    let
+        ext =
+            req.url.path
+                |> Path.fromPosixString
+                |> (\path -> path.extension)
+    in
+    contentType
+        |> Dict.get ext
+        |> Maybe.withDefault "application/octet-stream"
+
+
+serve : HttpServer.Request -> Response.Response -> Bytes.Bytes -> Cmd msg
+serve req res bytes =
+    res
+        |> Response.setHeader "Content-Type" (deriveContentType req)
+        |> Response.setStatus 200
+        |> Response.setBodyAsBytes bytes
+        |> Response.send

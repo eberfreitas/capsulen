@@ -1,45 +1,60 @@
 module Main exposing (main)
 
 
+import Bytes
+import FileSystem
+import FileSystem.Path as Path
 import HttpServer
 import HttpServer.Response as Response
 import Init
 import Node
+import Router
+import Static
 import Stream
 import Task
+
+
+type alias App =
+    { model : Model
+    , command : Cmd Msg
+    }
 
 
 type Msg
     = CreateServerResult (Result HttpServer.ServerError HttpServer.Server)
     | GotRequest HttpServer.Request Response.Response
+    | GotStatic HttpServer.Request Response.Response (Result FileSystem.Error Bytes.Bytes)
 
 
 type alias Model =
     { server : Maybe HttpServer.Server
     , stdout : Stream.Stream
     , stderr : Stream.Stream
+    , filesystem : FileSystem.Permission
     }
 
 
-init : Node.Environment -> Init.Task { model : Model, command : Cmd Msg }
+init : Node.Environment -> Init.Task App
 init env =
-    Init.await HttpServer.initialize <| \serverPermission ->
-        Node.startProgram
-            { model =
-                { server = Nothing
-                , stdout = env.stdout
-                , stderr = env.stderr
+    Init.await FileSystem.initialize <| \fileSystemPermission ->
+        Init.await HttpServer.initialize <| \serverPermission ->
+            Node.startProgram
+                { model =
+                    { server = Nothing
+                    , stdout = env.stdout
+                    , stderr = env.stderr
+                    , filesystem = fileSystemPermission
+                    }
+                , command =
+                    Task.attempt CreateServerResult <|
+                        HttpServer.createServer serverPermission
+                            { host = "0.0.0.0"
+                            , port_ = 6060
+                            }
                 }
-            , command =
-                Task.attempt CreateServerResult <|
-                    HttpServer.createServer serverPermission
-                        { host = "0.0.0.0"
-                        , port_ = 6060
-                        }
-            }
 
 
-update : Msg -> Model -> { model : Model, command: Cmd Msg }
+update : Msg -> Model -> App
 update msg model =
     case msg of
         CreateServerResult result ->
@@ -59,15 +74,45 @@ update msg model =
                             |> Task.execute
                     }
 
-        GotRequest _req res ->
+        GotRequest req res ->
+            case Router.route req res of
+                Just _ ->
+                    { model = model
+                    , command =
+                        res
+                            |> Response.setStatus 200
+                            |> Response.setHeader "Content-type" "text/plain"
+                            |> Response.setBody "Router hit!"
+                            |> Response.send
+                    }
+
+                Nothing ->
+                    let
+                        filePath = "./public" ++ req.url.path
+                        task = FileSystem.readFile model.filesystem (Path.fromPosixString filePath)
+                    in
+                    { model = model
+                    , command = Task.attempt (GotStatic req res) task
+                    }
+
+        GotStatic req res (Ok bytes) ->
             { model = model
-            , command =
-                res
-                    |> Response.setStatus 200
-                    |> Response.setHeader "Content-type" "text/plain"
-                    |> Response.setBody "Hello World!"
-                    |> Response.send
+            , command = Static.serve req res bytes
             }
+
+        GotStatic _req res (Err _) ->
+            { model = model
+            , command = notFound res
+            }
+
+
+notFound : Response.Response -> Cmd Msg
+notFound res =
+    res
+        |> Response.setStatus 404
+        |> Response.setBody "File not found"
+        |> Response.setHeader "Content-type" "text/plain"
+        |> Response.send
 
 
 subscriptions : Model -> Sub Msg
