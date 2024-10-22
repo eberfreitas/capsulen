@@ -1,4 +1,4 @@
-module Static exposing (serve)
+module Static exposing (serve, filePath)
 
 
 import Bytes
@@ -20,11 +20,20 @@ contentType =
         |> Dict.set "webmanifest" "application/manifest+json"
 
 
+filePath : HttpServer.Request -> String
+filePath req =
+    if String.endsWith "/" req.url.path then
+      "./public" ++ req.url.path ++ "index.html"
+    else
+      "./public" ++ req.url.path
+
+
 deriveContentType : HttpServer.Request -> String
 deriveContentType req =
     let
         ext =
-            req.url.path
+            req
+                |> filePath
                 |> Path.fromPosixString
                 |> (\path -> path.extension)
     in

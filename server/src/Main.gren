@@ -88,7 +88,7 @@ update msg model =
 
                 Nothing ->
                     let
-                        filePath = "./public" ++ req.url.path
+                        filePath = Static.filePath req
                         task = FileSystem.readFile model.filesystem (Path.fromPosixString filePath)
                     in
                     { model = model
