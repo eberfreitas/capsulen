@@ -28,12 +28,11 @@ filePath req =
       "./public" ++ req.url.path
 
 
-deriveContentType : HttpServer.Request -> String
-deriveContentType req =
+deriveContentType : String -> String
+deriveContentType file =
     let
         ext =
-            req
-                |> filePath
+            file
                 |> Path.fromPosixString
                 |> (\path -> path.extension)
     in
@@ -42,10 +41,10 @@ deriveContentType req =
         |> Maybe.withDefault "application/octet-stream"
 
 
-serve : HttpServer.Request -> Response.Response -> Bytes.Bytes -> Cmd msg
-serve req res bytes =
+serve : String -> Response.Response -> Bytes.Bytes -> Cmd msg
+serve file res bytes =
     res
-        |> Response.setHeader "Content-Type" (deriveContentType req)
+        |> Response.setHeader "Content-Type" (deriveContentType file)
         |> Response.setStatus 200
         |> Response.setBodyAsBytes bytes
         |> Response.send

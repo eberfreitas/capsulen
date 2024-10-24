@@ -23,7 +23,7 @@ type alias App =
 type Msg
     = CreateServerResult (Result HttpServer.ServerError HttpServer.Server)
     | GotRequest HttpServer.Request Response.Response
-    | GotStatic HttpServer.Request Response.Response (Result FileSystem.Error Bytes.Bytes)
+    | GotStatic String Response.Response (Result FileSystem.Error Bytes.Bytes)
 
 
 type alias Model =
@@ -92,27 +92,22 @@ update msg model =
                         task = FileSystem.readFile model.filesystem (Path.fromPosixString filePath)
                     in
                     { model = model
-                    , command = Task.attempt (GotStatic req res) task
+                    , command = Task.attempt (GotStatic filePath res) task
                     }
 
-        GotStatic req res (Ok bytes) ->
+        GotStatic file res (Ok bytes) ->
             { model = model
-            , command = Static.serve req res bytes
+            , command = Static.serve file res bytes
             }
 
-        GotStatic _req res (Err _) ->
+        GotStatic _file res (Err _) ->
+            let
+                filePath = "./public/index.html"
+                task = FileSystem.readFile model.filesystem (Path.fromPosixString filePath)
+            in
             { model = model
-            , command = notFound res
+            , command = Task.attempt (GotStatic filePath res) task
             }
-
-
-notFound : Response.Response -> Cmd Msg
-notFound res =
-    res
-        |> Response.setStatus 404
-        |> Response.setBody "File not found"
-        |> Response.setHeader "Content-type" "text/plain"
-        |> Response.send
 
 
 subscriptions : Model -> Sub Msg
